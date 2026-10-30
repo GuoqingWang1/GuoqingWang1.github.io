@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Publication from '../components/Publication.astro';
+import publications from '../data/publications.json';
+import { profile } from '../data/profile';
+const selected = publications.selected.map(id => publications.papers.find(p => p.id === id)!);
+const other = publications.papers.filter(p => !publications.selected.includes(p.id));
+---
+<BaseLayout>
+  <section id="about" aria-label="About">
+    <div class="intro">
+      <h1>hi, i'm guoqing</h1>
+      <p>My research interests are LLM agents, agentic reinforcement learning, and deep research.</p>
+      <p>{profile.affiliation}.<br />
+        <span class="profile-links">
+          <a class="text-link" href={profile.scholar} target="_blank" rel="noopener noreferrer">Google Scholar</a>
+          <span class="link-separator" aria-hidden="true">·</span>
+          <a class="text-link" href={profile.github} target="_blank" rel="noopener noreferrer">GitHub</a>
+        </span>
+      </p>
+    </div>
+    <section class="publications" aria-labelledby="publications-heading">
+      <h2 id="publications-heading">Selected publications</h2>
+      {selected.map(paper => <Publication paper={paper} />)}
+      <details class="more-publications">
+        <summary>More publications</summary>
+        <div id="more-publications">{other.map(paper => <Publication paper={paper} />)}</div>
+      </details>
+    </section>
+  </section>
+</BaseLayout>

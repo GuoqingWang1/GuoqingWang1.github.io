@@ -1,0 +1,8 @@
+---
+interface Props { paper: { title: string; url: string; venue: string; year: number; type: string } }
+const { paper } = Astro.props;
+---
+<article class="publication">
+  <span class="pub-meta" title={paper.type === 'preprint' ? 'Technical report / preprint' : 'Conference paper'}>{paper.venue} {paper.year}</span>
+  <h3 class="pub-title"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></h3>
+</article>

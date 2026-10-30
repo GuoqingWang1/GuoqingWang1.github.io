@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { publishedPosts } from '../../lib/posts';
+const posts = await publishedPosts();
+const categories = ['technical', 'reflection'] as const;
+---
+<BaseLayout title="Blog" active="blog" description="Technical notes and reflections by Guoqing Wang.">
+  <section aria-label="Blog">
+    {posts.length > 0 ? <>
+      <div class="blog-filters" role="group" aria-label="Article category">
+        {categories.map(category => <button type="button" data-category={category} aria-pressed="true">
+          <span class={`category-mark ${category}`} aria-hidden="true" />{category === 'technical' ? 'Technical' : 'Reflection'}
+        </button>)}
+      </div>
+      <h1 class="article-list-heading">Article</h1>
+      <div id="post-list">
+        {posts.map(post => <a class="article-link" data-post-category={post.data.category} href={`/blog/${post.id}/`}>
+          <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>{post.data.pubDate.toISOString().slice(0, 10)}</time>
+          <span class="title" lang={post.data.lang}>{post.data.title}</span>
+        </a>)}
+      </div>
+      <p class="empty" id="filtered-empty" hidden>No posts in this category.</p>
+      <a class="rss-link" href="/rss.xml">RSS</a>
+    </> : <p class="empty">No posts yet.</p>}
+  </section>
+</BaseLayout>
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-category]');
+  const rows = document.querySelectorAll<HTMLAnchorElement>('[data-post-category]');
+  const enabled = new Set(['technical', 'reflection']);
+  buttons.forEach(button => button.addEventListener('click', () => {
+    const category = button.dataset.category!;
+    enabled.has(category) ? enabled.delete(category) : enabled.add(category);
+    button.setAttribute('aria-pressed', String(enabled.has(category)));
+    let visible = 0;
+    rows.forEach(row => { row.hidden = !enabled.has(row.dataset.postCategory!); if (!row.hidden) visible++; });
+    const empty = document.getElementById('filtered-empty');
+    if (empty) empty.hidden = visible > 0;
+  }));
+</script>

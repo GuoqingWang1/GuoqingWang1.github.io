@@ -1,0 +1,173 @@
+{
+  "selected": [
+    "igpo",
+    "dmc",
+    "dr-venus"
+  ],
+  "papers": [
+    {
+      "id": "igpo",
+      "title": "Information Gain-based Policy Optimization: A Simple and Effective Approach for Multi-Turn Search Agents",
+      "authors": [
+        "Guoqing Wang",
+        "Sunhao Dai",
+        "Guangze Ye",
+        "Zeyu Gan",
+        "Wei Yao",
+        "Yong Deng",
+        "Xiaofeng Wu",
+        "Zhenzhe Ying"
+      ],
+      "venue": "ICLR",
+      "year": 2026,
+      "url": "https://openreview.net/pdf?id=qkWP6phrvZ",
+      "type": "conference",
+      "code": "https://github.com/GuoqingWang1/IGPO"
+    },
+    {
+      "id": "evinoterag",
+      "title": "EviNoteRAG: Enhancing RAG Models via Quality-Augmented Evidence Notes",
+      "authors": [
+        "Yuqin Dai",
+        "Guoqing Wang",
+        "Yuan Wang",
+        "Zhouheng Yao",
+        "Kairan Dou",
+        "Kaichen Zhou",
+        "Zhanwei Zhang",
+        "Shuo Yang",
+        "Fei Tang",
+        "Jun Yin",
+        "Pengyu Zeng",
+        "Can YI",
+        "Changhua Meng",
+        "Yuchen Zhou",
+        "Yongliang Shen",
+        "Shuai Lu"
+      ],
+      "venue": "EMNLP",
+      "year": 2026,
+      "url": "https://aclanthology.org/2026.emnlp-main.2108/",
+      "type": "conference"
+    },
+    {
+      "id": "dr-venus",
+      "title": "DR-Venus: Towards Frontier Edge-Scale Deep Research Agents with Only 10K Open Data",
+      "authors": [
+        "Venus Team",
+        "Sunhao Dai",
+        "Yong Deng",
+        "Jinzhen Lin",
+        "Yusheng Song",
+        "Guoqing Wang",
+        "Xiaofeng Wu",
+        "Yuqi Zhou",
+        "Shuo Yang",
+        "Zhenzhe Ying",
+        "Zhanwei Zhang",
+        "Changhua Meng",
+        "Weiqiang Wang"
+      ],
+      "venue": "arXiv",
+      "year": 2026,
+      "url": "https://arxiv.org/abs/2604.19859",
+      "type": "preprint",
+      "code": "https://github.com/inclusionAI/DR-Venus"
+    },
+    {
+      "id": "webfilter",
+      "title": "Careful Queries, Credible Results: Teaching RAG Models Advanced Web Search Tools with Reinforcement Learning",
+      "authors": [
+        "Yuqin Dai",
+        "Shuo Yang",
+        "Guoqing Wang",
+        "Yong Deng",
+        "Zhanwei Zhang",
+        "Jun Yin",
+        "Pengyu Zeng",
+        "Zhenzhe Ying",
+        "Changhua Meng",
+        "Can Yi",
+        "Yuchen Zhou",
+        "Weiqiang Wang",
+        "Shuai Lu"
+      ],
+      "venue": "AAAI",
+      "year": 2026,
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40299",
+      "type": "conference"
+    },
+    {
+      "id": "metaeval",
+      "title": "MetaEval: Measuring the Discrimination of Benchmarks for Efficient LLM Evaluation",
+      "authors": [
+        "Zhuo Wang",
+        "Wen Wu",
+        "Guoqing Wang",
+        "Guangze Ye",
+        "Zhenxiao Cheng"
+      ],
+      "venue": "AAAI",
+      "year": 2026,
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40668",
+      "type": "conference"
+    },
+    {
+      "id": "dmc",
+      "title": "Decoupling Metacognition from Cognition: A Framework for Quantifying Metacognitive Ability in LLMs",
+      "authors": [
+        "Guoqing Wang",
+        "Wen Wu",
+        "Guangze Ye",
+        "Zhenxiao Cheng",
+        "Xi Chen",
+        "Hong Zheng"
+      ],
+      "venue": "AAAI",
+      "year": 2025,
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723",
+      "type": "conference"
+    },
+    {
+      "id": "atom-searcher",
+      "title": "Atom-Searcher: Enhancing Agentic Deep Research via Fine-Grained Atomic Thought Reward",
+      "authors": [
+        "Yong Deng",
+        "Guoqing Wang",
+        "Zhenzhe Ying",
+        "Xiaofeng Wu",
+        "Jinzhen Lin",
+        "Wenwen Xiong",
+        "Yuqin Dai",
+        "Shuo Yang",
+        "Zhanwei Zhang",
+        "Qiwen Wang",
+        "Yang Qin",
+        "Yuan Wang",
+        "Quanxing Zha",
+        "Sunhao Dai",
+        "Changhua Meng"
+      ],
+      "venue": "arXiv",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2508.12800",
+      "type": "preprint"
+    },
+    {
+      "id": "disrec",
+      "title": "Disentangled Modeling of Preferences and Social Influence for Group Recommendation",
+      "authors": [
+        "Guangze Ye",
+        "Wen Wu",
+        "Guoqing Wang",
+        "Xi Chen",
+        "Hong Zheng",
+        "Liang He"
+      ],
+      "venue": "AAAI",
+      "year": 2025,
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/33424",
+      "type": "conference"
+    }
+  ]
+}
