@@ -1,8 +1,16 @@
 ---
-interface Props { paper: { title: string; url: string; venue: string; year: number; type: string } }
+import github from '../assets/github.svg?raw';
+import { profile } from '../data/profile';
+interface Props {
+  paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string }
+}
 const { paper } = Astro.props;
 ---
-<article class="publication">
-  <span class="pub-meta" title={paper.type === 'preprint' ? 'Technical report / preprint' : 'Conference paper'}>{paper.venue} {paper.year}</span>
-  <h3 class="pub-title"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></h3>
+<article class="publication" id={paper.id}>
+  <div class="pub-meta"><span>{paper.venue} {paper.year}</span>{paper.type === 'preprint' && <span class="pub-status">Technical report</span>}</div>
+  <div class="pub-content">
+    <h2 class="pub-title"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></h2>
+    <p class="pub-authors">{paper.authors.map((author, index) => <>{author === profile.name ? <strong>{author}</strong> : author}{index < paper.authors.length - 1 ? ', ' : ''}</>)}</p>
+    {paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={`Code for ${paper.title}`} title="Code"><span aria-hidden="true" set:html={github} /><span>Code</span></a>}
+  </div>
 </article>

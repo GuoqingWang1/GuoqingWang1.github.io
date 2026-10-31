@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.14.0 <25" },
+  "engines": {
+    "node": ">=24.14.0 <25"
+  },
   "scripts": {
     "dev": "astro dev --host 127.0.0.1",
     "build": "astro build",
@@ -13,6 +15,7 @@
   },
   "dependencies": {
     "@astrojs/rss": "4.0.19",
+    "@fontsource/spectral": "5.3.0",
     "astro": "7.4.4"
   }
 }

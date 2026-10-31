@@ -37,7 +37,7 @@ jobs:
                   assert response.url.startswith(base), (url, response.url)
                   return {'url': url, 'status': response.status, 'final_url': response.url,
                           'bytes': len(body), 'redirects': handler.chain, 'body': body}
-          urls = [base, base+'blog/', base+'rss.xml', base+'sitemap.xml',
+          urls = [base, base+'blog/', base+'rss.xml', base+'sitemap.xml', base+'publications/',
                   'http://'+host+'/', 'https://guoqingwang1.github.io/']
           if not host.endswith('.github.io'): urls.append('https://www.'+host+'/')
           with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:

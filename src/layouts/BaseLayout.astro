@@ -1,11 +1,17 @@
 ---
+import '@fontsource/spectral/latin-400.css';
+import '@fontsource/spectral/latin-400-italic.css';
+import '@fontsource/spectral/latin-500.css';
+import '@fontsource/spectral/latin-600.css';
 import '../styles/global.css';
 import logo from '../../public/logo.svg?raw';
+import SocialLinks from '../components/SocialLinks.astro';
+import BackgroundParticles from '../components/BackgroundParticles.astro';
 import { profile } from '../data/profile';
 interface Props {
   title?: string;
   description?: string;
-  active?: 'about' | 'blog';
+  active?: 'about' | 'publications' | 'blog';
   lang?: 'en' | 'zh-CN';
   article?: boolean;
   published?: Date;
@@ -15,6 +21,7 @@ interface Props {
 const { title = profile.name, description = profile.description, active = 'about', lang = 'en', article = false, published, updated, noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = title === profile.name ? title : `${title} — ${profile.name}`;
+const pageKind = noindex ? 'plain' : article ? 'article' : active === 'about' ? 'home' : active;
 const schema = article ? {
   '@context': 'https://schema.org', '@type': 'BlogPosting', headline: title, description,
   author: { '@type': 'Person', name: profile.name, url: Astro.site },
@@ -33,7 +40,8 @@ const schema = article ? {
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="alternate" type="application/rss+xml" title={`${profile.name} — Blog`} href="/rss.xml" />
@@ -46,19 +54,39 @@ const schema = article ? {
     {published && <meta property="article:published_time" content={published.toISOString()} />}
     <script type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />
   </head>
-  <body>
+  <body data-page={pageKind}>
     <a class="skip-link" href="#main">Skip to content</a>
-    <div class="site">
-      <header class="header">
-        <a class="name" href="/" aria-label="Guoqing Wang, home">
-          <span class="brand-mark" aria-hidden="true" set:html={logo} /><span>{profile.name}</span>
-        </a>
-        <nav aria-label="Main navigation">
+    {pageKind === 'home' && <BackgroundParticles />}
+    <header class="site-header">
+      <a class="site-name" href="/" aria-label="Guoqing Wang, home">
+        <span class="brand-mark" aria-hidden="true" set:html={logo} /><span>{profile.name}</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="main-navigation"><span></span><span></span><span></span></button>
+      <nav class="navigation" id="main-navigation" aria-label="Main navigation">
+        <div class="nav-links">
           <a href="/" aria-current={active === 'about' ? 'page' : undefined}>About</a>
+          <a href="/publications/" aria-current={active === 'publications' ? 'page' : undefined}>Publications</a>
           <a href="/blog/" aria-current={active === 'blog' ? 'page' : undefined}>Blog</a>
-        </nav>
-      </header>
-      <main id="main" tabindex="-1"><slot /></main>
-    </div>
+        </div>
+        <SocialLinks />
+      </nav>
+    </header>
+    <main id="main" class:list={['page', `${pageKind}-page`]} tabindex="-1"><slot /></main>
+    <script is:inline>
+      const header = document.querySelector('.site-header');
+      const toggle = document.querySelector('.menu-toggle');
+      if (header && toggle) {
+        document.documentElement.classList.add('nav-enhanced');
+        const closeMenu = () => { header.dataset.open = 'false'; toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', 'Open navigation'); };
+        toggle.addEventListener('click', () => {
+          const open = toggle.getAttribute('aria-expanded') !== 'true';
+          header.dataset.open = String(open); toggle.setAttribute('aria-expanded', String(open));
+          toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+        });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') { closeMenu(); toggle.focus(); } });
+        document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
+        window.matchMedia('(max-width: 768px)').addEventListener('change', closeMenu);
+      }
+    </script>
   </body>
 </html>

@@ -13,7 +13,7 @@ async function files(dir) {
   }
   return list;
 }
-for (const required of ['index.html', 'blog/index.html', '404.html', 'logo.svg', 'rss.xml', 'sitemap.xml', 'robots.txt']) await access(path.join(root, required));
+for (const required of ['index.html', 'blog/index.html', 'publications/index.html', '404.html', 'logo.svg', 'rss.xml', 'sitemap.xml', 'robots.txt']) await access(path.join(root, required));
 const output = await files(root);
 let pages = 0;
 for (const filename of output) {

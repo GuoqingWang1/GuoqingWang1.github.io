@@ -27,11 +27,13 @@ The `dist/` directory is the complete website. It contains no backend service or
 ## Edit
 
 - Profile and public links: `src/data/profile.ts`
-- Publications and selected ordering: `src/data/publications.json`
+- Publication records: `src/data/publications.json`
 - Layout and typography: `src/layouts/`, `src/styles/global.css`
 - GW monogram and favicon: `public/logo.svg`
 - Finalized articles: `src/content/blog/*.md`
 - Article format: `templates/post.md`
+
+The site has separate About, Publications, and Blog pages. The header exposes GitHub and Google Scholar as labeled icon links. Spectral is self-hosted. The homepage has a small original 2D particle background with pause and reduced-motion support; there is no 3D sculpture.
 
 Articles have their own `/blog/<slug>/` URL, heading navigation, code highlighting, reading time, and category filters. RSS, sitemap, canonical URLs, and sharing metadata are generated at build time. The blog stays empty until a real article is finalized.
 
@@ -42,3 +44,7 @@ Only articles with `draft: false` and a publication date no later than build tim
 The default public URL is `https://guoqingwang1.github.io`. Set `SITE_URL` to a registered and configured custom domain when ready. No custom domain is bound by this project. See [deployment instructions](DEPLOYMENT.md).
 
 CI validates every push and pull request. Public deployment is a separate manual workflow, so preparing a change does not publish the website automatically.
+
+## Design sources
+
+Layout and interaction details were informed by inspecting the public HTML/CSS of [Nathan Chen’s site](https://nathanchen.me/). The implementation and personal content are maintained here independently; reference snapshots are not included. Spectral is distributed under the SIL Open Font License, and the GitHub/Google Scholar glyphs come from Simple Icons (CC0). License texts are included in `public/licenses/`.

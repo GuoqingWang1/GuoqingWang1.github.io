@@ -1,0 +1,90 @@
+<canvas id="background-particles" class="particle-background" aria-hidden="true"></canvas>
+<button id="motion-control" class="motion-control" type="button" aria-label="Pause background motion" title="Pause background motion" aria-pressed="false">
+  <svg class="pause-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" /></svg>
+  <svg class="play-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 7 5-7 5Z" /></svg>
+</button>
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>('#background-particles');
+  const control = document.querySelector<HTMLButtonElement>('#motion-control');
+  if (canvas && control) {
+    const context = canvas.getContext('2d');
+    if (context) {
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+      const theme = matchMedia('(prefers-color-scheme: dark)');
+      let paused = reduce.matches;
+      let frame = 0, last = 0, time = 0;
+      let width = 0, height = 0;
+      let mouse: { x: number; y: number } | null = null;
+      let color = getComputedStyle(document.documentElement).getPropertyValue('--particle').trim();
+      type Dot = { x: number; y: number; vx: number; vy: number; radius: number; phase: number };
+      let dots: Dot[] = [];
+      const updateButton = () => {
+        control.dataset.ready = 'true';
+        control.setAttribute('aria-pressed', String(paused));
+        control.setAttribute('aria-label', paused ? 'Play background motion' : 'Pause background motion');
+        control.title = paused ? 'Play background motion' : 'Pause background motion';
+      };
+      function paint() {
+        context!.clearRect(0, 0, width, height);
+        for (let i = 0; i < dots.length; i++) {
+          for (let j = i + 1; j < dots.length; j++) {
+            const a = dots[i], b = dots[j], distance = Math.hypot(a.x - b.x, a.y - b.y);
+            if (distance >= 150) continue;
+            context!.strokeStyle = `rgba(${color},${0.15 * (1 - distance / 150)})`;
+            context!.lineWidth = 0.65;
+            context!.beginPath(); context!.moveTo(a.x, a.y); context!.lineTo(b.x, b.y); context!.stroke();
+          }
+        }
+        for (const dot of dots) {
+          const breath = 0.5 + 0.5 * Math.sin(time * 0.65 + dot.phase);
+          const r = dot.radius * (0.5 + 0.5 * breath);
+          context!.fillStyle = `rgba(${color},${0.10 + breath * 0.38})`;
+          context!.beginPath();
+          context!.moveTo(dot.x, dot.y - r);
+          context!.lineTo(dot.x - r * 0.866, dot.y + r * 0.5);
+          context!.lineTo(dot.x + r * 0.866, dot.y + r * 0.5);
+          context!.closePath(); context!.fill();
+        }
+      }
+      function resize() {
+        width = innerWidth; height = innerHeight;
+        const dpr = Math.min(devicePixelRatio || 1, 1.5);
+        canvas!.width = Math.round(width * dpr); canvas!.height = Math.round(height * dpr);
+        context!.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const count = Math.min(32, Math.max(9, Math.round(width * height / 40000)));
+        dots = Array.from({ length: count }, () => ({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - 0.5) * 14, vy: (Math.random() - 0.5) * 14, radius: 1.5 + Math.random() * 3, phase: Math.random() * Math.PI * 2 }));
+        paint();
+      }
+      function tick(now: number) {
+        frame = 0;
+        if (paused || document.hidden) { last = 0; return; }
+        if (last && now - last < 1000 / 30) { frame = requestAnimationFrame(tick); return; }
+        const dt = last ? Math.min((now - last) / 1000, 0.06) : 0;
+        last = now; time += dt;
+        for (const dot of dots) {
+          if (mouse && !reduce.matches) {
+            const dx = dot.x - mouse.x, dy = dot.y - mouse.y, d = Math.hypot(dx, dy);
+            if (d > 0 && d < 100) { const strength = (1 - d / 100) * 38 * dt; dot.x += dx / d * strength; dot.y += dy / d * strength; }
+          }
+          dot.x += dot.vx * dt; dot.y += dot.vy * dt;
+          if (dot.x < 0 || dot.x > width) { dot.vx *= -1; dot.x = Math.max(0, Math.min(width, dot.x)); }
+          if (dot.y < 0 || dot.y > height) { dot.vy *= -1; dot.y = Math.max(0, Math.min(height, dot.y)); }
+        }
+        paint(); frame = requestAnimationFrame(tick);
+      }
+      function sync() {
+        if (frame) cancelAnimationFrame(frame);
+        frame = 0; last = 0;
+        if (!paused && !document.hidden) frame = requestAnimationFrame(tick);
+      }
+      control.addEventListener('click', () => { paused = !paused; updateButton(); sync(); });
+      reduce.addEventListener('change', () => { paused = reduce.matches; mouse = null; updateButton(); sync(); });
+      theme.addEventListener('change', () => { color = getComputedStyle(document.documentElement).getPropertyValue('--particle').trim(); paint(); });
+      document.addEventListener('visibilitychange', sync);
+      window.addEventListener('resize', resize);
+      window.addEventListener('pointermove', event => { if (event.pointerType !== 'touch') mouse = { x: event.clientX, y: event.clientY }; }, { passive: true });
+      document.addEventListener('pointerleave', () => { mouse = null; });
+      resize(); updateButton(); sync();
+    }
+  }
+</script>
