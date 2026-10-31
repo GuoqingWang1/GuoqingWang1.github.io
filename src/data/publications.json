@@ -22,7 +22,7 @@
       ],
       "venue": "ICLR",
       "year": 2026,
-      "url": "https://openreview.net/pdf?id=qkWP6phrvZ",
+      "url": "https://arxiv.org/abs/2510.14967",
       "type": "conference",
       "code": "https://github.com/GuoqingWang1/IGPO",
       "authorship": "first",
@@ -81,7 +81,8 @@
       "type": "technical-report",
       "code": "https://github.com/inclusionAI/DR-Venus",
       "authorship": "core-contributor",
-      "publishedDate": "2026-04-21"
+      "publishedDate": "2026-04-21",
+      "teamCredit": "Venus Team (Ant Group)"
     },
     {
       "id": "webfilter",
@@ -103,7 +104,7 @@
       ],
       "venue": "AAAI",
       "year": 2026,
-      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40299",
+      "url": "https://arxiv.org/abs/2508.07956",
       "type": "conference",
       "authorship": "co-first",
       "code": "https://github.com/GuoqingWang1/WebFilter",
@@ -170,7 +171,9 @@
       "url": "https://arxiv.org/abs/2508.12800",
       "type": "technical-report",
       "authorship": "core-contributor",
-      "publishedDate": "2025-08-18"
+      "publishedDate": "2025-08-18",
+      "teamCredit": "Venus Team (Ant Group)",
+      "code": "https://github.com/antgroup/Research-Venus"
     },
     {
       "id": "disrec",
