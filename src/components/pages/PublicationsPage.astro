@@ -7,8 +7,15 @@ interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const papers = [...publications.papers].sort((a,b) => b.year - a.year);
+const sections = [
+  { id: 'conference-papers', title: t.conferencePapers, papers: papers.filter(paper => paper.type === 'conference') },
+  { id: 'technical-reports', title: t.technicalReports, papers: papers.filter(paper => paper.type === 'preprint') },
+].filter(section => section.papers.length);
 ---
 <BaseLayout lang={lang} title={t.publications} active="publications" description={t.publicationsDescription}>
-  <h1 class="page-title">{t.publicationsHeading}</h1>
-  <div class="publication-list">{papers.map(paper => <Publication paper={paper} lang={lang} />)}</div>
+  <h1 class="page-title">{t.publications}</h1>
+  {sections.map(section => <section class="publication-section" aria-labelledby={section.id}>
+    <h2 class="publication-section-title" id={section.id}>{section.title}</h2>
+    <div class="publication-list">{section.papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={3} showStatus={false} />)}</div>
+  </section>)}
 </BaseLayout>

@@ -1,14 +1,27 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { copy, type Locale } from '../../lib/i18n';
+import Publication from '../Publication.astro';
+import { profile } from '../../data/profile';
+import publications from '../../data/publications.json';
+import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
+const selected = publications.selected.map(id => publications.papers.find(paper => paper.id === id)!).sort((a,b) => b.year - a.year);
 ---
 <BaseLayout lang={lang}>
-  <section class="intro" aria-label={t.about}>
-    <h1>{t.greeting}</h1>
-    <p>{t.interests}</p>
-    <p>{t.affiliation}{lang === 'en' ? '.' : '。'}</p>
+  <section class="intro intro-profile" aria-label={t.about}>
+    <div class="intro-identity">
+      <h1 lang="en">{profile.name}</h1>
+      <p class="affiliation">{t.affiliation}</p>
+    </div>
+    <div class="intro-bio"><p>{t.interests}</p></div>
+  </section>
+  <section class="selected-research" aria-labelledby="selected-heading">
+    <div class="section-heading">
+      <h2 id="selected-heading">{t.selectedPublications}</h2>
+      <a class="all-publications" href={localizedPath('/publications/',lang)}>{t.allPublications}<span aria-hidden="true"> →</span></a>
+    </div>
+    <div class="publication-list">{selected.map(paper => <Publication paper={paper} lang={lang} compact headingLevel={3} />)}</div>
   </section>
 </BaseLayout>

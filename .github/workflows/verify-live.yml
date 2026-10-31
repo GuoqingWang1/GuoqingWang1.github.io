@@ -59,7 +59,8 @@ jobs:
               assert 'href="'+opposite+'"' in body, (path, opposite)
               assert ('切换为中文' if english else 'Switch to English') in body
               if path in ('/', '/en/'):
-                  assert ('hi, i' if english else '你好，我是') in body
+                  assert ('East China Normal University' if english else '华东师范大学') in body
+                  assert ('Selected publications' if english else '代表论文') in body
           class Assets(HTMLParser):
               paths = []
               def handle_starttag(self, tag, attrs):

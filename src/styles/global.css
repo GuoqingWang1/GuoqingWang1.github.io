@@ -20,3 +20,20 @@
 html[lang="zh-CN"] .intro{line-height:1.9}
 @media(max-width:768px){.language-switch{right:65px;top:14px;min-height:32px;padding:0 8px;border:0;font-size:13px}html:not(.nav-enhanced) .language-switch{right:16px;top:11px}.social-links{right:auto}}
 @media print{.language-switch{display:none}}
+
+/* Academic overview: identity, research interests, then a short selected list. */
+.home-page{width:calc(100% - 64px);max-width:880px;padding:42px 20px 80px}
+.intro-profile{display:grid;grid-template-columns:210px minmax(0,1fr);gap:44px;align-items:start}
+.intro-identity h1{font-size:28px;font-weight:400;line-height:1.25;letter-spacing:-.5px;margin:0 0 10px}
+.intro-identity .affiliation{font-size:14px;line-height:1.65;color:var(--secondary);margin:0}
+.intro-bio p{margin:1px 0 0;line-height:1.8;text-wrap:balance}
+.selected-research{margin-top:56px}
+.section-heading{display:flex;gap:20px;align-items:baseline;justify-content:space-between;margin:0 0 28px}
+.section-heading h2{font-size:20px;font-weight:500;line-height:1.4;margin:0}
+.all-publications{flex-shrink:0;font-size:13px;color:var(--secondary);border-bottom:1px solid transparent;transition:border-color .2s,color .2s}
+.all-publications:hover{border-bottom-color:var(--link-line);color:var(--text)}
+.publication-compact{margin-bottom:24px}
+.publication-compact .pub-title{margin-bottom:0}
+.publication-section + .publication-section{margin-top:46px}
+.publication-section-title{font-size:17px;font-weight:500;line-height:1.5;margin:0 0 28px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+@media(max-width:768px){.home-page{width:100%;padding:32px 24px 64px}.intro-profile{grid-template-columns:1fr;gap:20px}.intro-identity h1{font-size:26px;letter-spacing:-.3px;margin-bottom:7px}.intro-identity .affiliation{font-size:13px}.intro-bio p{margin:0;line-height:1.9}.selected-research{margin-top:40px}.section-heading{gap:16px;margin-bottom:25px}.section-heading h2{font-size:19px}.all-publications{font-size:12px}.publication-section-title{font-size:16px;margin-bottom:24px}.publication-section + .publication-section{margin-top:38px}}
