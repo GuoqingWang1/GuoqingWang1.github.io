@@ -8,7 +8,7 @@ interface Props {
   showAuthors?: boolean;
   headingLevel?: 2 | 3;
   showAuthorship?: boolean;
-  paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string; authorship?: string; distinction?: string; teamCredit?: string }
+  paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string; authorship?: string; distinction?: string; teamCredit?: string; pdfMirror?: string }
 }
 const { paper, lang = 'en', compact = false, showAuthors = !compact, headingLevel = 2, showAuthorship = false } = Astro.props;
 const t = copy[lang];
@@ -23,6 +23,7 @@ const authors = paper.teamCredit ? paper.authors.filter(author => author !== 'Ve
       <span class="pub-inline-meta">
         <span class="venue" lang="en">[{venue} {paper.year}{paper.distinction && <> · {paper.distinction}</>}]</span>
         {paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={lang === 'zh-CN' ? `${paper.title} 的代码` : `Code for ${paper.title}`} title={t.code}><span aria-hidden="true" set:html={github} /><span>{t.code}</span></a>}
+        {paper.pdfMirror && <a class="code-link" href={paper.pdfMirror} target="_blank" rel="noopener noreferrer" aria-label={`PDF mirror for ${paper.title}`} title="PDF mirror on GitHub (third-party)">PDF</a>}
       </span>
     </div>
     {showAuthors && <p class="pub-authors" lang="en">{paper.teamCredit && <><span class="pub-team">{paper.teamCredit}</span>; </>}{authors.map((author, index) => <>{author === profile.name ? <><strong>{author}</strong>{showAuthorship && authorship && <span class="pub-authorship"> ({authorship})</span>}</> : author}{index < authors.length - 1 ? ', ' : ''}</>)}</p>}

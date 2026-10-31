@@ -144,7 +144,8 @@
       "type": "conference",
       "authorship": "first",
       "publishedDate": "2025-04-11",
-      "distinction": "Oral"
+      "distinction": "Oral",
+      "pdfMirror": "https://raw.githubusercontent.com/sdeture/determined-to-be-seen/b212643afaee48005fd46e2690387b505ae625c2/Decoupling%20Metacognition%20from%20Cognition-%20A%20Framework%20for%20Quantifying%20Metacognitive%20Ability%20in%20LLMs.pdf"
     },
     {
       "id": "atom-searcher",
@@ -188,7 +189,7 @@
       ],
       "venue": "AAAI",
       "year": 2025,
-      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/33424",
+      "url": "https://arxiv.org/abs/2501.11342",
       "type": "conference",
       "authorship": "co-author",
       "publishedDate": "2025-04-11",
