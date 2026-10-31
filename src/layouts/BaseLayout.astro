@@ -19,12 +19,14 @@ interface Props {
   updated?: Date;
   noindex?: boolean;
 }
-const { lang = 'zh-CN', active = 'about', article = false, published, updated, noindex = false } = Astro.props;
+const { lang = 'en', active = 'about', article = false, published, updated, noindex = false } = Astro.props;
 const t = copy[lang];
+const navigation = copy.en;
 const { title = profile.name, description = t.description } = Astro.props;
 const otherLang: Locale = lang === 'zh-CN' ? 'en' : 'zh-CN';
-const equivalent = !article && !noindex;
-const switchPath = localizedPath(equivalent ? Astro.url.pathname : article ? '/blog/' : '/', otherLang);
+const blogScope = active === 'blog' && !noindex;
+const equivalent = blogScope && !article;
+const switchPath = localizedPath('/blog/', otherLang);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = title === profile.name ? title : `${title} — ${profile.name}`;
 const pageKind = noindex ? 'plain' : article ? 'article' : active === 'about' ? 'home' : active;
@@ -53,7 +55,7 @@ const schema = article ? {
     {equivalent && <>
       <link rel="alternate" hreflang="zh-CN" href={new URL(localizedPath(Astro.url.pathname, 'zh-CN'), Astro.site)} />
       <link rel="alternate" hreflang="en" href={new URL(localizedPath(Astro.url.pathname, 'en'), Astro.site)} />
-      <link rel="alternate" hreflang="x-default" href={new URL(localizedPath(Astro.url.pathname, 'zh-CN'), Astro.site)} />
+      <link rel="alternate" hreflang="x-default" href={new URL(localizedPath('/blog/', 'en'), Astro.site)} />
     </>}
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="alternate" type="application/rss+xml" title={`${profile.name} — ${t.blog}`} href={localizedPath('/rss.xml', lang)} />
@@ -70,20 +72,21 @@ const schema = article ? {
   <body data-page={pageKind}>
     <a class="skip-link" href="#main">{t.skip}</a>
     {pageKind === 'home' && <BackgroundParticles lang={lang} />}
-    <header class="site-header">
-      <a class="site-name" href={localizedPath('/', lang)} aria-label={`${profile.name}, ${t.about}`}>
+    <header class="site-header" lang="en" data-blog={blogScope || undefined}>
+      <a class="site-name" href="/" aria-label={`${profile.name}, ${navigation.about}`}>
         <span class="brand-mark" aria-hidden="true" set:html={logo} /><span>{profile.name}</span>
       </a>
-      <button class="menu-toggle" type="button" aria-label={t.openNavigation} data-label-open={t.openNavigation} data-label-close={t.closeNavigation} aria-expanded="false" aria-controls="main-navigation"><span></span><span></span><span></span></button>
-      <nav class="navigation" id="main-navigation" aria-label={t.navigation}>
+      <button class="menu-toggle" type="button" aria-label={navigation.openNavigation} data-label-open={navigation.openNavigation} data-label-close={navigation.closeNavigation} aria-expanded="false" aria-controls="main-navigation"><span></span><span></span><span></span></button>
+      <nav class="navigation" id="main-navigation" aria-label={navigation.navigation}>
         <div class="nav-links">
-          <a href={localizedPath('/', lang)} aria-current={active === 'about' ? 'page' : undefined}>{t.about}</a>
-          <a href={localizedPath('/publications/', lang)} aria-current={active === 'publications' ? 'page' : undefined}>{t.publications}</a>
-          <a href={localizedPath('/blog/', lang)} aria-current={active === 'blog' ? 'page' : undefined}>{t.blog}</a>
+          <a href="/" aria-current={active === 'about' ? 'page' : undefined}>{navigation.about}</a>
+          <a href="/#news">News</a>
+          <a href="/publications/" aria-current={active === 'publications' ? 'page' : undefined}>{navigation.publications}</a>
+          <a href={localizedPath('/blog/', lang)} aria-current={active === 'blog' ? 'page' : undefined}>{navigation.blog}</a>
         </div>
-        <SocialLinks lang={lang} />
+        <SocialLinks lang="en" />
       </nav>
-      <a class="language-switch" href={switchPath} lang={otherLang} hreflang={otherLang} data-equivalent={equivalent || undefined} aria-label={article ? t.otherBlog : t.switchTitle} title={article ? t.otherBlog : t.switchTitle}>{article ? t.otherBlog : t.switchLabel}</a>
+      {blogScope && <a class="language-switch" href={switchPath} lang={otherLang} hreflang={otherLang} data-equivalent={equivalent || undefined} aria-label={article ? t.otherBlog : t.switchTitle} title={article ? t.otherBlog : t.switchTitle}>{article ? t.otherBlog : t.switchLabel}</a>}
     </header>
     <main id="main" class:list={['page', `${pageKind}-page`]} tabindex="-1"><slot /></main>
     <script is:inline>
@@ -100,6 +103,7 @@ const schema = article ? {
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') { closeMenu(); toggle.focus(); } });
         document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
         window.matchMedia('(max-width: 768px)').addEventListener('change', closeMenu);
+        header.querySelectorAll('.nav-links a').forEach(link => link.addEventListener('click', closeMenu));
       }
       const languageLink = document.querySelector('.language-switch[data-equivalent]');
       if (languageLink) {

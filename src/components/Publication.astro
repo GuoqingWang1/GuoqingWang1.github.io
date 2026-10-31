@@ -9,7 +9,7 @@ interface Props {
   showStatus?: boolean;
   paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string }
 }
-const { paper, lang = 'zh-CN', compact = false, headingLevel = 2, showStatus = true } = Astro.props;
+const { paper, lang = 'en', compact = false, headingLevel = 2, showStatus = true } = Astro.props;
 const t = copy[lang];
 const Title = headingLevel === 3 ? 'h3' : 'h2';
 ---

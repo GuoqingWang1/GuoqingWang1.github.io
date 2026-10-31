@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { copy } from '../lib/i18n';
-const t = copy['zh-CN'];
+const t = copy.en;
 ---
 <BaseLayout title={t.notFound} noindex>
-  <p>{t.notFound}。</p>
+  <p>{t.notFound}.</p>
   <a href="/" class="text-link">{t.home}</a>
 </BaseLayout>

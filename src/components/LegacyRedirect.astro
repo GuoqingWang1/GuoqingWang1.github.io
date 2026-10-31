@@ -1,0 +1,18 @@
+---
+interface Props { to: string }
+const { to } = Astro.props;
+const canonical = new URL(to, Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, follow" />
+    <title>Page moved — Guoqing Wang</title>
+    <link rel="canonical" href={canonical} />
+    <meta http-equiv="refresh" content={`0;url=${to}`} />
+    <script is:inline define:vars={{ to }}>location.replace(to + location.search + location.hash);</script>
+  </head>
+  <body><a href={to}>Continue to the current page</a></body>
+</html>

@@ -1,7 +1,7 @@
 ---
 import { copy, type Locale } from '../lib/i18n';
 interface Props { lang?: Locale }
-const { lang = 'zh-CN' } = Astro.props;
+const { lang = 'en' } = Astro.props;
 const t = copy[lang];
 ---
 <canvas id="background-particles" class="particle-background" aria-hidden="true"></canvas>

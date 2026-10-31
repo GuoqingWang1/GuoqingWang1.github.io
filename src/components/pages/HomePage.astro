@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Publication from '../Publication.astro';
 import { profile } from '../../data/profile';
 import publications from '../../data/publications.json';
+import news from '../../data/news.json';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
@@ -16,6 +17,15 @@ const selected = publications.selected.map(id => publications.papers.find(paper 
       <p class="affiliation">{t.affiliation}</p>
     </div>
     <div class="intro-bio"><p>{t.interests}</p></div>
+  </section>
+  <section class="news-section" id="news" aria-labelledby="news-heading" tabindex="-1">
+    <div class="section-heading"><h2 id="news-heading">News</h2></div>
+    <ul class="news-list">
+      {news.map(item => <li class="news-item">
+        <time datetime={item.date}>{item.label}</time>
+        <p><a href={item.url} target="_blank" rel="noopener noreferrer">{item.name}</a> {item.text}</p>
+      </li>)}
+    </ul>
   </section>
   <section class="selected-research" aria-labelledby="selected-heading">
     <div class="section-heading">

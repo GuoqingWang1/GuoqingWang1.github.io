@@ -1,9 +1,10 @@
-export const locales = ['zh-CN', 'en'] as const;
+export const locales = ['en', 'zh-CN'] as const;
 export type Locale = typeof locales[number];
 
 export function localizedPath(path: string, lang: Locale) {
-  const unprefixed = path.replace(/^\/en(?=\/|$)/, '') || '/';
-  return lang === 'en' ? `/en${unprefixed}` : unprefixed;
+  const unprefixed = path.replace(/^\/(?:en|zh)(?=\/|$)/, '') || '/';
+  const isBlog = unprefixed.startsWith('/blog/') || unprefixed === '/rss.xml';
+  return isBlog && lang === 'zh-CN' ? `/zh${unprefixed}` : unprefixed;
 }
 
 export const copy = {

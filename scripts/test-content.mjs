@@ -8,8 +8,8 @@ const work = path.resolve(process.env.VERIFY_WORK_DIR || '.verify-work');
 const origin = new URL(process.env.SITE_URL || 'https://guoqingwang1.github.io').origin;
 let temporary;
 const languages = [
-  { lang: 'zh-CN', key: 'zh', home: '/', otherHome: '/en/' },
-  { lang: 'en', key: 'en', home: '/en/', otherHome: '/' },
+  { lang: 'zh-CN', key: 'zh', home: '/zh/', otherHome: '/' },
+  { lang: 'en', key: 'en', home: '/', otherHome: '/zh/' },
 ];
 const fixtures = languages.flatMap(language => [
   { ...language, name: `verification-published-${language.key}`, status: `draft: false\nslug: verification-public-${language.key}`, date: '2000-01-01', marker: `__VERIFICATION_PUBLIC_${language.key.toUpperCase()}__`, published: true },
@@ -20,6 +20,26 @@ const fixtures = languages.flatMap(language => [
   ].map(([kind, status, date]) => ({ ...language, name: `verification-${kind}-${language.key}`, status, date, marker: `__VERIFICATION_PRIVATE_${kind.toUpperCase()}_${language.key.toUpperCase()}__`, published: false })),
 ]);
 const created = [];
+const decode = value => value.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
+function tags(html, name) {
+  return [...html.matchAll(new RegExp(`<${name}\\b([^>]*)>`, 'gi'))].map(match =>
+    Object.fromEntries([...match[1].matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)]
+      .map(([, key, double, single]) => [key.toLowerCase(), decode(double ?? single)])));
+}
+const hasClass = (tag, name) => (tag.class || '').split(/\s+/).includes(name);
+const absolute = value => new URL(value, origin).href;
+function assertEnglishHeader(html, blogPath, route) {
+  const header = html.match(/<header\b[^>]*class="[^"]*\bsite-header\b[^"]*"[^>]*>([\s\S]*?)<\/header>/i);
+  assert(header, `Missing article header: ${route}`);
+  const anchors = [...header[1].matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gi)].map(match => ({
+    ...tags(match[0], 'a')[0], text: decode(match[1].replace(/<[^>]*>/g, '')).trim(),
+  }));
+  const logo = anchors.find(anchor => hasClass(anchor, 'site-name'));
+  assert(logo?.href && absolute(logo.href) === absolute('/'), `Article logo must target the English homepage: ${route}`);
+  for (const [label, destination] of [['About', '/'], ['News', '/#news'], ['Publications', '/publications/'], ['Blog', blogPath]]) {
+    assert(anchors.some(anchor => anchor.text === label && anchor.href && absolute(anchor.href) === absolute(destination)), `Wrong English navigation ${label}: ${route}`);
+  }
+}
 async function allText(dir) {
   let text = '';
   for (const entry of await readdir(dir, { withFileTypes:true })) {
@@ -44,6 +64,10 @@ try {
   const combined=await allText(output);
   for(const {marker,published} of fixtures) if (!published) assert(!combined.includes(marker),`Unpublished content leaked in any language: ${marker}`);
   const sitemap = await readFile(path.join(output, 'sitemap.xml'), 'utf8');
+  const legacyFeed = await readFile(path.join(output, 'en/rss.xml'), 'utf8');
+  assert(legacyFeed.includes('<language>en</language>'), 'Legacy RSS must remain English');
+  const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => decode(match[1]));
+  assert(!sitemapUrls.some(url => new URL(url).pathname.startsWith('/en/')), 'Legacy aliases leaked into sitemap');
   for (const fixture of fixtures.filter(f => f.published)) {
     const { lang, key, home, otherHome, marker } = fixture;
     const slug = `verification-public-${key}`;
@@ -57,22 +81,37 @@ try {
     assert.equal(canonical?.[1], `${origin}${route}`, `Wrong article canonical: ${route}`);
     assert(!/<link\b[^>]*hreflang=/.test(article), `Article advertises a nonexistent translation: ${route}`);
     assert(new RegExp(`<a\\b(?=[^>]*class="[^"]*\\barticle-back\\b)(?=[^>]*href="${home}blog/")[^>]*>`).test(article), `Article back link changes language: ${route}`);
+    assertEnglishHeader(article, `${home}blog/`, route);
+    const switches = tags(article, 'a').filter(anchor => hasClass(anchor, 'language-switch'));
+    assert.equal(switches.length, 1, `Missing article Blog-language switch: ${route}`);
+    assert.equal(absolute(switches[0].href), absolute(`${otherHome}blog/`), `Article switch invents a translation: ${route}`);
+    const rss = tags(article, 'link').filter(link => link.rel === 'alternate' && link.type === 'application/rss+xml');
+    assert.equal(rss.length, 1, `Missing article RSS discovery: ${route}`);
+    assert.equal(absolute(rss[0].href), absolute(`${home}rss.xml`), `Article points to the wrong feed: ${route}`);
     await assert.rejects(access(path.join(output, `${otherHome}blog/${slug}/`.slice(1), 'index.html')), { code: 'ENOENT' }, `Unprovided translated article was generated: ${slug}`);
+    await assert.rejects(access(path.join(output, 'en/blog', slug, 'index.html')), { code: 'ENOENT' }, `Unprovided legacy article was generated: ${slug}`);
     for (const name of ['blog/index.html', 'rss.xml']) {
       const own = await readFile(path.join(output, home.slice(1), name), 'utf8');
       const other = await readFile(path.join(output, otherHome.slice(1), name), 'utf8');
       assert(own.includes(marker), `Published ${lang} fixture missing from ${home}${name}`);
       assert(own.includes(route), `Published route missing from ${home}${name}`);
       assert(!other.includes(marker) && !other.includes(route), `${lang} article leaked into the other-language ${name}`);
+      if (name === 'blog/index.html') assertEnglishHeader(own, `${home}blog/`, `${home}blog/`);
+      if (name === 'rss.xml') assert(own.includes(`<language>${lang}</language>`), `Wrong feed language: ${home}rss.xml`);
+    }
+    assert.equal(legacyFeed.includes(marker), lang === 'en', `Legacy RSS contains the wrong language: ${lang}`);
+    if (lang === 'en') {
+      assert(legacyFeed.includes(route), 'Legacy RSS must link to the canonical English article route');
+      assert(!legacyFeed.includes(`/en/blog/${slug}/`), 'Legacy RSS retains an obsolete article URL');
     }
     assert(sitemap.includes(`${origin}${route}`), `Sitemap omits published ${lang} article`);
   }
   for (const fixture of fixtures.filter(f => !f.published)) {
-    for (const home of ['/', '/en/']) {
+    for (const home of ['/', '/zh/', '/en/']) {
       await assert.rejects(access(path.join(output, `${home}blog/${fixture.name}/`.slice(1), 'index.html')), { code: 'ENOENT' }, `Unpublished route generated: ${fixture.name}`);
     }
   }
-  console.log('Bilingual content boundaries passed: independent Chinese/English articles render only in their own routes, lists and RSS; sitemap includes both; drafts, default-drafts, future posts and invented translations are excluded.');
+  console.log('Content boundaries passed: English navigation throughout; independent English/Chinese Blog routes, lists and feeds; compatible legacy English RSS; no unpublished content, invented translations or obsolete article routes.');
 } finally {
   const cleanup = await Promise.allSettled([
     ...created.map(target => unlink(target)),
