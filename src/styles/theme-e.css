@@ -27,7 +27,7 @@
   min-height: 108px;
   border-bottom: 1px solid var(--line);
 }
-.theme-e .brand { display: inline-flex; align-items: center; gap: 10px; justify-self: start; }
+.theme-e .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 32px; justify-self: start; }
 .theme-e .brand-mark { display: inline-flex; color: var(--accent); }
 .theme-e .brand-mark svg { width: 28px; height: 28px; }
 .theme-e .brand-mark path { stroke: currentColor; }
