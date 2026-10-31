@@ -10,7 +10,7 @@ export const copy = {
   'zh-CN': {
     about: '关于', publications: '论文', blog: '博客',
     description: '研究大语言模型智能体、智能体强化学习与深度研究。',
-    interests: '我的研究方向包括大语言模型、大语言模型智能体、智能体强化学习与深度研究。',
+    interests: '我关注大语言模型与智能体、智能体强化学习，以及深度研究。',
     affiliation: '华东师范大学',
     selectedPublications: '代表论文', allPublications: '更多论文',
     conferencePapers: '会议论文', technicalReports: '技术报告与预印本',
@@ -28,7 +28,7 @@ export const copy = {
   en: {
     about: 'About', publications: 'Publications', blog: 'Blog',
     description: 'Research on LLM agents, agentic reinforcement learning, and deep research.',
-    interests: 'My research interests are large language models, LLM agents, agentic reinforcement learning, and deep research.',
+    interests: 'My research focuses on large language models and agents, agentic reinforcement learning, and deep research.',
     affiliation: 'East China Normal University',
     selectedPublications: 'Selected publications', allPublications: 'More publications',
     conferencePapers: 'Conference papers', technicalReports: 'Technical reports & preprints',
