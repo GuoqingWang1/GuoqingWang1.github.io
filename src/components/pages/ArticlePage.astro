@@ -1,0 +1,26 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { readingMinutes } from '../../lib/posts';
+import { copy, localizedPath } from '../../lib/i18n';
+interface Props { post: CollectionEntry<'blog'> }
+const { post } = Astro.props;
+const lang = post.data.lang;
+const t = copy[lang];
+const { Content, headings } = await render(post);
+const toc = headings.filter(h => h.depth === 2);
+---
+<BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article published={post.data.pubDate} updated={post.data.updatedDate}>
+  <article>
+    <header class="article-header">
+      <h1>{post.data.title}</h1>
+      <div class="article-meta">
+        <time datetime={post.data.pubDate.toISOString().slice(0,10)}>{post.data.pubDate.toISOString().slice(0,10)}</time>
+        <span aria-hidden="true">·</span><span>{lang === 'zh-CN' ? `约 ${readingMinutes(post.body)} 分钟阅读` : `~${readingMinutes(post.body)} min read`}</span>
+      </div>
+    </header>
+    {toc.length > 1 && <nav class="article-toc" aria-label={t.contents}>{toc.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav>}
+    <div class="article-body"><Content /></div>
+  </article>
+  <a class="article-back" href={localizedPath('/blog/', lang)}>← {t.allPosts}</a>
+</BaseLayout>

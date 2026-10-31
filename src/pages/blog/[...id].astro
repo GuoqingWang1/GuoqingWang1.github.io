@@ -1,25 +1,9 @@
 ---
-import { render } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { publishedPosts, readingMinutes } from '../../lib/posts';
+import ArticlePage from '../../components/pages/ArticlePage.astro';
+import { publishedPosts } from '../../lib/posts';
 export async function getStaticPaths() {
-  return (await publishedPosts()).map(post => ({ params: { id: post.id }, props: { post } }));
+  return (await publishedPosts('zh-CN')).map(post => ({ params: { id: post.id }, props: { post } }));
 }
 const { post } = Astro.props;
-const { Content, headings } = await render(post);
-const toc = headings.filter(h => h.depth === 2);
 ---
-<BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article published={post.data.pubDate} updated={post.data.updatedDate}>
-  <article>
-    <header class="article-header">
-      <h1>{post.data.title}</h1>
-      <div class="article-meta">
-        <time datetime={post.data.pubDate.toISOString().slice(0,10)}>{post.data.pubDate.toISOString().slice(0,10)}</time>
-        <span aria-hidden="true">·</span><span>~{readingMinutes(post.body)} min read</span>
-      </div>
-    </header>
-    {toc.length > 1 && <nav class="article-toc" aria-label="Contents">{toc.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav>}
-    <div class="article-body"><Content /></div>
-  </article>
-  <a class="article-back" href="/blog/">← All posts</a>
-</BaseLayout>
+<ArticlePage post={post} />

@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { copy, type Locale } from '../../lib/i18n';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = copy[lang];
+---
+<BaseLayout lang={lang}>
+  <section class="intro" aria-label={t.about}>
+    <h1>{t.greeting}</h1>
+    <p>{t.interests}</p>
+    <p>{t.affiliation}{lang === 'en' ? '.' : '。'}</p>
+  </section>
+</BaseLayout>

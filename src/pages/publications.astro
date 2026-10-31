@@ -1,10 +1,4 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Publication from '../components/Publication.astro';
-import publications from '../data/publications.json';
-const papers = [...publications.papers].sort((a,b) => b.year - a.year);
+import Page from '../components/pages/PublicationsPage.astro';
 ---
-<BaseLayout title="Publications" active="publications" description="Selected publications by Guoqing Wang on language models, agents, evaluation, and retrieval.">
-  <h1 class="page-title">Selected publications</h1>
-  <div class="publication-list">{papers.map(paper => <Publication paper={paper} />)}</div>
-</BaseLayout>
+<Page lang="zh-CN" />

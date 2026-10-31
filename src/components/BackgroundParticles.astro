@@ -1,5 +1,11 @@
+---
+import { copy, type Locale } from '../lib/i18n';
+interface Props { lang?: Locale }
+const { lang = 'zh-CN' } = Astro.props;
+const t = copy[lang];
+---
 <canvas id="background-particles" class="particle-background" aria-hidden="true"></canvas>
-<button id="motion-control" class="motion-control" type="button" aria-label="Pause background motion" title="Pause background motion" aria-pressed="false">
+<button id="motion-control" class="motion-control" type="button" aria-label={t.pauseMotion} title={t.pauseMotion} data-label-pause={t.pauseMotion} data-label-play={t.playMotion} aria-pressed="false">
   <svg class="pause-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" /></svg>
   <svg class="play-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 7 5-7 5Z" /></svg>
 </button>
@@ -21,8 +27,9 @@
       const updateButton = () => {
         control.dataset.ready = 'true';
         control.setAttribute('aria-pressed', String(paused));
-        control.setAttribute('aria-label', paused ? 'Play background motion' : 'Pause background motion');
-        control.title = paused ? 'Play background motion' : 'Pause background motion';
+        const label = (paused ? control.dataset.labelPlay : control.dataset.labelPause)!;
+        control.setAttribute('aria-label', label);
+        control.title = label;
       };
       function paint() {
         context!.clearRect(0, 0, width, height);

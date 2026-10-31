@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Publication from '../Publication.astro';
+import publications from '../../data/publications.json';
+import { copy, type Locale } from '../../lib/i18n';
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = copy[lang];
+const papers = [...publications.papers].sort((a,b) => b.year - a.year);
+---
+<BaseLayout lang={lang} title={t.publications} active="publications" description={t.publicationsDescription}>
+  <h1 class="page-title">{t.publicationsHeading}</h1>
+  <div class="publication-list">{papers.map(paper => <Publication paper={paper} lang={lang} />)}</div>
+</BaseLayout>

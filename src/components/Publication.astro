@@ -1,16 +1,19 @@
 ---
 import github from '../assets/github.svg?raw';
 import { profile } from '../data/profile';
+import { copy, type Locale } from '../lib/i18n';
 interface Props {
+  lang?: Locale;
   paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string }
 }
-const { paper } = Astro.props;
+const { paper, lang = 'zh-CN' } = Astro.props;
+const t = copy[lang];
 ---
 <article class="publication" id={paper.id}>
-  <div class="pub-meta"><span>{paper.venue} {paper.year}</span>{paper.type === 'preprint' && <span class="pub-status">Technical report</span>}</div>
+  <div class="pub-meta"><span lang="en">{paper.venue} {paper.year}</span>{paper.type === 'preprint' && <span class="pub-status">{t.technicalReport}</span>}</div>
   <div class="pub-content">
-    <h2 class="pub-title"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></h2>
-    <p class="pub-authors">{paper.authors.map((author, index) => <>{author === profile.name ? <strong>{author}</strong> : author}{index < paper.authors.length - 1 ? ', ' : ''}</>)}</p>
-    {paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={`Code for ${paper.title}`} title="Code"><span aria-hidden="true" set:html={github} /><span>Code</span></a>}
+    <h2 class="pub-title" lang="en"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></h2>
+    <p class="pub-authors" lang="en">{paper.authors.map((author, index) => <>{author === profile.name ? <strong>{author}</strong> : author}{index < paper.authors.length - 1 ? ', ' : ''}</>)}</p>
+    {paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={lang === 'zh-CN' ? `${paper.title} 的代码` : `Code for ${paper.title}`} title={t.code}><span aria-hidden="true" set:html={github} /><span>{t.code}</span></a>}
   </div>
 </article>

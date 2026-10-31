@@ -10,6 +10,7 @@ export default defineConfig({
   site: url.origin,
   output: 'static',
   trailingSlash: 'always',
+  i18n: { locales: ['zh-CN', 'en'], defaultLocale: 'zh-CN', routing: { prefixDefaultLocale: false } },
   devToolbar: { enabled: false },
   markdown: { shikiConfig: { theme: 'github-light', wrap: true } },
 });

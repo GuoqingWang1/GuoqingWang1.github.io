@@ -1,11 +1,4 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { profile } from '../data/profile';
+import Page from '../components/pages/HomePage.astro';
 ---
-<BaseLayout>
-  <section class="intro" aria-label="About">
-    <h1>hi, i'm guoqing</h1>
-    <p>My research interests are large language models, LLM agents, agentic reinforcement learning, and deep research.</p>
-    <p>{profile.affiliation}.</p>
-  </section>
-</BaseLayout>
+<Page lang="zh-CN" />

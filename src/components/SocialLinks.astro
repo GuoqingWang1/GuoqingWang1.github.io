@@ -2,8 +2,12 @@
 import github from '../assets/github.svg?raw';
 import scholar from '../assets/googlescholar.svg?raw';
 import { profile } from '../data/profile';
+import { copy, type Locale } from '../lib/i18n';
+interface Props { lang?: Locale }
+const { lang = 'zh-CN' } = Astro.props;
+const t = copy[lang];
 ---
-<div class="social-links" aria-label="Academic profiles">
+<div class="social-links" aria-label={t.profiles}>
   <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><span aria-hidden="true" set:html={github} /></a>
-  <a href={profile.scholar} target="_blank" rel="noopener noreferrer" aria-label="Google Scholar" title="Google Scholar"><span aria-hidden="true" set:html={scholar} /></a>
+  <a href={profile.scholar} target="_blank" rel="noopener noreferrer" aria-label={t.scholar} title={t.scholar}><span aria-hidden="true" set:html={scholar} /></a>
 </div>

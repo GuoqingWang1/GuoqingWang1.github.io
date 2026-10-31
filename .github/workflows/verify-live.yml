@@ -38,7 +38,8 @@ jobs:
                   return {'url': url, 'status': response.status, 'final_url': response.url,
                           'bytes': len(body), 'redirects': handler.chain, 'body': body}
           urls = [base, base+'blog/', base+'rss.xml', base+'sitemap.xml', base+'publications/',
-                  'http://'+host+'/', 'https://guoqingwang1.github.io/']
+                  'http://'+host+'/', 'https://guoqingwang1.github.io/',
+                  base+'en/', base+'en/publications/', base+'en/blog/', base+'en/rss.xml']
           if not host.endswith('.github.io'): urls.append('https://www.'+host+'/')
           with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
               results = list(pool.map(fetch, urls))
@@ -47,6 +48,18 @@ jobs:
           assert 'href="'+base+'"' in home
           assert base in results[2]['body'].decode()
           assert base in results[3]['body'].decode()
+          for result in results:
+              path = urlparse(result['url']).path
+              if path not in ('/', '/blog/', '/publications/', '/en/', '/en/blog/', '/en/publications/'): continue
+              body = result['body'].decode()
+              english = path.startswith('/en/')
+              lang = 'en' if english else 'zh-CN'
+              assert '<html lang="'+lang+'"' in body, (path, lang)
+              opposite = (path[3:] or '/') if english else '/en'+path
+              assert 'href="'+opposite+'"' in body, (path, opposite)
+              assert ('切换为中文' if english else 'Switch to English') in body
+              if path in ('/', '/en/'):
+                  assert ('hi, i' if english else '你好，我是') in body
           class Assets(HTMLParser):
               paths = []
               def handle_starttag(self, tag, attrs):
@@ -63,6 +76,6 @@ jobs:
           print(json.dumps(summary, indent=2))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
               f.write('## Live website verified\n\n')
-              f.write('HTTPS certificate validation, homepage identity, Blog, RSS, sitemap, assets and redirects passed.\n\n')
+              f.write('HTTPS, both language versions, language-switch destinations, Publications, Blog, RSS, sitemap, assets and redirects passed.\n\n')
               f.write('```json\n'+json.dumps(summary, indent=2)+'\n```\n')
           PY

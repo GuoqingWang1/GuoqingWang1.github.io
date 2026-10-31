@@ -26,6 +26,7 @@ The `dist/` directory is the complete website. It contains no backend service or
 
 ## Edit
 
+- Bilingual UI copy and path helpers: `src/lib/i18n.ts`
 - Profile and public links: `src/data/profile.ts`
 - Publication records: `src/data/publications.json`
 - Layout and typography: `src/layouts/`, `src/styles/global.css`
@@ -33,9 +34,11 @@ The `dist/` directory is the complete website. It contains no backend service or
 - Finalized articles: `src/content/blog/*.md`
 - Article format: `templates/post.md`
 
+The site defaults to Chinese at `/`, `/publications/`, and `/blog/`. English versions live at `/en/`, `/en/publications/`, and `/en/blog/`. The header language link switches to the corresponding page and preserves a URL fragment. Each version has its own canonical URL, language metadata, and RSS feed. Navigation stays in the selected language without cookies or a client-side redirect.
+
 The site has separate About, Publications, and Blog pages. The header exposes GitHub and Google Scholar as labeled icon links. Spectral is self-hosted. The homepage has a small original 2D particle background with pause and reduced-motion support; there is no 3D sculpture.
 
-Articles have their own `/blog/<slug>/` URL, heading navigation, code highlighting, reading time, and category filters. RSS, sitemap, canonical URLs, and sharing metadata are generated at build time. The blog stays empty until a real article is finalized.
+Chinese articles have a `/blog/<slug>/` URL; English articles use `/en/blog/<slug>/`, selected by the article’s `lang` field. Each language’s list and RSS feed includes only articles written in that language. An article without a translation links to the other language’s blog list, rather than pretending its body has been translated. Articles provide heading navigation, code highlighting, reading time, and category filters. RSS, sitemap, canonical URLs, and sharing metadata are generated at build time. The blog stays empty until a real article is finalized.
 
 Only articles with `draft: false` and a publication date no later than build time appear on the site. The default is draft. **This flag does not make a file private in a public GitHub repository.** Keep private notes and unfinished research outside this repository; copy only publication-approved material here. The template is an example of structure, not an article.
 
