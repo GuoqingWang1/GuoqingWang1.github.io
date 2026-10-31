@@ -1,11 +1,12 @@
 ---
 title: "奖励完全一样，GRPO 的优势为什么不是零？"
-description: "从一次同奖组归一化异常，谈浮点归约、精确判等和容易遗漏的边界测试。"
+description: "相同奖励如何留下非零优势，以及为什么修复时要保留只差一个浮点间隔的奖励差异。"
 category: technical
 topic: model
 lang: zh-CN
 tags: [GRPO, PyTorch, 数值稳定性]
 pubDate: "2026-11-01T05:12:52+08:00"
+updatedDate: "2026-11-01T06:52:26+08:00"
 draft: false
 review: true
 ---
@@ -40,17 +41,23 @@ advantage[i] = (reward[i] - mean(reward)) / (std(reward) + eps)
 
 同一组已存储的数值转成 FP64 后重算，当时得到的标准差和优势都回到了零。这帮助我们确认了这一具体异常的数值来源。
 
-可以用下面的简化计算观察这类行为：
+排查时，先确认参与估计的奖励确实相等，再分别打印均值、标准差和优势。下面是一个仅使用 CPU 张量的简化诊断例子：
 
 ```python
 import torch
 
-r = torch.full((8,), -0.1, dtype=torch.float32)
+r = torch.full((8,), -0.1, dtype=torch.float32, device="cpu")
+assert torch.eq(r, r[0]).all().item()
+
 mean = r.mean()
 std = r.std(correction=1)
 adv = (r - mean) / (std + 1e-6)
 
-print(r[0].item(), mean.item(), std.item(), adv)
+print("stored reward:", r[0].item())
+print("mean:", mean.item())
+print("residual:", (r[0] - mean).item())
+print("std:", std.item())
+print("advantage:", adv.tolist())
 ```
 
 这里显式选择了 `correction=1`，即样本标准差的约定；实际修复应保留原估计器的统计约定。[`torch.std` 文档](https://docs.pytorch.org/docs/stable/generated/torch.std.html)说明了这个参数。表中的数字来自当时的固定环境，不是对这段代码在所有环境下的输出承诺；不同版本、设备或归约路径可能给出不同末位，也可能直接得到零。
@@ -61,7 +68,17 @@ print(r[0].item(), mean.item(), std.item(), adv)
 
 浮点加法不满足结合律，数学上等价的计算路径不保证得到逐位一致的结果。[PyTorch 的数值说明](https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html)也专门提醒了这一点。
 
-在这个例子里，均值比每个元素略小，分子于是留下约 `7.45e-9` 的正残差。与此同时，标准差很小，分母几乎由 `1e-6` 决定。相除以后，残差变成了约 `7.39e-3` 的优势。
+把每个已存储的奖励记作 `c`，将计算均值相对它的误差记作 `delta`，就能直接看到误差如何进入优势：
+
+```text
+computed_mean = c + delta
+reward[i] - computed_mean = -delta
+advantage[i] = -delta / (computed_std + eps)
+```
+
+每个成员的分子都使用同一个均值，因此这次误差给整组带来了相同的偏移。均值略小于 `c`，八个分子便都是正数；这不表示八个输出都比组内其他输出更好。
+
+代入上面的记录，`7.45e-9 / (7.97e-9 + 1e-6)` 约为 `7.39e-3`。分子虽小，分母也很小。这里标准差同样非零，是那次归约的计算结果，不意味着原始奖励之间有差异。
 
 `eps` 可以让零标准差时的除法有定义，却不会让分子自动成为精确的零。增大 `eps` 会缩小这个非零值，也会改变其它低方差组的缩放；这并没有直接落实“精确同奖组应当归零”的要求。
 
@@ -69,9 +86,13 @@ print(r[0].item(), mean.item(), std.item(), adv)
 
 我们的修复保留了原估计器，只对精确同奖组补充归零处理。普通组和近似相等的组继续走原计算路径。
 
-下面的示例只说明单组归一化的处理顺序，其中优势计算不参与反向传播。
+下面把前面的单组示意公式封装为 `raw_group_advantage`，修补函数只决定哪些结果应该归零。示例处理一组已经聚合好的浮点奖励，至少包含两个成员；优势在这里作为固定目标，不参与反向传播。
 
 ```python
+def raw_group_advantage(r):
+    return (r - r.mean()) / (r.std(correction=1) + 1e-6)
+
+
 @torch.no_grad()
 def normalize_one_group(r):
     if r.ndim != 1 or r.numel() < 2:
@@ -81,7 +102,7 @@ def normalize_one_group(r):
     if not torch.isfinite(r).all():
         raise ValueError("non-finite rewards")
 
-    adv = (r - r.mean()) / (r.std(correction=1) + 1e-6)
+    adv = raw_group_advantage(r)
     if not torch.isfinite(adv).all():
         raise FloatingPointError("non-finite advantages")
 
@@ -96,7 +117,7 @@ def normalize_one_group(r):
 
 其次，`torch.eq` 判断精确的数值相等。不能直接换成 `allclose`，也不能把“标准差小于某个阈值”当作同奖组：这些做法可能连真实存在的微小差异一起抹掉。
 
-最后，这次对既有实现的修补保留了输入和原输出的合法性检查，再做归零。这样，输入中的 NaN／Inf，以及导致非有限输出的异常，不会被一个零张量盖住。
+最后，这次对既有实现的修补保留了输入和原输出的合法性检查，再做归零。例如一组正无穷也能通过逐元素判等，但不应成为合法的零优势。先检查有限性，可以避免用一个零张量盖住输入中的 NaN／Inf 或非有限输出。
 
 接入真实训练框架时，还要由上游确认分组完整，并沿用原有的奖励聚合、mask 和 token 广播规则。如果接口同时返回 `advantages` 与 `returns`，两者都要检查；原来共享存储的输出也不能在修复中被无意拆开。
 
@@ -112,8 +133,33 @@ def normalize_one_group(r):
 | 输入或优势含 NaN／Inf | 明确拒绝，不能用归零掩盖问题 |
 | 分组不完整 | 由上游按预期组大小检查并拒绝 |
 
-构造第二类输入时，可以用 [`torch.nextafter`](https://docs.pytorch.org/docs/stable/generated/torch.nextafter.html) 向正无穷方向取得下一个可表示值。随手加一个很小的十进制数，可能在当前 dtype 下又舍入回原值，使“近似相等”测试实际仍是一组完全相同的数。
+构造第二类输入时，可以用 [`torch.nextafter`](https://docs.pytorch.org/docs/2.15/generated/torch.nextafter.html) 向正无穷方向取得下一个可表示值。随手加一个很小的十进制数，可能在当前 dtype 下又舍入回原值，使“近似相等”测试实际仍是一组完全相同的数。
 
-后续实际训练验收中，检查到的同奖组，其 `advantages` 和 `returns` 都恢复为了精确的零。它确认的是这一条数值性质得到了修复；具体任务效果仍需要独立评价。
+接着前面的函数，可以写出两个互补的检查：
+
+```python
+equal = torch.full((8,), -0.1, dtype=torch.float32, device="cpu")
+near = equal.clone()
+near[-1] = torch.nextafter(
+    near[-1], torch.full_like(near[-1], float("inf"))
+)
+
+# 只移动了最后一个值，整组已经不再精确相等。
+assert not torch.eq(near, near[0]).all().item()
+assert torch.allclose(near, equal)  # 默认容差仍会认为两组接近
+
+# 同奖组严格归零；近似同奖组必须保留原计算结果。
+assert torch.equal(normalize_one_group(equal), torch.zeros_like(equal))
+before = near.clone()
+expected = raw_group_advantage(near)
+assert torch.equal(normalize_one_group(near), expected)
+assert torch.equal(near, before)  # 修补不能改写输入奖励
+```
+
+在 `-0.1` 附近，相邻 FP32 数的间隔约为 `7.45e-9`。[`allclose` 的默认容差](https://docs.pytorch.org/docs/2.15/generated/torch.allclose.html)在这里约为 `1.01e-6`，足以容纳这个差异。因此它适合回答“足够接近吗”，却不能替代“实际存储的奖励完全相等吗”。这段检查要求近似同奖组与原函数保持一致，不要求它在所有设备上产生同一组末位数值。
+
+这个单组函数也无法识别“本该有八个成员，却只来了七个”。组大小、成员归属和重复采样检查仍应放在上游。`r.numel() >= 2` 只是示例的统计前提，不是分组完整性的证明。
+
+后续实际训练验收中，检查到的同奖组，其 `advantages` 和 `returns` 都恢复为了精确的零。这里归零的是这一项组内相对优势；KL 等其他损失项或优化器状态仍可能影响参数更新，不能据此要求整个训练步都不更新。
 
 对这类归一化代码，值得在测试里长期保留两个互补的要求：**没有组内差异时，不凭空制造相对优势；确实存在微小差异时，也不随手将它抹掉。**
