@@ -18,6 +18,6 @@ const papers = [...priorityPapers, ...otherPapers];
     <a class="scholar-text-link" href={profile.scholar} target="_blank" rel="noopener noreferrer">Google Scholar<span aria-hidden="true"> ↗</span></a>
   </header>
   <div class="publication-list publications-list">
-    {papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={2} showAuthorship />)}
+    {papers.map(paper => <Publication paper={paper} lang="en" headingLevel={2} showAuthorship />)}
   </div>
 </BaseLayout>

@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import BlogLanguageLinks from '../BlogLanguageLinks.astro';
 import { publishedPosts, postPath } from '../../lib/posts';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
@@ -10,7 +9,7 @@ const posts = await publishedPosts(lang);
 const categories = ['technical', 'reflection'] as const;
 ---
 <BaseLayout lang={lang} title={t.blog} active="blog" description={t.blogDescription}>
-  <header class="page-heading blog-heading"><h1>{t.blog}</h1><BlogLanguageLinks lang={lang} /></header>
+  <header class="page-heading blog-heading"><h1>{t.blog}</h1></header>
   <section aria-label={t.blog}>
     {posts.length > 0 ? <>
       <div class="blog-layout">

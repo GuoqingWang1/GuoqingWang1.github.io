@@ -28,16 +28,32 @@ function tags(html, name) {
 }
 const hasClass = (tag, name) => (tag.class || '').split(/\s+/).includes(name);
 const absolute = value => new URL(value, origin).href;
-function assertEnglishHeader(html, blogPath, route) {
+function assertLocalizedHeader(html, { lang, home, otherHome }, route, { article = false } = {}) {
   const header = html.match(/<header\b[^>]*class="[^"]*\bsite-header\b[^"]*"[^>]*>([\s\S]*?)<\/header>/i);
   assert(header, `Missing article header: ${route}`);
+  assert.equal(tags(header[0], 'header')[0].lang, lang, `Wrong header language: ${route}`);
   const anchors = [...header[1].matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gi)].map(match => ({
-    ...tags(match[0], 'a')[0], text: decode(match[1].replace(/<[^>]*>/g, '')).trim(),
+    ...tags(match[0], 'a')[0], text: decode(match[1].replace(/<[^>]*>/g, '')).trim(), raw: match[0],
   }));
   const logo = anchors.find(anchor => hasClass(anchor, 'site-name'));
-  assert(logo?.href && absolute(logo.href) === absolute('/'), `Article logo must target the English homepage: ${route}`);
-  for (const [label, destination] of [['About', '/'], ['Publications', '/publications/'], ['Blog', blogPath]]) {
-    assert(anchors.some(anchor => anchor.text === label && anchor.href && absolute(anchor.href) === absolute(destination)), `Wrong English navigation ${label}: ${route}`);
+  assert(logo?.href && absolute(logo.href) === absolute(home), `Header logo changes UI language: ${route}`);
+  const labels = lang === 'zh-CN' ? ['关于', '论文', '博客'] : ['About', 'Publications', 'Blog'];
+  const nav = header[1].match(/<nav\b[^>]*id="main-navigation"[^>]*>([\s\S]*?)<\/nav>/i);
+  assert(nav, `Missing localized main navigation: ${route}`);
+  const navLinks = [...nav[1].matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gi)].map(match => [decode(match[1].replace(/<[^>]*>/g, '')).trim(), absolute(tags(match[0], 'a')[0].href)]);
+  assert.deepEqual(navLinks, labels.map((label, index) => [label, absolute([home, `${home}publications/`, `${home}blog/`][index])]), `Wrong localized navigation: ${route}`);
+  const switches = anchors.filter(anchor => hasClass(anchor, 'language-switch'));
+  assert.equal(switches.length, 1, `Language switch must appear exactly once in the header: ${route}`);
+  assert.equal(tags(html, 'a').filter(anchor => hasClass(anchor, 'language-switch')).length, 1, `Duplicate language switch outside the header: ${route}`);
+  assert.equal(absolute(switches[0].href), absolute(`${otherHome}blog/`), `Blog language switch invents a translated article: ${route}`);
+  assert.equal(switches[0].text, lang === 'zh-CN' ? 'EN' : '中文', `Wrong compact switch label: ${route}`);
+  assert.equal(switches[0].lang, lang === 'zh-CN' ? 'en' : 'zh-CN', `Wrong switch text language: ${route}`);
+  assert.equal(switches[0].hreflang, lang === 'zh-CN' ? 'en' : 'zh-CN', `Wrong switch target language: ${route}`);
+  if (article) {
+    const otherBlog = lang === 'zh-CN' ? 'English blog' : '中文博客';
+    assert.equal(switches[0]['aria-label'], otherBlog, `Article switch must name the other-language Blog list: ${route}`);
+    assert.equal(switches[0].title, otherBlog, `Article switch tooltip must name the other-language Blog list: ${route}`);
+    assert(!/\bdata-equivalent\b/.test(switches[0].raw), `Article falsely claims an equivalent translation: ${route}`);
   }
 }
 async function allText(dir) {
@@ -81,10 +97,7 @@ try {
     assert.equal(canonical?.[1], `${origin}${route}`, `Wrong article canonical: ${route}`);
     assert(!/<link\b[^>]*hreflang=/.test(article), `Article advertises a nonexistent translation: ${route}`);
     assert(new RegExp(`<a\\b(?=[^>]*class="[^"]*\\barticle-back\\b)(?=[^>]*href="${home}blog/")[^>]*>`).test(article), `Article back link changes language: ${route}`);
-    assertEnglishHeader(article, `${home}blog/`, route);
-    const switches = tags(article, 'a').filter(anchor => hasClass(anchor, 'language-switch'));
-    assert.equal(switches.length, 1, `Missing article Blog-language switch: ${route}`);
-    assert.equal(absolute(switches[0].href), absolute(`${otherHome}blog/`), `Article switch invents a translation: ${route}`);
+    assertLocalizedHeader(article, fixture, route, { article: true });
     const rss = tags(article, 'link').filter(link => link.rel === 'alternate' && link.type === 'application/rss+xml');
     assert.equal(rss.length, 1, `Missing article RSS discovery: ${route}`);
     assert.equal(absolute(rss[0].href), absolute(`${home}rss.xml`), `Article points to the wrong feed: ${route}`);
@@ -96,7 +109,7 @@ try {
       assert(own.includes(marker), `Published ${lang} fixture missing from ${home}${name}`);
       assert(own.includes(route), `Published route missing from ${home}${name}`);
       assert(!other.includes(marker) && !other.includes(route), `${lang} article leaked into the other-language ${name}`);
-      if (name === 'blog/index.html') assertEnglishHeader(own, `${home}blog/`, `${home}blog/`);
+      if (name === 'blog/index.html') assertLocalizedHeader(own, fixture, `${home}blog/`);
       if (name === 'rss.xml') assert(own.includes(`<language>${lang}</language>`), `Wrong feed language: ${home}rss.xml`);
     }
     assert.equal(legacyFeed.includes(marker), lang === 'en', `Legacy RSS contains the wrong language: ${lang}`);
@@ -111,7 +124,7 @@ try {
       await assert.rejects(access(path.join(output, `${home}blog/${fixture.name}/`.slice(1), 'index.html')), { code: 'ENOENT' }, `Unpublished route generated: ${fixture.name}`);
     }
   }
-  console.log('Content boundaries passed: English navigation throughout; independent English/Chinese Blog routes, lists and feeds; compatible legacy English RSS; no unpublished content, invented translations or obsolete article routes.');
+  console.log('Content boundaries passed: localized navigation and one header switch to the other-language Blog list; independent English/Chinese article routes, lists and feeds; compatible legacy English RSS; no unpublished content, invented translations or obsolete article routes.');
 } finally {
   const cleanup = await Promise.allSettled([
     ...created.map(target => unlink(target)),

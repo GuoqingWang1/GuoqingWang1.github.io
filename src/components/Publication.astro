@@ -17,7 +17,7 @@ const authorship = paper.authorship === 'co-first' ? t.coFirstAuthor : paper.aut
 const venue = paper.type === 'technical-report' ? t.technicalReport : paper.type === 'preprint' ? t.preprint : paper.venue;
 const authors = paper.teamCredit ? paper.authors.filter(author => author !== 'Venus Team') : paper.authors;
 ---
-<article class:list={['publication', { 'publication-compact': compact, compact }]} id={paper.id}>
+<article class:list={['publication', { 'publication-compact': compact, compact }]} id={paper.id} lang={lang}>
     <div class="pub-title-line">
       <Title class="pub-title" lang="en"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></Title>
       <span class="pub-inline-meta">

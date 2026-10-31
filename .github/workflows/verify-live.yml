@@ -20,7 +20,7 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL || 'https://guoqingwang1.github.io' }}
         run: |
           python3 - <<'PY'
-          import concurrent.futures, json, os
+          import concurrent.futures, json, os, re
           from html.parser import HTMLParser
           from urllib.parse import urljoin, urlparse
           from urllib.request import build_opener, HTTPRedirectHandler
@@ -29,6 +29,8 @@ jobs:
           host = urlparse(base).hostname
           with open('src/data/news.json') as source:
               expected_news = json.load(source)
+          with open('src/data/publications.json') as source:
+              expected_publications = json.load(source)
           assert base.startswith('https://')
           class Trace(HTTPRedirectHandler):
               def __init__(self): self.chain = []
@@ -45,43 +47,93 @@ jobs:
           class Page(HTMLParser):
               def __init__(self):
                   super().__init__(); self.lang = None; self.canonical = None
-                  self.switches = []; self.alternates = {}; self.assets = []; self.refresh = None
-                  self.ids = set(); self.news = 0
+                  self.switches = []; self.alternates = []; self.assets = []; self.refresh = None
+                  self.ids = set(); self.news = 0; self.paper_languages = []
+                  self.header_lang = None; self.header_switches = []; self.header_anchors = []; self.navigation = []
+                  self.in_header = False; self.in_navigation = False; self.anchor = None
               def handle_starttag(self, tag, attrs):
                   a = dict(attrs)
                   if a.get('id'): self.ids.add(a['id'])
                   if 'news-item' in a.get('class', '').split(): self.news += 1
+                  if tag == 'article' and 'publication' in a.get('class', '').split(): self.paper_languages.append(a.get('lang'))
                   if tag == 'html': self.lang = a.get('lang')
-                  if tag == 'a' and 'language-switch' in a.get('class', '').split(): self.switches.append(a['href'])
+                  if tag == 'header' and 'site-header' in a.get('class', '').split():
+                      self.in_header = True; self.header_lang = a.get('lang')
+                  if tag == 'nav' and self.in_header and a.get('id') == 'main-navigation': self.in_navigation = True
+                  if tag == 'a':
+                      if 'language-switch' in a.get('class', '').split():
+                          self.switches.append(a)
+                          if self.in_header: self.header_switches.append(a)
+                      if self.in_header: self.anchor = {'attrs': a, 'text': [], 'navigation': self.in_navigation}
                   if tag == 'meta' and a.get('http-equiv', '').lower() == 'refresh': self.refresh = a['content']
                   if tag == 'link':
                       if a.get('rel') == 'canonical': self.canonical = a['href']
-                      if a.get('hreflang'): self.alternates[a['hreflang']] = a['href']
+                      if a.get('rel') == 'alternate' and a.get('hreflang'): self.alternates.append((a['hreflang'], a['href']))
                       if a.get('rel') in ('stylesheet', 'icon'): self.assets.append(a['href'])
-          paths = ['', 'publications/', 'blog/', 'zh/blog/', 'rss.xml', 'zh/rss.xml', 'en/rss.xml', 'sitemap.xml',
+              def handle_data(self, data):
+                  if self.anchor is not None: self.anchor['text'].append(data)
+              def handle_endtag(self, tag):
+                  if tag == 'a' and self.anchor is not None:
+                      anchor = {**self.anchor['attrs'], 'text': ''.join(self.anchor['text']).strip()}
+                      self.header_anchors.append(anchor)
+                      if self.anchor['navigation']: self.navigation.append((anchor['text'], anchor.get('href')))
+                      self.anchor = None
+                  if tag == 'nav': self.in_navigation = False
+                  if tag == 'header': self.in_header = False
+          paths = ['', 'publications/', 'blog/', 'zh/', 'zh/publications/', 'zh/blog/', 'rss.xml', 'zh/rss.xml', 'en/rss.xml', 'sitemap.xml',
                    'en/', 'en/publications/', 'en/blog/']
           with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
               results = list(pool.map(fetch, [base+path for path in paths]))
           by_path = dict(zip(paths, results))
           assets = set()
-          for path, lang in [('', 'en'), ('publications/', 'en'), ('blog/', 'en'), ('zh/blog/', 'zh-CN')]:
-              parser = Page(); parser.feed(by_path[path]['body'].decode())
-              assert parser.lang == lang and parser.canonical == base+path, path
-              if path in ('blog/', 'zh/blog/'):
-                  assert parser.switches == (['/zh/blog/'] if lang == 'en' else ['/blog/'])
-                  assert parser.alternates == {'en':base+'blog/', 'zh-CN':base+'zh/blog/', 'x-default':base+'blog/'}
-              else:
-                  assert not parser.switches and not parser.alternates, path
-              if path == '':
-                  assert parser.news == len(expected_news) and 'news' in parser.ids
-                  assert b'Guoqing Wang' in by_path[path]['body'] and b'D6vayD4AAAAJ' in by_path[path]['body']
-              assets.update(parser.assets)
+          translation_pairs = [('', 'zh/'), ('publications/', 'zh/publications/'), ('blog/', 'zh/blog/')]
+          for en_path, zh_path in translation_pairs:
+              for path, lang, other_path in [(en_path, 'en', zh_path), (zh_path, 'zh-CN', en_path)]:
+                  parser = Page(); parser.feed(by_path[path]['body'].decode())
+                  assert parser.lang == lang and parser.header_lang == lang and parser.canonical == base+path, path
+                  assert len(parser.switches) == 1 and len(parser.header_switches) == 1, path
+                  switch = parser.switches[0]
+                  assert switch['href'] == '/'+other_path, path
+                  other_lang = 'zh-CN' if lang == 'en' else 'en'
+                  assert switch.get('lang') == other_lang and switch.get('hreflang') == other_lang, path
+                  assert switch.get('title') and switch.get('aria-label'), path
+                  switch_anchor = [a for a in parser.header_anchors if 'language-switch' in a.get('class', '').split()]
+                  assert len(switch_anchor) == 1 and switch_anchor[0]['text'] == ('中文' if lang == 'en' else 'EN'), path
+                  assert len(parser.alternates) == 3 and dict(parser.alternates) == {'en':base+en_path, 'zh-CN':base+zh_path, 'x-default':base+en_path}, path
+                  home = '/zh/' if lang == 'zh-CN' else '/'
+                  labels = ['关于', '论文', '博客'] if lang == 'zh-CN' else ['About', 'Publications', 'Blog']
+                  assert parser.navigation == list(zip(labels, [home, home+'publications/', home+'blog/'])), path
+                  brands = [a for a in parser.header_anchors if 'site-name' in a.get('class', '').split()]
+                  assert len(brands) == 1 and brands[0]['href'] == home, path
+                  social = [a for a in parser.header_anchors if a.get('href', '').startswith(('https://', 'http://', 'mailto:'))]
+                  assert len(social) == 3, path
+                  assert any(a.get('href') == 'https://github.com/GuoqingWang1' and a.get('aria-label') == 'GitHub' for a in social), path
+                  assert any('scholar.google.com/citations?' in a.get('href', '') and 'user=D6vayD4AAAAJ' in a['href'] and a.get('aria-label') == ('谷歌学术' if lang == 'zh-CN' else 'Google Scholar') for a in social), path
+                  assert any(a.get('href') == 'mailto:guoqingwang905@gmail.com' and a.get('aria-label') == ('邮箱' if lang == 'zh-CN' else 'Email')+': guoqingwang905@gmail.com' for a in social), path
+                  if en_path == '':
+                      assert parser.news == len(expected_news) and 'news' in parser.ids, path
+                      assert b'Guoqing Wang' in by_path[path]['body'] and b'D6vayD4AAAAJ' in by_path[path]['body']
+                  if en_path in ('', 'publications/'):
+                      count = len(expected_publications['selected'] if en_path == '' else expected_publications['papers'])
+                      assert parser.paper_languages == ['en'] * count, path
+                  assets.update(parser.assets)
+          def paper_markup(body):
+              entries = []
+              for match in re.finditer(r'<article\b([^>]*)>[\s\S]*?</article>', body.decode()):
+                  classes = re.search(r'\bclass="([^"]*)"', match[1])
+                  if classes and 'publication' in classes[1].split(): entries.append(match[0])
+              return entries
+          for en_path, zh_path in translation_pairs[:2]:
+              assert paper_markup(by_path[en_path]['body']) == paper_markup(by_path[zh_path]['body']), 'Publication records/order differ across languages: '+en_path
           for path, target in [('en/', ''), ('en/publications/', 'publications/'), ('en/blog/', 'blog/')]:
               parser = Page(); parser.feed(by_path[path]['body'].decode())
               assert parser.canonical == base+target and parser.refresh == '0;url=/'+target, path
+              assert parser.lang == 'en' and not parser.switches and not parser.alternates, path
           for path, lang in [('rss.xml','en'), ('zh/rss.xml','zh-CN'), ('en/rss.xml','en')]:
               assert ('<language>'+lang+'</language>') in by_path[path]['body'].decode()
           assert b'/en/' not in by_path['sitemap.xml']['body']
+          for en_path, zh_path in translation_pairs:
+              for path in (en_path, zh_path): assert ('<loc>'+base+path+'</loc>').encode() in by_path['sitemap.xml']['body'], path
           for asset in sorted(assets):
               url = urljoin(base, asset); assert urlparse(url).hostname == host
               results.append(fetch(url))
@@ -90,6 +142,6 @@ jobs:
           summary = [{k:v for k,v in result.items() if k != 'body'} for result in results]
           print(json.dumps(summary, indent=2))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
-              f.write('## Live website verified\n\nEnglish main pages, bilingual Blog, News, legacy aliases, RSS, assets and HTTPS passed.\n\n')
+              f.write('## Live website verified\n\nSix bilingual pages, localized header navigation and switches, identical English publication records, News, legacy aliases, RSS, assets and HTTPS passed.\n\n')
               f.write('```json\n'+json.dumps(summary, indent=2)+'\n```\n')
           PY

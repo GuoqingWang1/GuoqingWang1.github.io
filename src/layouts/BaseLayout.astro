@@ -19,10 +19,11 @@ interface Props {
 }
 const { lang = 'en', active = 'about', article = false, published, updated, noindex = false } = Astro.props;
 const t = copy[lang];
-const navigation = copy.en;
+const navigation = t;
 const { title = profile.name, description = t.description } = Astro.props;
-const blogScope = active === 'blog' && !noindex;
-const equivalent = blogScope && !article;
+const equivalent = !noindex && !article;
+const otherLang: Locale = lang === 'en' ? 'zh-CN' : 'en';
+const switchPath = localizedPath(article ? '/blog/' : Astro.url.pathname, otherLang);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = title === profile.name ? title : `${title} — ${profile.name}`;
 const pageKind = noindex ? 'plain' : article ? 'article' : active === 'about' ? 'home' : active;
@@ -52,7 +53,7 @@ const schema = article ? {
     {equivalent && <>
       <link rel="alternate" hreflang="zh-CN" href={new URL(localizedPath(Astro.url.pathname, 'zh-CN'), Astro.site)} />
       <link rel="alternate" hreflang="en" href={new URL(localizedPath(Astro.url.pathname, 'en'), Astro.site)} />
-      <link rel="alternate" hreflang="x-default" href={new URL(localizedPath('/blog/', 'en'), Astro.site)} />
+      <link rel="alternate" hreflang="x-default" href={new URL(localizedPath(Astro.url.pathname, 'en'), Astro.site)} />
     </>}
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="alternate" type="application/rss+xml" title={`${profile.name} — ${t.blog}`} href={localizedPath('/rss.xml', lang)} />
@@ -69,21 +70,27 @@ const schema = article ? {
   <body class="theme-e" data-page={pageKind}>
     <a class="skip-link" href="#main">{t.skip}</a>
     <div class="site-shell">
-      <header class="site-header" lang="en">
+      <header class="site-header" lang={lang}>
         <div class="site-identity">
           <IdentityHeading class="site-identity-name">
-            <a class="site-name brand" href="/" aria-label={`${profile.name}, ${navigation.about}`}>
-              <span class="brand-name">{profile.name}</span>
+            <a class="site-name brand" href={localizedPath('/', lang)} aria-label={`${profile.name}, ${navigation.about}`}>
+              <span class="brand-name" lang="en">{profile.name}</span>
             </a>
           </IdentityHeading>
           <p class="brand-affiliation">{navigation.affiliation}</p>
         </div>
         <nav class="site-nav" id="main-navigation" aria-label={navigation.navigation}>
-          <a href="/" aria-current={active === 'about' ? 'page' : undefined}>{navigation.about}</a>
-          <a href="/publications/" aria-current={active === 'publications' ? 'page' : undefined}>{navigation.publications}</a>
+          <a href={localizedPath('/', lang)} aria-current={active === 'about' ? 'page' : undefined}>{navigation.about}</a>
+          <a href={localizedPath('/publications/', lang)} aria-current={active === 'publications' ? 'page' : undefined}>{navigation.publications}</a>
           <a href={localizedPath('/blog/', lang)} aria-current={active === 'blog' ? 'page' : undefined}>{navigation.blog}</a>
         </nav>
-        <SocialLinks lang="en" />
+        <div class="header-actions">
+          <SocialLinks lang={lang} />
+          {!noindex && <a class="language-switch header-language-switch" href={switchPath}
+            lang={otherLang} hreflang={otherLang} data-equivalent={equivalent || undefined}
+            title={article ? t.otherBlog : t.switchTitle}
+            aria-label={article ? t.otherBlog : t.switchTitle}>{t.switchLabel}</a>}
+        </div>
       </header>
       <main id="main" class:list={['page', `${pageKind}-page`]} tabindex="-1"><slot /></main>
     </div>

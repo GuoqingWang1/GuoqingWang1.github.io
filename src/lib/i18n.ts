@@ -3,16 +3,16 @@ export type Locale = typeof locales[number];
 
 export function localizedPath(path: string, lang: Locale) {
   const unprefixed = path.replace(/^\/(?:en|zh)(?=\/|$)/, '') || '/';
-  const isBlog = unprefixed.startsWith('/blog/') || unprefixed === '/rss.xml';
-  return isBlog && lang === 'zh-CN' ? `/zh${unprefixed}` : unprefixed;
+  return lang === 'zh-CN' ? `/zh${unprefixed}` : unprefixed;
 }
 
 export const copy = {
   'zh-CN': {
     about: '关于', publications: '论文', blog: '博客',
     description: '研究大语言模型智能体、智能体强化学习与深度研究。',
-    interests: '我关注大语言模型与智能体、智能体强化学习，以及深度研究。',
-    affiliation: '华东师范大学',
+    interests: '我的研究聚焦大语言模型与智能体，重点关注智能体强化学习和深度研究。我探索智能体如何获取与利用证据、从交互中学习，并完成复杂任务。我的研究兴趣也包括记忆与评测。',
+    affiliation: '华东师范大学 · PhD',
+    news: '动态', moreNews: '更多动态', lessNews: '收起动态', earlierNews: '较早动态',
     selectedPublications: '代表论文', allPublications: '更多论文',
     selectedWork: '精选工作', paperCollection: '论文资料合集',
     conferencePapers: '会议论文', technicalReports: '技术报告与预印本',
@@ -27,13 +27,14 @@ export const copy = {
     skip: '跳至正文', navigation: '主导航', openNavigation: '打开导航', closeNavigation: '关闭导航',
     profiles: '学术主页与联系', scholar: '谷歌学术', email: '邮箱',
     pauseMotion: '暂停背景动画', playMotion: '播放背景动画',
-    switchLabel: 'English', switchTitle: 'Switch to English', otherBlog: 'English blog',
+    switchLabel: 'EN', switchTitle: 'Switch to English', otherBlog: 'English blog',
   },
   en: {
     about: 'About', publications: 'Publications', blog: 'Blog',
     description: 'Research on LLM agents, agentic reinforcement learning, and deep research.',
     interests: 'My research focuses on large language models and agents, with an emphasis on agentic reinforcement learning and deep research. I study how agents gather and use evidence, learn from interaction, and tackle complex tasks. My broader interests include memory and evaluation.',
     affiliation: 'East China Normal University · PhD',
+    news: 'News', moreNews: 'More news', lessNews: 'Less news', earlierNews: 'Earlier news',
     selectedPublications: 'Selected publications', allPublications: 'More publications',
     selectedWork: 'Selected work', paperCollection: 'Paper collection',
     conferencePapers: 'Conference papers', technicalReports: 'Technical reports & preprints',

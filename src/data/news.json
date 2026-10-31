@@ -7,7 +7,13 @@
     "url": "https://github.com/wanghai673/MemPro",
     "prefix": "My co-first-author paper",
     "highlight": "EMNLP 2026 (Main Conference, Oral)",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "我的共同一作论文",
+      "text": "已被",
+      "highlight": "EMNLP 2026 主会（Oral）",
+      "ending": "录用。"
+    }
   },
   {
     "date": "2026-08-21",
@@ -17,7 +23,13 @@
     "url": "https://github.com/Da1yuqin/EviNoteRAG",
     "prefix": "My co-first-author paper",
     "highlight": "EMNLP 2026 (Main Conference)",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "我的共同一作论文",
+      "text": "已被",
+      "highlight": "EMNLP 2026 主会",
+      "ending": "录用。"
+    }
   },
   {
     "date": "2026-04",
@@ -26,7 +38,12 @@
     "text": "technical report, code, and model checkpoints",
     "url": "https://github.com/inclusionAI/DR-Venus",
     "prefix": "As a core contributor, I helped release the",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "作为核心贡献者，我参与发布了",
+      "text": "的技术报告、代码和模型权重",
+      "ending": "。"
+    }
   },
   {
     "date": "2026-01-26",
@@ -36,7 +53,13 @@
     "url": "https://arxiv.org/abs/2510.14967",
     "prefix": "My first-author paper",
     "highlight": "ICLR 2026",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "我的一作论文",
+      "text": "已被",
+      "highlight": "ICLR 2026",
+      "ending": "录用。"
+    }
   },
   {
     "date": "2025-11-09",
@@ -46,7 +69,13 @@
     "url": "https://arxiv.org/abs/2508.07956",
     "prefix": "My co-first-author paper",
     "highlight": "AAAI 2026",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "我的共同一作论文",
+      "text": "已被",
+      "highlight": "AAAI 2026",
+      "ending": "录用。"
+    }
   },
   {
     "date": "2025-08",
@@ -55,7 +84,12 @@
     "text": "technical report, demo code, and model checkpoint",
     "url": "https://github.com/antgroup/Research-Venus",
     "prefix": "As a core contributor, I helped release the",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "作为核心贡献者，我参与发布了",
+      "text": "的技术报告、演示代码和模型权重",
+      "ending": "。"
+    }
   },
   {
     "date": "2025-04-11",
@@ -65,6 +99,12 @@
     "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723",
     "prefix": "My first-author paper",
     "highlight": "AAAI 2025 proceedings (Oral)",
-    "ending": "."
+    "ending": ".",
+    "zh": {
+      "prefix": "我的一作论文",
+      "text": "已发表于",
+      "highlight": "AAAI 2025 论文集（Oral）",
+      "ending": "。"
+    }
   }
 ]
