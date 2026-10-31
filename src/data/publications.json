@@ -78,7 +78,7 @@
       "venue": "arXiv",
       "year": 2026,
       "url": "https://arxiv.org/abs/2604.19859",
-      "type": "preprint",
+      "type": "technical-report",
       "code": "https://github.com/inclusionAI/DR-Venus",
       "authorship": "core-contributor",
       "publishedDate": "2026-04-21"
@@ -167,8 +167,8 @@
       "venue": "arXiv",
       "year": 2025,
       "url": "https://arxiv.org/abs/2508.12800",
-      "type": "preprint",
-      "authorship": "co-author",
+      "type": "technical-report",
+      "authorship": "core-contributor",
       "publishedDate": "2025-08-18"
     },
     {

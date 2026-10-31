@@ -36,8 +36,9 @@
     "date": "2025-08-18",
     "label": "Aug 2025",
     "name": "Atom-Searcher",
-    "text": "preprint was released on arXiv.",
-    "url": "https://arxiv.org/abs/2508.12800"
+    "text": "technical report was released.",
+    "url": "https://arxiv.org/abs/2508.12800",
+    "role": "core contributor"
   },
   {
     "date": "2025-04-11",

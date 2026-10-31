@@ -145,15 +145,13 @@
 .theme-e .scholar-text-link { font-size: 13px; line-height: 1.6; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--line); }
 .theme-e .scholar-text-link:hover { color: var(--ink); border-color: currentColor; }
 .theme-e .publication-section {
-  display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
-  gap: 54px;
+  display: block;
   border-top: 1px solid var(--line);
-  padding-top: 24px;
+  padding-top: 14px;
 }
-.theme-e .publication-section + .publication-section { margin-top: 48px; }
-.theme-e .publication-section > .section-heading { display: block; border: 0; padding-top: 0; margin: 0; }
-.theme-e .publication-section > .section-heading h2 { font-size: 25px; line-height: 1.35; }
+.theme-e .publication-section + .publication-section { margin-top: 36px; }
+.theme-e .publication-section > .section-heading { display: block; border: 0; padding-top: 0; margin: 0 0 24px; }
+.theme-e .publication-section > .section-heading h2 { font-family: var(--sans); font-size: 13px; line-height: 1.6; font-weight: 400; letter-spacing: 0; color: var(--muted); }
 .theme-e .blog-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 24px; padding-bottom: 32px; }
 .theme-e .language-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 20px; font-size: 13px; line-height: 1.6; }
 .theme-e .language-links a { padding-bottom: 3px; color: var(--muted); border-bottom: 1px solid transparent; }
@@ -168,7 +166,6 @@
   .theme-e .intro { gap: 36px; }
   .theme-e .intro h1 { font-size: clamp(44px, 5vw, 60px); }
   .theme-e .home-sections { grid-template-columns: minmax(0, 228px) minmax(0, 1fr); gap: 44px; }
-  .theme-e .publication-section { grid-template-columns: 165px minmax(0, 1fr); gap: 36px; }
 }
 
 @media (max-width: 760px) {
@@ -201,10 +198,9 @@
   .theme-e .pub-meta { margin-top: 10px; }
   .theme-e .page-heading { padding: 46px 0 32px; }
   .theme-e .page-heading h1 { font-size: 46px; letter-spacing: -.04em; }
-  .theme-e .publication-section { display: block; padding-top: 18px; }
-  .theme-e .publication-section > .section-heading { margin-bottom: 25px; }
-  .theme-e .publication-section > .section-heading h2 { font-size: 24px; }
-  .theme-e .publication-section + .publication-section { margin-top: 40px; }
+  .theme-e .publication-section { padding-top: 14px; }
+  .theme-e .publication-section > .section-heading { margin-bottom: 22px; }
+  .theme-e .publication-section + .publication-section { margin-top: 32px; }
   .theme-e .blog-heading { gap: 22px; }
   .theme-e .empty-state { padding-top: 30px; padding-bottom: 100px; }
 }

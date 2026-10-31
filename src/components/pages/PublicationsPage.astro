@@ -8,7 +8,7 @@ interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const papers = [...publications.papers].sort((a,b) => b.publishedDate.localeCompare(a.publishedDate));
-const isLeadWorkOrReport = (paper: typeof papers[number]) => paper.authorship === 'first' || paper.authorship === 'co-first' || paper.type === 'preprint';
+const isLeadWorkOrReport = (paper: typeof papers[number]) => paper.authorship === 'first' || paper.authorship === 'co-first' || paper.type === 'technical-report';
 const sections = [
   { id: 'lead-work-and-reports', title: t.leadWorkAndReports, papers: papers.filter(isLeadWorkOrReport) },
   { id: 'other-publications', title: t.otherPublications, papers: papers.filter(paper => !isLeadWorkOrReport(paper)) },
