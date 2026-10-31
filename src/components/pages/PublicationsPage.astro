@@ -7,11 +7,11 @@ import { copy, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
-const papers = [...publications.papers].sort((a,b) => b.year - a.year);
-const isLeadAuthor = (paper: typeof papers[number]) => paper.authorship === 'first' || paper.authorship === 'co-first';
+const papers = [...publications.papers].sort((a,b) => b.publishedDate.localeCompare(a.publishedDate));
+const isLeadWorkOrReport = (paper: typeof papers[number]) => paper.authorship === 'first' || paper.authorship === 'co-first' || paper.type === 'preprint';
 const sections = [
-  { id: 'first-author-papers', title: t.firstAndCoFirstAuthor, papers: papers.filter(isLeadAuthor) },
-  { id: 'other-publications', title: t.otherPublications, papers: papers.filter(paper => !isLeadAuthor(paper)) },
+  { id: 'lead-work-and-reports', title: t.leadWorkAndReports, papers: papers.filter(isLeadWorkOrReport) },
+  { id: 'other-publications', title: t.otherPublications, papers: papers.filter(paper => !isLeadWorkOrReport(paper)) },
 ].filter(section => section.papers.length);
 ---
 <BaseLayout lang={lang} title={t.publications} active="publications" description={t.publicationsDescription}>

@@ -1,8 +1,10 @@
 {
   "selected": [
     "igpo",
-    "dmc",
-    "dr-venus"
+    "dr-venus",
+    "webfilter",
+    "evinoterag",
+    "mempro"
   ],
   "papers": [
     {
@@ -23,7 +25,8 @@
       "url": "https://openreview.net/pdf?id=qkWP6phrvZ",
       "type": "conference",
       "code": "https://github.com/GuoqingWang1/IGPO",
-      "authorship": "first"
+      "authorship": "first",
+      "publishedDate": "2026"
     },
     {
       "id": "evinoterag",
@@ -46,12 +49,13 @@
         "Yongliang Shen",
         "Shuai Lu"
       ],
-      "venue": "EMNLP (Main)",
+      "venue": "EMNLP",
       "year": 2026,
       "url": "https://aclanthology.org/2026.emnlp-main.2108/",
       "type": "conference",
       "authorship": "co-first",
-      "code": "https://github.com/Da1yuqin/EviNoteRAG"
+      "code": "https://github.com/Da1yuqin/EviNoteRAG",
+      "publishedDate": "2026-10"
     },
     {
       "id": "dr-venus",
@@ -76,7 +80,8 @@
       "url": "https://arxiv.org/abs/2604.19859",
       "type": "preprint",
       "code": "https://github.com/inclusionAI/DR-Venus",
-      "authorship": "core-contributor"
+      "authorship": "core-contributor",
+      "publishedDate": "2026-04-21"
     },
     {
       "id": "webfilter",
@@ -100,7 +105,9 @@
       "year": 2026,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40299",
       "type": "conference",
-      "authorship": "co-first"
+      "authorship": "co-first",
+      "code": "https://github.com/GuoqingWang1/WebFilter",
+      "publishedDate": "2026-03-14"
     },
     {
       "id": "metaeval",
@@ -116,7 +123,8 @@
       "year": 2026,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40668",
       "type": "conference",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2026-03-14"
     },
     {
       "id": "dmc",
@@ -133,7 +141,8 @@
       "year": 2025,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723",
       "type": "conference",
-      "authorship": "first"
+      "authorship": "first",
+      "publishedDate": "2025-04-11"
     },
     {
       "id": "atom-searcher",
@@ -159,7 +168,8 @@
       "year": 2025,
       "url": "https://arxiv.org/abs/2508.12800",
       "type": "preprint",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2025-08-18"
     },
     {
       "id": "disrec",
@@ -176,7 +186,8 @@
       "year": 2025,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/33424",
       "type": "conference",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2025-04-11"
     },
     {
       "id": "mempro",
@@ -191,13 +202,14 @@
         "Jie Zhou",
         "Liang He"
       ],
-      "venue": "EMNLP (Main)",
+      "venue": "EMNLP",
       "year": 2026,
       "url": "https://aclanthology.org/2026.emnlp-main.1364/",
       "type": "conference",
       "code": "https://github.com/wanghai673/MemPro",
       "authorship": "co-first",
-      "distinction": "Oral"
+      "distinction": "Oral",
+      "publishedDate": "2026-10"
     },
     {
       "id": "consensus-entropy",
@@ -216,7 +228,8 @@
       "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_Consensus_Entropy_Harnessing_Multi-VLM_Agreement_for_Self-Verifying_and_Self-Improving_OCR_CVPR_2026_paper.html",
       "type": "conference",
       "code": "https://github.com/Aslan-yulong/consensus-entropy",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2026-06"
     },
     {
       "id": "rama",
@@ -237,7 +250,8 @@
       "url": "https://doi.org/10.1145/3774905.3796483",
       "type": "conference",
       "code": "https://github.com/kalendsyang/RAMA",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2026-05-28"
     },
     {
       "id": "realfactbench",
@@ -257,7 +271,8 @@
       "year": 2025,
       "url": "https://doi.org/10.1145/3746027.3758307",
       "type": "conference",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2025-10-27"
     },
     {
       "id": "mentor",
@@ -279,7 +294,15 @@
       "year": 2025,
       "url": "https://arxiv.org/pdf/2511.07107v5",
       "type": "preprint",
-      "authorship": "co-author"
+      "authorship": "co-author",
+      "publishedDate": "2025-11-10"
+    }
+  ],
+  "selectedResources": [
+    {
+      "id": "awesome-dllm-papers",
+      "title": "Awesome dLLM Papers",
+      "url": "https://github.com/GuoqingWang1/Awesome-dLLM-Papers"
     }
   ]
 }

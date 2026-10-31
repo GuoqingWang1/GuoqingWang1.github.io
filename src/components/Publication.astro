@@ -6,22 +6,21 @@ interface Props {
   lang?: Locale;
   compact?: boolean;
   headingLevel?: 2 | 3;
-  showStatus?: boolean;
   showAuthorship?: boolean;
   paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string; authorship?: string; distinction?: string }
 }
-const { paper, lang = 'en', compact = false, headingLevel = 2, showStatus = true, showAuthorship = false } = Astro.props;
+const { paper, lang = 'en', compact = false, headingLevel = 2, showAuthorship = false } = Astro.props;
 const t = copy[lang];
 const Title = headingLevel === 3 ? 'h3' : 'h2';
 const authorship = paper.authorship === 'first' ? t.firstAuthor : paper.authorship === 'co-first' ? t.coFirstAuthor : paper.authorship === 'core-contributor' ? t.coreContributor : null;
 ---
 <article class:list={['publication', { 'publication-compact': compact, compact }]} id={paper.id}>
-    <Title class="pub-title" lang="en"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></Title>
-    {!compact && <p class="pub-authors" lang="en">{paper.authors.map((author, index) => <>{author === profile.name ? <strong>{author}</strong> : author}{index < paper.authors.length - 1 ? ', ' : ''}</>)}</p>}
-    <div class="pub-meta">
-      <span class="venue" lang="en">{paper.venue} {paper.year}</span>{showStatus && paper.type === 'preprint' && <span class="pub-type">{t.technicalReport}</span>}
-      {showAuthorship && authorship && <span class="pub-authorship">{authorship}</span>}
-      {!compact && paper.distinction && <span class="pub-distinction">{paper.distinction}</span>}
-      {!compact && paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={lang === 'zh-CN' ? `${paper.title} 的代码` : `Code for ${paper.title}`} title={t.code}><span aria-hidden="true" set:html={github} /><span>{t.code}</span></a>}
+    <div class="pub-title-line">
+      <Title class="pub-title" lang="en"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></Title>
+      <span class="pub-inline-meta">
+        <span class="venue" lang="en">[{paper.venue} {paper.year}{paper.distinction && <> · {paper.distinction}</>}]</span>
+        {paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={lang === 'zh-CN' ? `${paper.title} 的代码` : `Code for ${paper.title}`} title={t.code}><span aria-hidden="true" set:html={github} /><span>{t.code}</span></a>}
+      </span>
     </div>
+    {!compact && <p class="pub-authors" lang="en">{paper.authors.map((author, index) => <>{author === profile.name ? <><strong>{author}</strong>{showAuthorship && authorship && <span class="pub-authorship"> ({authorship})</span>}</> : author}{index < paper.authors.length - 1 ? ', ' : ''}</>)}</p>}
 </article>
