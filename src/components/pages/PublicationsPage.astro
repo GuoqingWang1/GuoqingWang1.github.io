@@ -2,20 +2,25 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Publication from '../Publication.astro';
 import publications from '../../data/publications.json';
+import { profile } from '../../data/profile';
 import { copy, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const papers = [...publications.papers].sort((a,b) => b.year - a.year);
+const isLeadAuthor = (paper: typeof papers[number]) => paper.authorship === 'first' || paper.authorship === 'co-first';
 const sections = [
-  { id: 'conference-papers', title: t.conferencePapers, papers: papers.filter(paper => paper.type === 'conference') },
-  { id: 'technical-reports', title: t.technicalReports, papers: papers.filter(paper => paper.type === 'preprint') },
+  { id: 'first-author-papers', title: t.firstAndCoFirstAuthor, papers: papers.filter(isLeadAuthor) },
+  { id: 'other-publications', title: t.otherPublications, papers: papers.filter(paper => !isLeadAuthor(paper)) },
 ].filter(section => section.papers.length);
 ---
 <BaseLayout lang={lang} title={t.publications} active="publications" description={t.publicationsDescription}>
-  <header class="page-heading"><h1>{t.publications}</h1></header>
+  <header class="page-heading publications-heading">
+    <h1>{t.publications}</h1>
+    <a class="scholar-text-link" href={profile.scholar} target="_blank" rel="noopener noreferrer">Google Scholar<span aria-hidden="true"> ↗</span></a>
+  </header>
   {sections.map(section => <section class="publication-section" aria-labelledby={section.id}>
     <div class="section-heading"><h2 id={section.id}>{section.title}</h2></div>
-    <div class="publication-list">{section.papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={3} showStatus={false} />)}</div>
+    <div class="publication-list">{section.papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={3} showAuthorship />)}</div>
   </section>)}
 </BaseLayout>

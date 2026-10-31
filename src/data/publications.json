@@ -22,7 +22,8 @@
       "year": 2026,
       "url": "https://openreview.net/pdf?id=qkWP6phrvZ",
       "type": "conference",
-      "code": "https://github.com/GuoqingWang1/IGPO"
+      "code": "https://github.com/GuoqingWang1/IGPO",
+      "authorship": "first"
     },
     {
       "id": "evinoterag",
@@ -45,10 +46,12 @@
         "Yongliang Shen",
         "Shuai Lu"
       ],
-      "venue": "EMNLP",
+      "venue": "EMNLP (Main)",
       "year": 2026,
       "url": "https://aclanthology.org/2026.emnlp-main.2108/",
-      "type": "conference"
+      "type": "conference",
+      "authorship": "co-first",
+      "code": "https://github.com/Da1yuqin/EviNoteRAG"
     },
     {
       "id": "dr-venus",
@@ -72,7 +75,8 @@
       "year": 2026,
       "url": "https://arxiv.org/abs/2604.19859",
       "type": "preprint",
-      "code": "https://github.com/inclusionAI/DR-Venus"
+      "code": "https://github.com/inclusionAI/DR-Venus",
+      "authorship": "core-contributor"
     },
     {
       "id": "webfilter",
@@ -95,7 +99,8 @@
       "venue": "AAAI",
       "year": 2026,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40299",
-      "type": "conference"
+      "type": "conference",
+      "authorship": "co-first"
     },
     {
       "id": "metaeval",
@@ -110,7 +115,8 @@
       "venue": "AAAI",
       "year": 2026,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/40668",
-      "type": "conference"
+      "type": "conference",
+      "authorship": "co-author"
     },
     {
       "id": "dmc",
@@ -126,7 +132,8 @@
       "venue": "AAAI",
       "year": 2025,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723",
-      "type": "conference"
+      "type": "conference",
+      "authorship": "first"
     },
     {
       "id": "atom-searcher",
@@ -151,7 +158,8 @@
       "venue": "arXiv",
       "year": 2025,
       "url": "https://arxiv.org/abs/2508.12800",
-      "type": "preprint"
+      "type": "preprint",
+      "authorship": "co-author"
     },
     {
       "id": "disrec",
@@ -167,7 +175,111 @@
       "venue": "AAAI",
       "year": 2025,
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/33424",
-      "type": "conference"
+      "type": "conference",
+      "authorship": "co-author"
+    },
+    {
+      "id": "mempro",
+      "title": "MemPro: Agentic Memory Systems as Evolvable Programs",
+      "authors": [
+        "Qingshan Liu",
+        "Guoqing Wang",
+        "Wen Wu",
+        "Jingqi Huang",
+        "Xinqi Tao",
+        "Dejia Song",
+        "Jie Zhou",
+        "Liang He"
+      ],
+      "venue": "EMNLP (Main)",
+      "year": 2026,
+      "url": "https://aclanthology.org/2026.emnlp-main.1364/",
+      "type": "conference",
+      "code": "https://github.com/wanghai673/MemPro",
+      "authorship": "co-first",
+      "distinction": "Oral"
+    },
+    {
+      "id": "consensus-entropy",
+      "title": "Consensus Entropy: Harnessing Multi-VLM Agreement for Self-Verifying and Self-Improving OCR",
+      "authors": [
+        "Yulong Zhang",
+        "Tianyi Liang",
+        "Erfei Cui",
+        "Guoqing Wang",
+        "Xu Guo",
+        "Chenhui Li",
+        "Gongshen Liu"
+      ],
+      "venue": "CVPR",
+      "year": 2026,
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_Consensus_Entropy_Harnessing_Multi-VLM_Agreement_for_Self-Verifying_and_Self-Improving_OCR_CVPR_2026_paper.html",
+      "type": "conference",
+      "code": "https://github.com/Aslan-yulong/consensus-entropy",
+      "authorship": "co-author"
+    },
+    {
+      "id": "rama",
+      "title": "RAMA: Retrieval-Augmented Multi-Agent Framework for Misinformation Detection in Multimodal Fact-Checking",
+      "authors": [
+        "Shuo Yang",
+        "Zijian Yu",
+        "Zhenzhe Ying",
+        "Yuqin Dai",
+        "Guoqing Wang",
+        "Jun Lan",
+        "Jinfeng Xu",
+        "Jinze Li",
+        "Edith C. H. Ngai"
+      ],
+      "venue": "WWW Companion",
+      "year": 2026,
+      "url": "https://doi.org/10.1145/3774905.3796483",
+      "type": "conference",
+      "code": "https://github.com/kalendsyang/RAMA",
+      "authorship": "co-author"
+    },
+    {
+      "id": "realfactbench",
+      "title": "RealFactBench: A Benchmark for Evaluating Large Language Models in Real-World Fact-Checking",
+      "authors": [
+        "Shuo Yang",
+        "Yuqin Dai",
+        "Guoqing Wang",
+        "Xinran Zheng",
+        "Jinfeng Xu",
+        "Jinze Li",
+        "Zhenzhe Ying",
+        "Weiqiang Wang",
+        "Edith C. H. Ngai"
+      ],
+      "venue": "ACM Multimedia",
+      "year": 2025,
+      "url": "https://doi.org/10.1145/3746027.3758307",
+      "type": "conference",
+      "authorship": "co-author"
+    },
+    {
+      "id": "mentor",
+      "title": "MENTOR: Evolving Safety Knowledge through Metacognition to Mitigate Implicit Domain Risks in LLMs",
+      "authors": [
+        "Liang Shan",
+        "Kaicheng Shen",
+        "Wen Wu",
+        "Zhenyu Ying",
+        "Chaochao Lu",
+        "Yan Teng",
+        "Jingqi Huang",
+        "Qingshan Liu",
+        "Guoqing Wang",
+        "Jie Zhou",
+        "Liang He"
+      ],
+      "venue": "arXiv",
+      "year": 2025,
+      "url": "https://arxiv.org/pdf/2511.07107v5",
+      "type": "preprint",
+      "authorship": "co-author"
     }
   ]
 }
