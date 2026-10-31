@@ -20,7 +20,7 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL || 'https://guoqingwang1.github.io' }}
         run: |
           python3 - <<'PY'
-          import concurrent.futures, json, os, re
+          import concurrent.futures, hashlib, json, os, re, struct
           from html.parser import HTMLParser
           from urllib.parse import urljoin, urlparse
           from urllib.request import build_opener, HTTPRedirectHandler
@@ -31,6 +31,8 @@ jobs:
               expected_news = json.load(source)
           with open('src/data/publications.json') as source:
               expected_publications = json.load(source)
+          with open('src/data/share-images.json') as source:
+              share_images = json.load(source)
           assert base.startswith('https://')
           class Trace(HTTPRedirectHandler):
               def __init__(self): self.chain = []
@@ -43,7 +45,8 @@ jobs:
                   body = response.read()
                   assert response.status == 200 and response.url.startswith(base), (url, response.url)
                   return {'url': url, 'status': response.status, 'final_url': response.url,
-                          'bytes': len(body), 'redirects': handler.chain, 'body': body}
+                          'bytes': len(body), 'content_type': response.headers.get_content_type(),
+                          'redirects': handler.chain, 'body': body}
           class Page(HTMLParser):
               def __init__(self):
                   super().__init__(); self.lang = None; self.canonical = None
@@ -51,6 +54,7 @@ jobs:
                   self.ids = set(); self.news = 0; self.paper_languages = []
                   self.header_lang = None; self.header_switches = []; self.header_anchors = []; self.navigation = []
                   self.in_header = False; self.in_navigation = False; self.anchor = None
+                  self.meta_properties = {}; self.meta_names = {}
               def handle_starttag(self, tag, attrs):
                   a = dict(attrs)
                   if a.get('id'): self.ids.add(a['id'])
@@ -65,7 +69,10 @@ jobs:
                           self.switches.append(a)
                           if self.in_header: self.header_switches.append(a)
                       if self.in_header: self.anchor = {'attrs': a, 'text': [], 'navigation': self.in_navigation}
-                  if tag == 'meta' and a.get('http-equiv', '').lower() == 'refresh': self.refresh = a['content']
+                  if tag == 'meta':
+                      if a.get('http-equiv', '').lower() == 'refresh': self.refresh = a['content']
+                      if a.get('property'): self.meta_properties.setdefault(a['property'], []).append(a.get('content'))
+                      if a.get('name'): self.meta_names.setdefault(a['name'], []).append(a.get('content'))
                   if tag == 'link':
                       if a.get('rel') == 'canonical': self.canonical = a['href']
                       if a.get('rel') == 'alternate' and a.get('hreflang'): self.alternates.append((a['hreflang'], a['href']))
@@ -80,6 +87,42 @@ jobs:
                       self.anchor = None
                   if tag == 'nav': self.in_navigation = False
                   if tag == 'header': self.in_header = False
+          def verify_share_metadata(page, lang, path):
+              image = share_images[lang]
+              image_url = urljoin(base, image['path'])
+              assert image_url.startswith(base) and image_url.startswith('https://'), path
+              expected = {'og:url':page.canonical, 'og:image':image_url, 'og:image:secure_url':image_url,
+                          'og:image:type':image['type'], 'og:image:width':str(image['width']),
+                          'og:image:height':str(image['height']), 'og:image:alt':image['alt']}
+              for key, value in expected.items():
+                  assert page.meta_properties.get(key) == [value], (path, key)
+              for key in ('og:title', 'og:type'):
+                  values = page.meta_properties.get(key, [])
+                  assert len(values) == 1 and values[0], (path, key)
+              for key, value in {'twitter:card':'summary_large_image', 'twitter:image':image_url, 'twitter:image:alt':image['alt']}.items():
+                  assert page.meta_names.get(key) == [value], (path, key)
+          def image_info(body):
+              if len(body) >= 33 and body[:8] == b'\x89PNG\r\n\x1a\n':
+                  assert body[8:16] == b'\x00\x00\x00\rIHDR', 'Invalid PNG IHDR'
+                  return ('image/png', *struct.unpack('>II', body[16:24]))
+              if len(body) >= 4 and body[:2] == b'\xff\xd8':
+                  offset = 2
+                  while offset < len(body):
+                      assert body[offset] == 0xff, 'Invalid JPEG marker'
+                      while offset < len(body) and body[offset] == 0xff: offset += 1
+                      assert offset < len(body), 'Truncated JPEG marker'
+                      marker = body[offset]; offset += 1
+                      if marker in (0xda, 0xd9): break
+                      if marker == 0x01 or 0xd0 <= marker <= 0xd7: continue
+                      assert offset + 2 <= len(body), 'Truncated JPEG segment'
+                      length = int.from_bytes(body[offset:offset+2], 'big')
+                      assert length >= 2 and offset + length <= len(body), 'Invalid JPEG segment length'
+                      if marker in (0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf):
+                          assert length >= 8, 'Truncated JPEG frame header'
+                          height, width = struct.unpack('>HH', body[offset+3:offset+7])
+                          return ('image/jpeg', width, height)
+                      offset += length
+              raise AssertionError('Share image is not a readable PNG/JPEG header')
           paths = ['', 'publications/', 'blog/', 'zh/', 'zh/publications/', 'zh/blog/', 'rss.xml', 'zh/rss.xml', 'en/rss.xml', 'sitemap.xml',
                    'en/', 'en/publications/', 'en/blog/']
           with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -91,6 +134,7 @@ jobs:
               for path, lang, other_path in [(en_path, 'en', zh_path), (zh_path, 'zh-CN', en_path)]:
                   parser = Page(); parser.feed(by_path[path]['body'].decode())
                   assert parser.lang == lang and parser.header_lang == lang and parser.canonical == base+path, path
+                  verify_share_metadata(parser, lang, path)
                   assert len(parser.switches) == 1 and len(parser.header_switches) == 1, path
                   switch = parser.switches[0]
                   assert switch['href'] == '/'+other_path, path
@@ -137,11 +181,29 @@ jobs:
           for asset in sorted(assets):
               url = urljoin(base, asset); assert urlparse(url).hostname == host
               results.append(fetch(url))
+          assert set(share_images) == {'en', 'zh-CN'}
+          image_urls = {}
+          for lang, image in share_images.items():
+              assert re.fullmatch(r'/social/[a-zA-Z0-9][a-zA-Z0-9._-]*\.(?:png|jpe?g)', image['path']), lang
+              assert image['type'] in ('image/png', 'image/jpeg') and (image['width'], image['height']) == (1200, 630), lang
+              image_urls[urljoin(base, image['path'])] = image
+          with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+              image_results = list(pool.map(fetch, image_urls))
+          for result in image_results:
+              image = image_urls[result['url']]
+              assert result['final_url'] == result['url'] and not result['redirects'], result['url']
+              assert result['content_type'] == image['type'], result['url']
+              assert result['bytes'] < 5_000_000, 'Share image exceeds project compatibility target'
+              assert image_info(result['body']) == (image['type'], image['width'], image['height']), result['url']
+              digest = hashlib.sha256(result['body']).hexdigest()
+              assert digest == image['sha256'], 'Live share-image content differs from manifest'
+              result.update({'sha256':digest, 'width':image['width'], 'height':image['height'], 'anonymous_image_access':True})
+              results.append(result)
           results.append(fetch('http://'+host+'/'))
           if not host.endswith('.github.io'): results.append(fetch('https://www.'+host+'/'))
           summary = [{k:v for k,v in result.items() if k != 'body'} for result in results]
           print(json.dumps(summary, indent=2))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
-              f.write('## Live website verified\n\nSix bilingual pages, localized header navigation and switches, identical English publication records, News, legacy aliases, RSS, assets and HTTPS passed.\n\n')
+              f.write('## Live website verified\n\nSix bilingual pages, localized header navigation and switches, identical English publication records, News, legacy aliases, RSS, share metadata and anonymous PNG/JPEG card assets, and HTTPS passed.\n\n')
               f.write('```json\n'+json.dumps(summary, indent=2)+'\n```\n')
           PY

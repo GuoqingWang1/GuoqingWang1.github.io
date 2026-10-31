@@ -1,4 +1,5 @@
 import { readFile, readdir, access } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 
@@ -6,6 +7,7 @@ const root = path.resolve('dist');
 const origin = new URL(process.env.SITE_URL || 'https://guoqingwang1.github.io').origin;
 const news = JSON.parse(await readFile('src/data/news.json', 'utf8'));
 const publications = JSON.parse(await readFile('src/data/publications.json', 'utf8'));
+const shareImages = JSON.parse(await readFile('src/data/share-images.json', 'utf8'));
 const staticPages = [
   ['index.html', '/', 'en'],
   ['publications/index.html', '/publications/', 'en'],
@@ -39,6 +41,71 @@ function paperEntries(html) {
 }
 const hasClass = (tag, name) => (tag.class || '').split(/\s+/).includes(name);
 const absolute = value => new URL(value, origin).href;
+function imageInfo(bytes) {
+  if (bytes.length >= 33 && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
+    assert.equal(bytes.readUInt32BE(8), 13, 'Invalid PNG IHDR length');
+    assert.equal(bytes.toString('ascii', 12, 16), 'IHDR', 'PNG lacks its first IHDR chunk');
+    return { type: 'image/png', width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  }
+  if (bytes.length >= 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    const frameMarkers = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+    let offset = 2;
+    while (offset < bytes.length) {
+      assert.equal(bytes[offset], 0xff, 'Invalid JPEG marker');
+      while (offset < bytes.length && bytes[offset] === 0xff) offset++;
+      assert(offset < bytes.length, 'Truncated JPEG marker');
+      const marker = bytes[offset++];
+      if (marker === 0xda || marker === 0xd9) break;
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+      assert(offset + 2 <= bytes.length, 'Truncated JPEG segment');
+      const length = bytes.readUInt16BE(offset);
+      assert(length >= 2 && offset + length <= bytes.length, 'Invalid JPEG segment length');
+      if (frameMarkers.has(marker)) {
+        assert(length >= 8, 'Truncated JPEG frame header');
+        return { type: 'image/jpeg', width: bytes.readUInt16BE(offset + 5), height: bytes.readUInt16BE(offset + 3) };
+      }
+      offset += length;
+    }
+    throw new Error('JPEG lacks an image frame header');
+  }
+  throw new Error('Share image must contain a PNG or JPEG raster');
+}
+assert.deepEqual(Object.keys(shareImages).sort(), ['en', 'zh-CN'], 'Expected English and Chinese share-image manifests');
+for (const [lang, image] of Object.entries(shareImages)) {
+  assert(/^\/social\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.(?:png|jpe?g)$/.test(image.path), `Invalid share-image path: ${lang}`);
+  assert(['image/png', 'image/jpeg'].includes(image.type), `Unsupported share-image MIME type: ${lang}`);
+  assert(image.type === (/\.png$/.test(image.path) ? 'image/png' : 'image/jpeg'), `Share-image suffix/MIME mismatch: ${lang}`);
+  assert.equal(image.width, 1200, `Share-image width must be 1200: ${lang}`);
+  assert.equal(image.height, 630, `Share-image height must be 630: ${lang}`);
+  assert(typeof image.alt === 'string' && image.alt.trim(), `Missing share-image description: ${lang}`);
+  assert(/^[a-f0-9]{64}$/.test(image.sha256), `Invalid share-image SHA256: ${lang}`);
+  assert(image.path.includes(image.sha256.slice(0, 8)), `Share-image filename must contain its content hash: ${lang}`);
+  const bytes = await readFile(path.join(root, image.path.slice(1)));
+  assert(bytes.length < 5_000_000, `Share image exceeds the project's 5 MB compatibility target: ${lang}`);
+  assert.deepEqual(imageInfo(bytes), { type: image.type, width: image.width, height: image.height }, `Share-image binary metadata disagrees with manifest: ${lang}`);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), image.sha256, `Share-image content hash mismatch: ${lang}`);
+}
+function verifyShareMetadata(metas, lang, canonical, relative) {
+  const value = (attribute, key) => {
+    const matching = metas.filter(meta => meta[attribute] === key);
+    assert.equal(matching.length, 1, `Expected exactly one ${key}: ${relative}`);
+    assert(matching[0].content, `Empty ${key}: ${relative}`);
+    return matching[0].content;
+  };
+  const image = shareImages[lang];
+  const imageUrl = absolute(image.path);
+  assert.equal(new URL(imageUrl).protocol, 'https:', `Share-image URL must use HTTPS: ${relative}`);
+  value('property', 'og:title');
+  value('property', 'og:type');
+  assert.equal(value('property', 'og:url'), canonical, `Open Graph URL differs from canonical: ${relative}`);
+  for (const [key, expected] of Object.entries({
+    'og:image': imageUrl, 'og:image:secure_url': imageUrl, 'og:image:type': image.type,
+    'og:image:width': String(image.width), 'og:image:height': String(image.height), 'og:image:alt': image.alt,
+  })) assert.equal(value('property', key), expected, `Wrong ${key}: ${relative}`);
+  assert.equal(value('name', 'twitter:card'), 'summary_large_image', `Wrong X card type: ${relative}`);
+  assert.equal(value('name', 'twitter:image'), imageUrl, `Wrong X card image: ${relative}`);
+  assert.equal(value('name', 'twitter:image:alt'), image.alt, `Wrong X card image description: ${relative}`);
+}
 async function files(dir) {
   const list = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -89,6 +156,7 @@ for (const filename of output) {
     assert.equal(alternates.length, 0, `Legacy alias must not advertise translations: ${relative}`);
     assert.equal(switches.length, 0, `Legacy alias must not display a language switch: ${relative}`);
   } else {
+    verifyShareMetadata(metas, lang, canonicals[0].href, relative);
     if (known || isArticle) {
       const route = known ? known[1] : `/${relative.slice(0, -'index.html'.length)}`;
       assert.equal(canonicals[0].href, absolute(route), `Canonical must point to itself: ${relative}`);

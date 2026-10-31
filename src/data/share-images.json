@@ -1,0 +1,18 @@
+{
+  "en": {
+    "path": "/social/guoqing-wang-en-b1d65c0405b4.jpg",
+    "width": 1200,
+    "height": 630,
+    "type": "image/jpeg",
+    "alt": "Guoqing Wang — East China Normal University · PhD. Large language models & agents. Agentic reinforcement learning · Deep research.",
+    "sha256": "b1d65c0405b4c5912dad21c78f5a3bca13df6d130fdd8f39b771123b422b5840"
+  },
+  "zh-CN": {
+    "path": "/social/guoqing-wang-zh-aef8dcbd3fbf.jpg",
+    "width": 1200,
+    "height": 630,
+    "type": "image/jpeg",
+    "alt": "Guoqing Wang，华东师范大学 · PhD；大语言模型与智能体、智能体强化学习和深度研究。",
+    "sha256": "aef8dcbd3fbf3427b3ceb15130ffe25ba445ff4d0d75bc71fb3a7dfd57909a6d"
+  }
+}
