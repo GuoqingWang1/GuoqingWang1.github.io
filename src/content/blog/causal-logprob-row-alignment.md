@@ -3,6 +3,7 @@ title: "算 logprob 时，目标 token 应该对哪一行？"
 description: "从 next-token shift 到分块边界，避免把目标 token 配到错误的预测位置。"
 category: technical
 lang: zh-CN
+translationKey: causal-logprob-row-alignment
 topic: model
 tags: [语言模型, LogProb, 张量对齐]
 pubDate: "2026-11-01T06:32:29+08:00"

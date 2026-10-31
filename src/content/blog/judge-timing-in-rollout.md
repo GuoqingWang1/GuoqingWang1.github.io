@@ -3,6 +3,7 @@ title: "reward 计时接近零，Judge 的等待算到哪了？"
 description: "沿实际调用顺序解释评分等待的归属，避免被一个接近零的阶段数字误导。"
 category: technical
 lang: zh-CN
+translationKey: judge-timing-in-rollout
 topic: runtime
 tags: [Agent RL, 性能分析, 可观测性]
 pubDate: "2026-11-01T06:32:29+08:00"

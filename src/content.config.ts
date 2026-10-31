@@ -13,6 +13,7 @@ const blog = defineCollection({
     topic: z.enum(['model', 'training', 'runtime']).optional(),
     order: z.number().int().nonnegative().optional(),
     lang: z.enum(['en', 'zh-CN']).default('zh-CN'),
+    translationKey: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(true),
     review: z.boolean().default(false),

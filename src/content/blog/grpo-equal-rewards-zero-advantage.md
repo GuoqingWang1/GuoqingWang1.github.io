@@ -4,6 +4,7 @@ description: "相同奖励如何留下非零优势，以及为什么修复时要
 category: technical
 topic: model
 lang: zh-CN
+translationKey: grpo-equal-rewards-zero-advantage
 tags: [GRPO, PyTorch, 数值稳定性]
 pubDate: "2026-11-01T05:12:52+08:00"
 updatedDate: "2026-11-01T06:52:26+08:00"

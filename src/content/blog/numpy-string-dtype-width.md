@@ -3,6 +3,7 @@ title: "字符串长度也在 dtype 里：一次合批前的 schema 误判"
 description: "定宽字符串的容量不同，怎样与真正的类型不兼容区分开。"
 category: technical
 lang: zh-CN
+translationKey: numpy-string-dtype-width
 topic: training
 tags: [NumPy, 数据类型, 合批]
 pubDate: "2026-11-01T06:32:29+08:00"

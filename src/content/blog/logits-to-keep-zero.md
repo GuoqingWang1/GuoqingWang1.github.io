@@ -3,6 +3,7 @@ title: "logits_to_keep=0 为什么不是“不算 logits”？"
 description: "用同一组张量比较整数零、最后 k 行、空索引和指定行，再看它们怎样影响输出层与分块评分。"
 category: technical
 lang: zh-CN
+translationKey: logits-to-keep-zero
 topic: model
 tags: [PyTorch, Transformers, Logits]
 pubDate: "2026-11-01T06:32:29+08:00"

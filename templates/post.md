@@ -4,6 +4,7 @@ description: "One sentence describing the article."
 pubDate: 2026-10-31
 category: technical
 lang: zh-CN
+translationKey: article-key
 tags: []
 draft: true
 ---

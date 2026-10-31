@@ -3,6 +3,7 @@ title: "日志只追加，system prompt 却被重写了"
 description: "从 Pi 的一个兼容分支，看追加式历史如何在请求构造时改变开头的 system 字段。"
 category: technical
 lang: zh-CN
+translationKey: system-prompt-after-adapter
 topic: runtime
 tags: [Agent, 上下文, 推理接口]
 pubDate: "2026-11-01T06:32:29+08:00"

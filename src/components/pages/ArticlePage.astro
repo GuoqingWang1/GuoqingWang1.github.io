@@ -1,17 +1,26 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { readingMinutes, formatPostDate } from '../../lib/posts';
-import { copy, localizedPath } from '../../lib/i18n';
+import { readingMinutes, formatPostDate, postKey, postPath, translationsForPost } from '../../lib/posts';
+import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { post: CollectionEntry<'blog'> }
 const { post } = Astro.props;
 const lang = post.data.lang;
 const t = copy[lang];
 const { Content, headings } = await render(post);
 const toc = headings.filter(h => h.depth === 2);
+const versions = await translationsForPost(post);
+const articleTranslations = Object.fromEntries(versions.map(version => [version.data.lang, postPath(version)])) as Partial<Record<Locale, string>>;
+const otherVersion = versions.find(version => version.data.lang !== lang);
+let articleAnchors: Record<string, string> = {};
+if (otherVersion) {
+  const otherHeadings = (await render(otherVersion)).headings.filter(h => h.depth === 2);
+  if (toc.length !== otherHeadings.length) throw new Error(`Translated sections must correspond: ${postKey(post)}`);
+  articleAnchors = Object.fromEntries(toc.map((heading, index) => [heading.slug, otherHeadings[index].slug]));
+}
 ---
-<BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article published={post.data.pubDate} updated={post.data.updatedDate}>
-  <article>
+<BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article articleTranslations={articleTranslations} articleAnchors={articleAnchors} published={post.data.pubDate} updated={post.data.updatedDate}>
+  <article data-translation-key={postKey(post)}>
     <header class="article-header">
       <h1>{post.data.title}</h1>
       <div class="article-meta">

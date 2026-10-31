@@ -3,6 +3,7 @@ title: "测试提前报错了，先看它在哪一层拒绝"
 description: "负例在预期之外的位置被拒绝时，如何区分真实回归与过时的测试夹具。"
 category: technical
 lang: zh-CN
+translationKey: test-rejection-stage
 topic: training
 tags: [测试, 输入校验, padding]
 pubDate: "2026-11-01T06:32:29+08:00"

@@ -4,6 +4,7 @@ description: "恢复检查还需要走到旧缓存与新样本的第一次拼接
 category: technical
 topic: training
 lang: zh-CN
+translationKey: resume-first-mixed-batch
 tags: [checkpoint, schema, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
 order: 4

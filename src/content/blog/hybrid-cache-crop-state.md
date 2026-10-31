@@ -3,6 +3,7 @@ title: "裁短 KV cache，不等于回滚全部模型状态"
 description: "在混合注意力模型中，缓存长度恢复了，不代表卷积与循环状态也回到了原来的前缀。"
 category: technical
 lang: zh-CN
+translationKey: hybrid-cache-crop-state
 topic: model
 tags: [KV Cache, Transformers, 混合注意力]
 pubDate: "2026-11-01T06:32:29+08:00"

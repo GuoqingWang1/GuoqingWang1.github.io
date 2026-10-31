@@ -120,6 +120,7 @@ for (const required of [...staticByFile.keys(), ...aliases.keys(), '404.html', '
 }
 const output = await files(root);
 const renderedPapers = new Map();
+const blogCatalogs = new Map();
 let pages = 0, articleCount = 0;
 for (const filename of output) {
   const relative = path.relative(root, filename);
@@ -139,6 +140,8 @@ for (const filename of output) {
   const known = staticByFile.get(relative);
   const alias = aliases.get(relative);
   const isArticle = /^(?:zh\/)?blog\/[a-z0-9]+(?:-[a-z0-9]+)*\/index\.html$/.test(relative);
+  const articleEnRoute = isArticle ? `/${relative.replace(/^zh\//, '').replace(/index\.html$/, '')}` : undefined;
+  const articlePair = isArticle ? [articleEnRoute, `/zh${articleEnRoute}`] : undefined;
   assert(known || alias || relative === '404.html' || isArticle, `Unrecognized HTML route: ${relative}`);
   if (isArticle) articleCount++;
   const lang = relative.startsWith('zh/') ? 'zh-CN' : 'en';
@@ -191,12 +194,21 @@ for (const filename of output) {
       assert.equal(switches[0].hreflang, otherLang, `Wrong language-switch target language: ${relative}`);
       assert.equal(switches[0].text, lang === 'zh-CN' ? 'EN' : '中文', `Wrong compact language-switch label: ${relative}`);
       if (isArticle) {
-        const otherList = lang === 'zh-CN' ? '/blog/' : '/zh/blog/';
-        const otherBlog = lang === 'zh-CN' ? 'English blog' : '中文博客';
-        assert.equal(absolute(switches[0].href), absolute(otherList), `Article switch invents a translation: ${relative}`);
-        assert.equal(switches[0]['aria-label'], otherBlog, `Article switch must describe the other Blog list: ${relative}`);
-        assert.equal(switches[0].title, otherBlog, `Article switch tooltip must describe the other Blog list: ${relative}`);
-        assert(!/\bdata-equivalent\b/.test(switches[0].raw), `Article must not claim an equivalent translation: ${relative}`);
+        const otherRoute = articlePair[lang === 'en' ? 1 : 0];
+        const label = lang === 'zh-CN' ? 'Read this article in English' : '阅读本文中文版';
+        assert.equal(absolute(switches[0].href), absolute(otherRoute), `Article switch must stay on the same article: ${relative}`);
+        assert.equal(switches[0]['aria-label'], label, `Article switch must describe its translation: ${relative}`);
+        assert.equal(switches[0].title, label, `Article translation tooltip: ${relative}`);
+        assert(/\bdata-article-translation\b/.test(switches[0].raw), `Missing article-translation marker: ${relative}`);
+        const otherHtml = await readFile(path.join(root, otherRoute.slice(1), 'index.html'), 'utf8');
+        const key = articleEnRoute.split('/')[2];
+        assert.equal(tags(html, 'article')[0]['data-translation-key'], key, `Wrong shared article key: ${relative}`);
+        assert.equal(tags(otherHtml, 'article')[0]['data-translation-key'], key, `Counterpart belongs to a different article: ${relative}`);
+        const sourceHeadings = tags(html, 'h2').map(heading => heading.id);
+        const targetHeadings = tags(otherHtml, 'h2').map(heading => heading.id);
+        const anchorMap = JSON.parse(switches[0]['data-anchor-map']);
+        assert.deepEqual(Object.keys(anchorMap), sourceHeadings, `Missing source section mapping: ${relative}`);
+        assert.deepEqual(Object.values(anchorMap), targetHeadings, `Wrong translated section mapping: ${relative}`);
       } else {
         const pair = translationPairs.find(routes => routes.includes(known[1]));
         assert.equal(absolute(switches[0].href), absolute(pair[lang === 'en' ? 1 : 0]), `Switch must target the equivalent page: ${relative}`);
@@ -205,8 +217,8 @@ for (const filename of output) {
     } else {
       assert.equal(switches.length, 0, `404 must not display a language switch: ${relative}`);
     }
-    if (known) {
-      const [enRoute, zhRoute] = translationPairs.find(routes => routes.includes(known[1]));
+    if (known || isArticle) {
+      const [enRoute, zhRoute] = isArticle ? articlePair : translationPairs.find(routes => routes.includes(known[1]));
       assert.equal(alternates.length, 3, `Expected en/zh-CN/x-default page alternates: ${relative}`);
       for (const [locale, route] of [['en', enRoute], ['zh-CN', zhRoute], ['x-default', enRoute]]) {
         const matches = alternates.filter(link => link.hreflang === locale);
@@ -216,6 +228,12 @@ for (const filename of output) {
     } else {
       assert.equal(alternates.length, 0, `Page advertises an unprovided translation: ${relative}`);
     }
+  }
+  if (['blog/index.html', 'zh/blog/index.html'].includes(relative)) {
+    const entries = anchors.filter(anchor => hasClass(anchor, 'blog-entry'));
+    const keys = entries.map(entry => entry['data-post-key']);
+    assert(keys.every(Boolean) && new Set(keys).size === keys.length, `Each article must appear once in the Blog catalog: ${relative}`);
+    blogCatalogs.set(relative, keys);
   }
   if (['index.html', 'zh/index.html'].includes(relative)) {
     const elements = tags(html, '[a-z][a-z0-9:-]*');
@@ -245,6 +263,8 @@ for (const filename of output) {
 for (const [en, zh] of [['index.html', 'zh/index.html'], ['publications/index.html', 'zh/publications/index.html']]) {
   assert.deepEqual(renderedPapers.get(zh), renderedPapers.get(en), `Paper order and complete English records must match across UI languages: ${en}`);
 }
+assert.deepEqual(blogCatalogs.get('blog/index.html'), blogCatalogs.get('zh/blog/index.html'), 'Both Blog languages must show the same articles in the same order');
+assert.equal(articleCount, 2 * blogCatalogs.get('blog/index.html').length, 'Every public article must have one English and one Chinese version');
 const robots = await readFile(path.join(root, 'robots.txt'), 'utf8');
 assert(robots.includes(`${origin}/sitemap.xml`));
 const sitemap = await readFile(path.join(root, 'sitemap.xml'), 'utf8');

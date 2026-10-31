@@ -29,7 +29,7 @@ export const copy = {
     skip: '跳至正文', navigation: '主导航', openNavigation: '打开导航', closeNavigation: '关闭导航',
     profiles: '学术主页与联系', scholar: '谷歌学术', email: '邮箱',
     pauseMotion: '暂停背景动画', playMotion: '播放背景动画',
-    switchLabel: 'EN', switchTitle: 'Switch to English', otherBlog: 'English blog',
+    switchLabel: 'EN', switchTitle: 'Switch to English', switchArticleTitle: 'Read this article in English', otherBlog: 'English blog',
   },
   en: {
     about: 'About', publications: 'Publications', blog: 'Blog',
@@ -53,6 +53,6 @@ export const copy = {
     skip: 'Skip to content', navigation: 'Main navigation', openNavigation: 'Open navigation', closeNavigation: 'Close navigation',
     profiles: 'Profiles and contact', scholar: 'Google Scholar', email: 'Email',
     pauseMotion: 'Pause background motion', playMotion: 'Play background motion',
-    switchLabel: '中文', switchTitle: '切换为中文', otherBlog: '中文博客',
+    switchLabel: '中文', switchTitle: '切换为中文', switchArticleTitle: '阅读本文中文版', otherBlog: '中文博客',
   },
 } as const;

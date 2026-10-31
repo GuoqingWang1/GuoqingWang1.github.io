@@ -4,6 +4,7 @@ description: "构造参数也需要反序列化，准备业务依赖的代码有
 category: technical
 topic: training
 lang: zh-CN
+translationKey: ray-arguments-before-bootstrap
 tags: [Ray, serialization, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
 order: 6

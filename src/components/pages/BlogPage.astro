@@ -1,13 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { publishedPosts, postPath, formatPostDate } from '../../lib/posts';
+import { publishedPosts, postPath, postKey, formatPostDate } from '../../lib/posts';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const posts = await publishedPosts(lang);
-const otherLang: Locale = lang === 'en' ? 'zh-CN' : 'en';
-const otherLanguagePosts = posts.length === 0 ? await publishedPosts(otherLang) : [];
 const topicOf = (post: typeof posts[number]) => post.data.topic ?? post.data.category;
 const categories = [
   { key: 'all', label: t.allTopics },
@@ -29,7 +27,7 @@ const categories = [
           </button>)}
         </div>
         <div class="blog-list" id="post-list">
-          {posts.map(post => <a class={`blog-entry ${post.data.category}`} data-post-category={topicOf(post)} data-description={post.data.description} href={postPath(post)}>
+          {posts.map(post => <a class={`blog-entry ${post.data.category}`} data-post-key={postKey(post)} data-post-category={topicOf(post)} data-description={post.data.description} href={postPath(post)}>
             <time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
             <span class="post-title" lang={post.data.lang}>{post.data.title}</span>
           </a>)}
@@ -40,8 +38,7 @@ const categories = [
       <p class="hover-note" aria-hidden="true"></p>
       <footer class="blog-footer"><a href={localizedPath('/rss.xml', lang)}>{t.rss}</a></footer>
     </> : <div class="blog-empty empty-state">
-      <p>{otherLanguagePosts.length > 0 ? t.otherLanguagePosts : t.noPosts}</p>
-      {otherLanguagePosts.length > 0 && <a class="other-blog-link" href={localizedPath('/blog/', otherLang)} lang={otherLang}>{t.otherBlog}<span aria-hidden="true"> →</span></a>}
+      <p>{t.noPosts}</p>
     </div>}
   </section>
 </BaseLayout>

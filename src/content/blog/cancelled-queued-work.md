@@ -3,10 +3,11 @@ title: "取消请求后，排队的工作为什么还会执行？"
 description: "用带同步点的 A/B 排队例子，区分取消等待、取消尚未开始的工作与运行中工作的结束。"
 category: technical
 lang: zh-CN
+translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T06:52:26+08:00"
+updatedDate: "2026-11-01T07:19:23+08:00"
 order: 3
 draft: false
 review: true
@@ -83,7 +84,7 @@ assert case(True) is False  # 取消尚未开始的工作，B 不执行
 
 退出线程池的 `with` 块会等待工作收尾，所以末尾检查 `b_called` 时，观察窗口已经闭合。两条断言表达的区别是：取消结果通道只让迟到结果被丢弃；取消 B 的工作 Future 才阻止了这次排队调用。示例只覆盖成功函数与取消关系，省略了生产调度器的异常转发和重试逻辑。
 
-回调中的 `done()` 检查也依赖这里的同步顺序：结果通道先被取消，A 才被放行，B 的完成回调随后才能发生。生产系统中，取消和结果写入可能并发；检查状态再写入并不是一个原子动作，需要按结果对象所属的事件循环或锁约定协调。[`set_result()`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.set_result) 对已经结束的 Future 会抛出 `InvalidStateError`，不能把这个受控例子的回调当作通用竞态保护。
+这里的 `done()` 检查之所以安全，是因为两条路径都先取消了结果通道。未取消 B 时，它只能在 A 放行后完成；取消排队中的 B 时，`fb.cancel()` 就可能立即触发[完成回调](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.add_done_callback)，不必等 A 结束。两种情况下，回调看到的结果通道都已经终止。生产系统中，取消和结果写入可能并发；检查状态再写入并不是一个原子动作，需要按结果对象所属的事件循环或锁约定协调。[`set_result()`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.set_result) 对已经结束的 Future 会抛出 `InvalidStateError`，不能把这个受控例子的回调当作通用竞态保护。
 
 ## 取消传递与容量释放要分别接上
 
