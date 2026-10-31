@@ -26,6 +26,7 @@ const equivalent = blogScope && !article;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = title === profile.name ? title : `${title} — ${profile.name}`;
 const pageKind = noindex ? 'plain' : article ? 'article' : active === 'about' ? 'home' : active;
+const IdentityHeading = pageKind === 'home' ? 'h1' : 'div';
 const schema = article ? {
   '@context': 'https://schema.org', '@type': 'BlogPosting', headline: title, description,
   author: { '@type': 'Person', name: profile.name, url: Astro.site },
@@ -69,9 +70,14 @@ const schema = article ? {
     <a class="skip-link" href="#main">{t.skip}</a>
     <div class="site-shell">
       <header class="site-header" lang="en">
-        <a class="site-name brand" href="/" aria-label={`${profile.name}, ${navigation.about}`}>
-          <span class="brand-name">{profile.name}</span>
-        </a>
+        <div class="site-identity">
+          <IdentityHeading class="site-identity-name">
+            <a class="site-name brand" href="/" aria-label={`${profile.name}, ${navigation.about}`}>
+              <span class="brand-name">{profile.name}</span>
+            </a>
+          </IdentityHeading>
+          <p class="brand-affiliation">{navigation.affiliation}</p>
+        </div>
         <nav class="site-nav" id="main-navigation" aria-label={navigation.navigation}>
           <a href="/" aria-current={active === 'about' ? 'page' : undefined}>{navigation.about}</a>
           <a href="/publications/" aria-current={active === 'publications' ? 'page' : undefined}>{navigation.publications}</a>

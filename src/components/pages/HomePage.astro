@@ -2,7 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Publication from '../Publication.astro';
 import NewsItem from '../NewsItem.astro';
-import { profile } from '../../data/profile';
 import publications from '../../data/publications.json';
 import news from '../../data/news.json';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
@@ -15,10 +14,6 @@ const olderNews = news.slice(5);
 ---
 <BaseLayout lang={lang}>
   <section class="intro" id="about" aria-label={t.about} tabindex="-1">
-    <div class="intro-heading">
-      <p class="affiliation">{t.affiliation}</p>
-      <h1 lang="en">{profile.name}</h1>
-    </div>
     <p class="intro-copy">{t.interests}</p>
   </section>
   <div class="home-sections">

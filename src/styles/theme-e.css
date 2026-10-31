@@ -28,6 +28,9 @@
   border-bottom: 1px solid var(--line);
 }
 .theme-e .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 32px; justify-self: start; }
+.theme-e .site-identity { min-width: 0; justify-self: start; }
+.theme-e .site-identity-name { margin: 0; font-size: inherit; font-weight: 400; line-height: 1; }
+.theme-e .brand-affiliation { margin: 2px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
 .theme-e .brand-mark { display: inline-flex; color: var(--accent); }
 .theme-e .brand-mark svg { width: 28px; height: 28px; }
 .theme-e .brand-mark path { stroke: currentColor; }
@@ -48,39 +51,17 @@
 .theme-e .profile-links a:hover { color: var(--accent); }
 .theme-e .page { padding: 0 0 88px; }
 .theme-e .intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 64px;
-  align-items: end;
-  padding: 76px 0 72px;
-}
-.theme-e .affiliation {
-  margin: 0 0 22px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: .105em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.theme-e .intro h1 {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: clamp(48px, 5vw, 68px);
-  font-weight: 400;
-  line-height: 1.04;
-  letter-spacing: -.055em;
-  text-wrap: balance;
+  padding: 56px 0 58px;
 }
 .theme-e .intro-copy {
-  max-width: 400px;
-  margin: 0 0 3px;
-  padding: 0 0 0 24px;
-  border-left: 1px solid var(--line);
+  max-width: 900px;
+  margin: 0;
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 400;
-  line-height: 1.85;
+  line-height: 1.6;
+  letter-spacing: -.015em;
+  text-wrap: pretty;
   color: #101010;
 }
 .theme-e .home-sections { display: grid; grid-template-columns: minmax(0, 258px) minmax(0, 1fr); gap: 72px; }
@@ -160,8 +141,6 @@
   .theme-e .site-shell { width: calc(100% - 64px); }
   .theme-e .site-header { gap: 24px; grid-template-columns: auto 1fr auto; }
   .theme-e .site-nav { gap: 18px; }
-  .theme-e .intro { gap: 36px; }
-  .theme-e .intro h1 { font-size: clamp(44px, 5vw, 60px); }
   .theme-e .home-sections { grid-template-columns: minmax(0, 228px) minmax(0, 1fr); gap: 44px; }
 }
 
@@ -174,10 +153,8 @@
   .theme-e .site-nav { grid-row: 2; grid-column: 1 / -1; justify-content: flex-start; gap: 26px; }
   .theme-e .site-nav a { font-size: 14px; padding: 2px 0 5px; }
   .theme-e .page { padding-bottom: 64px; }
-  .theme-e .intro { display: block; padding: 44px 0 48px; }
-  .theme-e .affiliation { margin-bottom: 18px; font-size: 12px; letter-spacing: .07em; }
-  .theme-e .intro h1 { font-size: 44px; line-height: 1.1; letter-spacing: -.045em; }
-  .theme-e .intro-copy { max-width: 520px; margin: 24px 0 0; padding: 0; border: 0; font-size: 18px; line-height: 1.8; }
+  .theme-e .intro { padding: 36px 0 40px; }
+  .theme-e .intro-copy { font-size: 21px; line-height: 1.65; }
   .theme-e .home-sections { display: block; }
   .theme-e .news-section { display: block; }
   .theme-e .selected-section { margin-top: 44px; }
@@ -206,8 +183,8 @@
   .theme-e .brand { gap: 7px; }
   .theme-e .brand-name { font-size: 16px; }
   .theme-e .profile-links { gap: 10px; }
-  .theme-e .intro h1, .theme-e .page-heading h1 { font-size: 40px; }
-  .theme-e .intro-copy { font-size: 17px; }
+  .theme-e .page-heading h1 { font-size: 40px; }
+  .theme-e .intro-copy { font-size: 20px; }
   .theme-e .section-heading { gap: 10px 16px; }
   .theme-e .section-heading h2 { font-size: 22px; }
   .theme-e .news-item { grid-template-columns: 1fr; gap: 3px; }
