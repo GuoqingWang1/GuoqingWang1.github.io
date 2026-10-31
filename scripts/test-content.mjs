@@ -12,10 +12,10 @@ const languages = [
   { lang: 'en', key: 'en', home: '/', otherHome: '/zh/' },
 ];
 const fixtures = languages.flatMap(language => [
-  { ...language, name: `verification-published-${language.key}`, status: `draft: false\nslug: verification-public-${language.key}`, date: '2000-01-01', marker: `__VERIFICATION_PUBLIC_${language.key.toUpperCase()}__`, published: true },
+  { ...language, name: `verification-published-${language.key}`, status: `draft: false\nreview: true\nslug: verification-public-${language.key}`, date: '2000-01-01T18:30:00Z', marker: `__VERIFICATION_PUBLIC_${language.key.toUpperCase()}__`, published: true },
   ...[
-    ['draft', 'draft: true', '2000-01-01'],
-    ['default', '', '2000-01-01'],
+    ['draft', 'draft: true\nreview: true', '2000-01-01'],
+    ['default', 'review: true', '2000-01-01'],
     ['future', 'draft: false', '2999-01-01'],
   ].map(([kind, status, date]) => ({ ...language, name: `verification-${kind}-${language.key}`, status, date, marker: `__VERIFICATION_PRIVATE_${kind.toUpperCase()}_${language.key.toUpperCase()}__`, published: false })),
 ]);
@@ -93,6 +93,8 @@ try {
     assert(new RegExp(`<html\\b[^>]*lang="${lang}"`).test(article), `Wrong article language: ${route}`);
     assert(article.includes('href="#first-section"'), `Article TOC missing: ${route}`);
     assert(article.includes('<pre'), `Code block was not rendered: ${route}`);
+    assert(article.includes('datetime="2000-01-01T18:30:00.000Z">2000-01-02</time>'), `Article date must use Asia/Shanghai: ${route}`);
+    assert(article.includes(`class="article-review">${lang === 'zh-CN' ? '初稿' : 'Draft'}</span>`), `Public review status missing: ${route}`);
     const canonical = article.match(/<link\b(?=[^>]*rel="canonical")(?=[^>]*href="([^"]+)")[^>]*>/);
     assert.equal(canonical?.[1], `${origin}${route}`, `Wrong article canonical: ${route}`);
     assert(!/<link\b[^>]*hreflang=/.test(article), `Article advertises a nonexistent translation: ${route}`);
@@ -109,7 +111,10 @@ try {
       assert(own.includes(marker), `Published ${lang} fixture missing from ${home}${name}`);
       assert(own.includes(route), `Published route missing from ${home}${name}`);
       assert(!other.includes(marker) && !other.includes(route), `${lang} article leaked into the other-language ${name}`);
-      if (name === 'blog/index.html') assertLocalizedHeader(own, fixture, `${home}blog/`);
+      if (name === 'blog/index.html') {
+        assertLocalizedHeader(own, fixture, `${home}blog/`);
+        assert(own.includes('datetime="2000-01-01T18:30:00.000Z">2000-01-02</time>'), `Blog date must use Asia/Shanghai: ${home}`);
+      }
       if (name === 'rss.xml') assert(own.includes(`<language>${lang}</language>`), `Wrong feed language: ${home}rss.xml`);
     }
     assert.equal(legacyFeed.includes(marker), lang === 'en', `Legacy RSS contains the wrong language: ${lang}`);

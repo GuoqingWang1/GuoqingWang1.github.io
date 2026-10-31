@@ -11,5 +11,5 @@ export default defineConfig({
   output: 'static',
   trailingSlash: 'always',
   devToolbar: { enabled: false },
-  markdown: { shikiConfig: { theme: 'github-light', wrap: true } },
+  markdown: { shikiConfig: { theme: 'github-light', wrap: false } },
 });

@@ -1,7 +1,7 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { readingMinutes } from '../../lib/posts';
+import { readingMinutes, formatPostDate } from '../../lib/posts';
 import { copy, localizedPath } from '../../lib/i18n';
 interface Props { post: CollectionEntry<'blog'> }
 const { post } = Astro.props;
@@ -15,12 +15,21 @@ const toc = headings.filter(h => h.depth === 2);
     <header class="article-header">
       <h1>{post.data.title}</h1>
       <div class="article-meta">
-        <time datetime={post.data.pubDate.toISOString().slice(0,10)}>{post.data.pubDate.toISOString().slice(0,10)}</time>
+        <time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+        {post.data.review && <><span aria-hidden="true">·</span><span class="article-review">{t.draftLabel}</span></>}
         <span aria-hidden="true">·</span><span>{lang === 'zh-CN' ? `约 ${readingMinutes(post.body)} 分钟阅读` : `~${readingMinutes(post.body)} min read`}</span>
       </div>
     </header>
-    {toc.length > 1 && <nav class="article-toc" aria-label={t.contents}>{toc.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav>}
-    <div class="article-body"><Content /></div>
+    {toc.length > 1 && <details class="article-toc-inline">
+      <summary>{t.contents}</summary>
+      <nav class="article-toc" aria-label={t.contents}>{toc.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav>
+    </details>}
+    <div class="article-layout">
+      {toc.length > 1 && <aside class="article-sidebar">
+        <nav class="article-toc" aria-label={t.contents}>{toc.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav>
+      </aside>}
+      <div class="article-body"><Content /></div>
+    </div>
   </article>
   <a class="article-back" href={localizedPath('/blog/', lang)}>← {t.allPosts}</a>
 </BaseLayout>

@@ -1,11 +1,13 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { publishedPosts, postPath } from '../../lib/posts';
+import { publishedPosts, postPath, formatPostDate } from '../../lib/posts';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const posts = await publishedPosts(lang);
+const otherLang: Locale = lang === 'en' ? 'zh-CN' : 'en';
+const otherLanguagePosts = posts.length === 0 ? await publishedPosts(otherLang) : [];
 const categories = ['technical', 'reflection'] as const;
 ---
 <BaseLayout lang={lang} title={t.blog} active="blog" description={t.blogDescription}>
@@ -20,7 +22,7 @@ const categories = ['technical', 'reflection'] as const;
         </div>
         <div class="blog-list" id="post-list">
           {posts.map(post => <a class={`blog-entry ${post.data.category}`} data-post-category={post.data.category} data-description={post.data.description} href={postPath(post)}>
-            <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>{post.data.pubDate.toISOString().slice(0, 10)}</time>
+            <time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
             <span class="post-title" lang={post.data.lang}>{post.data.title}</span>
           </a>)}
           <p class="filter-empty" id="filtered-empty" hidden>{t.noCategoryPosts}</p>
@@ -29,7 +31,10 @@ const categories = ['technical', 'reflection'] as const;
       <div class="branch-overlay" aria-hidden="true"><svg><path d="" /></svg></div>
       <p class="hover-note" aria-hidden="true"></p>
       <footer class="blog-footer"><a href={localizedPath('/rss.xml', lang)}>{t.rss}</a></footer>
-    </> : <p class="blog-empty empty-state">{t.noPosts}</p>}
+    </> : <div class="blog-empty empty-state">
+      <p>{otherLanguagePosts.length > 0 ? t.otherLanguagePosts : t.noPosts}</p>
+      {otherLanguagePosts.length > 0 && <a class="other-blog-link" href={localizedPath('/blog/', otherLang)} lang={otherLang}>{t.otherBlog}<span aria-hidden="true"> →</span></a>}
+    </div>}
   </section>
 </BaseLayout>
 <script>

@@ -1,5 +1,12 @@
 import { getCollection } from 'astro:content';
 import { localizedPath, type Locale } from './i18n';
+const publicationDateFormat = new Intl.DateTimeFormat('en', {
+  timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+});
+export function formatPostDate(date: Date) {
+  const parts = Object.fromEntries(publicationDateFormat.formatToParts(date).map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
 export async function publishedPosts(lang?: Locale) {
   const now = Date.now();
   const posts = await getCollection('blog', ({ data }) => !data.draft && data.pubDate.getTime() <= now);

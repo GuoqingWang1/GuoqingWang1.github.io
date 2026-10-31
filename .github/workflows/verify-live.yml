@@ -20,10 +20,12 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL || 'https://guoqingwang1.github.io' }}
         run: |
           python3 - <<'PY'
-          import concurrent.futures, hashlib, json, os, re, struct
+          import concurrent.futures, datetime, hashlib, json, os, re, struct
+          from email.utils import parsedate_to_datetime
           from html.parser import HTMLParser
-          from urllib.parse import urljoin, urlparse
+          from urllib.parse import unquote, urljoin, urlparse
           from urllib.request import build_opener, HTTPRedirectHandler
+          from xml.etree import ElementTree as ET
 
           base = os.environ['SITE_URL'].rstrip('/') + '/'
           host = urlparse(base).hostname
@@ -55,6 +57,7 @@ jobs:
                   self.header_lang = None; self.header_switches = []; self.header_anchors = []; self.navigation = []
                   self.in_header = False; self.in_navigation = False; self.anchor = None
                   self.meta_properties = {}; self.meta_names = {}
+                  self.links = []; self.rss_links = []
               def handle_starttag(self, tag, attrs):
                   a = dict(attrs)
                   if a.get('id'): self.ids.add(a['id'])
@@ -65,6 +68,7 @@ jobs:
                       self.in_header = True; self.header_lang = a.get('lang')
                   if tag == 'nav' and self.in_header and a.get('id') == 'main-navigation': self.in_navigation = True
                   if tag == 'a':
+                      self.links.append(a)
                       if 'language-switch' in a.get('class', '').split():
                           self.switches.append(a)
                           if self.in_header: self.header_switches.append(a)
@@ -77,6 +81,7 @@ jobs:
                       if a.get('rel') == 'canonical': self.canonical = a['href']
                       if a.get('rel') == 'alternate' and a.get('hreflang'): self.alternates.append((a['hreflang'], a['href']))
                       if a.get('rel') in ('stylesheet', 'icon'): self.assets.append(a['href'])
+                      if a.get('rel') == 'alternate' and a.get('type') == 'application/rss+xml': self.rss_links.append(a['href'])
               def handle_data(self, data):
                   if self.anchor is not None: self.anchor['text'].append(data)
               def handle_endtag(self, tag):
@@ -128,6 +133,18 @@ jobs:
           with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
               results = list(pool.map(fetch, [base+path for path in paths]))
           by_path = dict(zip(paths, results))
+          sitemap_urls = [node.text for node in ET.fromstring(by_path['sitemap.xml']['body']).findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
+          assert all(url and url.startswith(base) for url in sitemap_urls), 'Sitemap contains a non-site URL'
+          article_paths = [url[len(base):] for url in sitemap_urls if re.fullmatch(r'(?:zh/)?blog/[a-z0-9]+(?:-[a-z0-9]+)*/', url[len(base):])]
+          assert len(article_paths) == len(set(article_paths)), 'Duplicate sitemap article URLs'
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+              article_results = list(pool.map(fetch, [base+path for path in article_paths]))
+          by_path.update(zip(article_paths, article_results))
+          results.extend(article_results)
+          feed_items = {}
+          for path in ('rss.xml', 'zh/rss.xml', 'en/rss.xml'):
+              feed_items[path] = ET.fromstring(by_path[path]['body']).findall('./channel/item')
+          feed_links = {path:[item.findtext('link') for item in items] for path,items in feed_items.items()}
           assets = set()
           translation_pairs = [('', 'zh/'), ('publications/', 'zh/publications/'), ('blog/', 'zh/blog/')]
           for en_path, zh_path in translation_pairs:
@@ -161,6 +178,53 @@ jobs:
                       count = len(expected_publications['selected'] if en_path == '' else expected_publications['papers'])
                       assert parser.paper_languages == ['en'] * count, path
                   assets.update(parser.assets)
+          for path in article_paths:
+              result = by_path[path]
+              assert result['final_url'] == base+path and not result['redirects'], path
+              parser = Page(); parser.feed(result['body'].decode())
+              lang = 'zh-CN' if path.startswith('zh/') else 'en'
+              home = '/zh/' if lang == 'zh-CN' else '/'
+              other_list = '/blog/' if lang == 'zh-CN' else '/zh/blog/'
+              other_lang = 'en' if lang == 'zh-CN' else 'zh-CN'
+              other_label = 'English blog' if lang == 'zh-CN' else '中文博客'
+              assert parser.lang == lang and parser.header_lang == lang and parser.canonical == base+path, path
+              verify_share_metadata(parser, lang, path)
+              assert parser.meta_properties.get('og:type') == ['article'], path
+              assert not parser.alternates, 'Article advertises an unprovided translation: '+path
+              assert len(parser.switches) == 1 and len(parser.header_switches) == 1, path
+              switch = parser.switches[0]
+              assert switch.get('href') == other_list and not urlparse(switch['href']).fragment, path
+              assert switch.get('lang') == other_lang and switch.get('hreflang') == other_lang, path
+              assert switch.get('title') == other_label and switch.get('aria-label') == other_label, path
+              assert 'data-equivalent' not in switch, 'Article switch falsely claims an equivalent translation: '+path
+              switch_anchor = [a for a in parser.header_anchors if 'language-switch' in a.get('class', '').split()]
+              assert len(switch_anchor) == 1 and switch_anchor[0]['text'] == ('EN' if lang == 'zh-CN' else '中文'), path
+              labels = ['关于', '论文', '博客'] if lang == 'zh-CN' else ['About', 'Publications', 'Blog']
+              assert parser.navigation == list(zip(labels, [home, home+'publications/', home+'blog/'])), path
+              brands = [a for a in parser.header_anchors if 'site-name' in a.get('class', '').split()]
+              assert len(brands) == 1 and brands[0]['href'] == home, path
+              assert parser.rss_links == [home+'rss.xml'], path
+              back = [a for a in parser.links if 'article-back' in a.get('class', '').split()]
+              assert len(back) == 1 and back[0].get('href') == home+'blog/', path
+              for anchor in parser.links:
+                  href = anchor.get('href', '')
+                  if href.startswith('#') and len(href) > 1: assert unquote(href[1:]) in parser.ids, (path, href)
+              feed_path = 'zh/rss.xml' if lang == 'zh-CN' else 'rss.xml'
+              matching_items = [item for item in feed_items[feed_path] if item.findtext('link') == base+path]
+              assert len(matching_items) == 1, 'Article missing or duplicated in own-language RSS: '+path
+              published = parser.meta_properties.get('article:published_time', [])
+              assert len(published) == 1 and published[0], path
+              og_date = datetime.datetime.fromisoformat(published[0].replace('Z', '+00:00'))
+              rss_date = parsedate_to_datetime(matching_items[0].findtext('pubDate'))
+              assert og_date.tzinfo is not None and rss_date.tzinfo is not None and int(og_date.timestamp()) == int(rss_date.timestamp()), 'Article/RSS publication instant mismatch: '+path
+              assets.update(parser.assets)
+          for lang, list_path, feed_path in [('en','blog/','rss.xml'), ('zh-CN','zh/blog/','zh/rss.xml')]:
+              expected = {base+path for path in article_paths if path.startswith('zh/') == (lang == 'zh-CN')}
+              parser = Page(); parser.feed(by_path[list_path]['body'].decode())
+              listed = [urljoin(base, a['href']) for a in parser.links if 'blog-entry' in a.get('class', '').split()]
+              assert len(listed) == len(set(listed)) and set(listed) == expected, 'Blog list/sitemap language mismatch: '+list_path
+              assert len(feed_links[feed_path]) == len(set(feed_links[feed_path])) and set(feed_links[feed_path]) == expected, 'RSS/sitemap language mismatch: '+feed_path
+          assert feed_links['en/rss.xml'] == feed_links['rss.xml'], 'Legacy English RSS entries differ'
           def paper_markup(body):
               entries = []
               for match in re.finditer(r'<article\b([^>]*)>[\s\S]*?</article>', body.decode()):
@@ -204,6 +268,6 @@ jobs:
           summary = [{k:v for k,v in result.items() if k != 'body'} for result in results]
           print(json.dumps(summary, indent=2))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
-              f.write('## Live website verified\n\nSix bilingual pages, localized header navigation and switches, identical English publication records, News, legacy aliases, RSS, share metadata and anonymous PNG/JPEG card assets, and HTTPS passed.\n\n')
+              f.write('## Live website verified\n\nSix bilingual pages, '+str(len(article_paths))+' published articles, localized header navigation and switches, identical English publication records, News, legacy aliases, language-isolated Blog/RSS links, share metadata and anonymous PNG/JPEG card assets, and HTTPS passed.\n\n')
               f.write('```json\n'+json.dumps(summary, indent=2)+'\n```\n')
           PY

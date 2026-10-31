@@ -13,6 +13,7 @@ const blog = defineCollection({
     lang: z.enum(['en', 'zh-CN']).default('zh-CN'),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(true),
+    review: z.boolean().default(false),
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
   }),
 });
