@@ -1,6 +1,7 @@
 ---
 import github from '../assets/github.svg?raw';
 import scholar from '../assets/googlescholar.svg?raw';
+import email from '../assets/email.svg?raw';
 import { profile } from '../data/profile';
 import { copy, type Locale } from '../lib/i18n';
 interface Props { lang?: Locale }
@@ -10,4 +11,5 @@ const t = copy[lang];
 <div class="social-links profile-links" aria-label={t.profiles}>
   <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><span aria-hidden="true" set:html={github} /></a>
   <a href={profile.scholar} target="_blank" rel="noopener noreferrer" aria-label={t.scholar} title={t.scholar}><span aria-hidden="true" set:html={scholar} /></a>
+  <a href={`mailto:${profile.email}`} aria-label={`${t.email}: ${profile.email}`} title={`${t.email}: ${profile.email}`}><span aria-hidden="true" set:html={email} /></a>
 </div>
