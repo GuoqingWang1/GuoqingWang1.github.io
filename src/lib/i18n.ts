@@ -32,8 +32,8 @@ export const copy = {
   en: {
     about: 'About', publications: 'Publications', blog: 'Blog',
     description: 'Research on LLM agents, agentic reinforcement learning, and deep research.',
-    interests: 'My research focuses on large language models and agents, agentic reinforcement learning, and deep research.',
-    affiliation: 'East China Normal University',
+    interests: 'My research focuses on large language models and agents, with an emphasis on agentic reinforcement learning and deep research. I study how agents gather and use evidence, learn from interaction, and tackle complex tasks. My broader interests include memory, metacognition, and evaluation.',
+    affiliation: 'East China Normal University · PhD',
     selectedPublications: 'Selected publications', allPublications: 'More publications',
     selectedWork: 'Selected work', paperCollection: 'Paper collection',
     conferencePapers: 'Conference papers', technicalReports: 'Technical reports & preprints',
