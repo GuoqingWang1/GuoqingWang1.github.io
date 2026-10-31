@@ -20,12 +20,12 @@
     "ending": "."
   },
   {
-    "date": "2026-04-22",
+    "date": "2026-04",
     "label": "2026.04",
     "name": "DR-Venus",
-    "text": "code and model checkpoints",
+    "text": "technical report, code, and model checkpoints",
     "url": "https://github.com/inclusionAI/DR-Venus",
-    "prefix": "As a core contributor, I am sharing the",
+    "prefix": "As a core contributor, I helped release the",
     "ending": "."
   },
   {
@@ -39,12 +39,22 @@
     "ending": "."
   },
   {
-    "date": "2025-08-18",
+    "date": "2025-11-09",
+    "label": "2025.11",
+    "name": "Careful Queries (WebFilter)",
+    "text": "was accepted to",
+    "url": "https://arxiv.org/abs/2508.07956",
+    "prefix": "My co-first-author paper",
+    "highlight": "AAAI 2026",
+    "ending": "."
+  },
+  {
+    "date": "2025-08",
     "label": "2025.08",
     "name": "Atom-Searcher",
-    "text": "technical report",
-    "url": "https://arxiv.org/abs/2508.12800",
-    "prefix": "As a core contributor, I am sharing our",
+    "text": "technical report, demo code, and model checkpoint",
+    "url": "https://github.com/antgroup/Research-Venus",
+    "prefix": "As a core contributor, I helped release the",
     "ending": "."
   },
   {
