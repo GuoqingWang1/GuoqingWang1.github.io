@@ -75,7 +75,6 @@ const schema = article ? {
         </a>
         <nav class="site-nav" id="main-navigation" aria-label={navigation.navigation}>
           <a href="/" aria-current={active === 'about' ? 'page' : undefined}>{navigation.about}</a>
-          <a href="/#news">News</a>
           <a href="/publications/" aria-current={active === 'publications' ? 'page' : undefined}>{navigation.publications}</a>
           <a href={localizedPath('/blog/', lang)} aria-current={active === 'blog' ? 'page' : undefined}>{navigation.blog}</a>
         </nav>

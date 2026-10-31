@@ -1,10 +1,20 @@
 [
   {
-    "date": "2026-10",
-    "label": "Oct 2026",
+    "date": "2026-08-21",
+    "label": "Aug 2026",
+    "name": "MemPro",
+    "role": "co-first author",
+    "text": "was accepted to EMNLP 2026 (Main Conference).",
+    "distinction": "Oral presentation.",
+    "url": "https://github.com/wanghai673/MemPro"
+  },
+  {
+    "date": "2026-08-21",
+    "label": "Aug 2026",
     "name": "EviNoteRAG",
-    "text": "appears in the EMNLP 2026 proceedings.",
-    "url": "https://aclanthology.org/2026.emnlp-main.2108/"
+    "role": "co-first author",
+    "text": "was accepted to EMNLP 2026 (Main Conference).",
+    "url": "https://github.com/Da1yuqin/EviNoteRAG"
   },
   {
     "date": "2026-04-22",
@@ -17,7 +27,23 @@
     "date": "2026-01-26",
     "label": "Jan 2026",
     "name": "IGPO",
+    "role": "co-first author",
     "text": "was accepted to ICLR 2026.",
     "url": "https://github.com/GuoqingWang1/IGPO"
+  },
+  {
+    "date": "2025-08-18",
+    "label": "Aug 2025",
+    "name": "Atom-Searcher",
+    "text": "preprint was released on arXiv.",
+    "url": "https://arxiv.org/abs/2508.12800"
+  },
+  {
+    "date": "2025-04-11",
+    "label": "Apr 2025",
+    "name": "DMC",
+    "role": "first author",
+    "text": "was published in the AAAI 2025 proceedings.",
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723"
   }
 ]

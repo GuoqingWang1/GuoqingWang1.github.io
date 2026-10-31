@@ -1,0 +1,14 @@
+---
+interface Props {
+  item: { date: string; label: string; name: string; text: string; url: string; role?: string; distinction?: string };
+}
+const { item } = Astro.props;
+---
+<li class="news-item">
+  <time datetime={item.date}>{item.label}</time>
+  <p>
+    <a href={item.url} target="_blank" rel="noopener noreferrer">{item.name}</a>
+    {item.role && <> <span class="news-role">({item.role})</span></>}
+    {' '}{item.text}{item.distinction && <> <strong class="news-distinction">{item.distinction}</strong></>}
+  </p>
+</li>

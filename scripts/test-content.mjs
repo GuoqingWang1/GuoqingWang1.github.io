@@ -36,7 +36,7 @@ function assertEnglishHeader(html, blogPath, route) {
   }));
   const logo = anchors.find(anchor => hasClass(anchor, 'site-name'));
   assert(logo?.href && absolute(logo.href) === absolute('/'), `Article logo must target the English homepage: ${route}`);
-  for (const [label, destination] of [['About', '/'], ['News', '/#news'], ['Publications', '/publications/'], ['Blog', blogPath]]) {
+  for (const [label, destination] of [['About', '/'], ['Publications', '/publications/'], ['Blog', blogPath]]) {
     assert(anchors.some(anchor => anchor.text === label && anchor.href && absolute(anchor.href) === absolute(destination)), `Wrong English navigation ${label}: ${route}`);
   }
 }

@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Read the expected public content
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Verify public HTTPS and redirects
         env:
           SITE_URL: ${{ vars.SITE_URL || 'https://guoqingwang1.github.io' }}
@@ -23,6 +27,8 @@ jobs:
 
           base = os.environ['SITE_URL'].rstrip('/') + '/'
           host = urlparse(base).hostname
+          with open('src/data/news.json') as source:
+              expected_news = json.load(source)
           assert base.startswith('https://')
           class Trace(HTTPRedirectHandler):
               def __init__(self): self.chain = []
@@ -67,7 +73,7 @@ jobs:
               else:
                   assert not parser.switches and not parser.alternates, path
               if path == '':
-                  assert parser.news == 3 and 'news' in parser.ids
+                  assert parser.news == len(expected_news) and 'news' in parser.ids
                   assert b'Guoqing Wang' in by_path[path]['body'] and b'D6vayD4AAAAJ' in by_path[path]['body']
               assets.update(parser.assets)
           for path, target in [('en/', ''), ('en/publications/', 'publications/'), ('en/blog/', 'blog/')]:

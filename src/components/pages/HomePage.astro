@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Publication from '../Publication.astro';
+import NewsItem from '../NewsItem.astro';
 import { profile } from '../../data/profile';
 import publications from '../../data/publications.json';
 import news from '../../data/news.json';
@@ -9,6 +10,8 @@ interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const selected = publications.selected.map(id => publications.papers.find(paper => paper.id === id)!).sort((a,b) => b.year - a.year);
+const recentNews = news.slice(0, 4);
+const olderNews = news.slice(4);
 ---
 <BaseLayout lang={lang}>
   <section class="intro" id="about" aria-label={t.about} tabindex="-1">
@@ -22,11 +25,17 @@ const selected = publications.selected.map(id => publications.papers.find(paper 
   <section class="news-section" id="news" aria-labelledby="news-heading" tabindex="-1">
     <div class="section-heading"><h2 id="news-heading">News</h2></div>
     <ul class="news-list">
-      {news.map(item => <li class="news-item">
-        <time datetime={item.date}>{item.label}</time>
-        <p><a href={item.url} target="_blank" rel="noopener noreferrer">{item.name}</a> {item.text}</p>
-      </li>)}
+      {recentNews.map(item => <NewsItem item={item} />)}
     </ul>
+    {olderNews.length > 0 && <>
+      <ul class="news-list older-news" id="older-news" aria-label="Earlier news">
+        {olderNews.map(item => <NewsItem item={item} />)}
+      </ul>
+      <button class="news-toggle" type="button" aria-expanded="true" aria-controls="older-news" hidden>
+        <span class="news-toggle-label">Less news</span>
+        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+      </button>
+    </>}
   </section>
   <section class="selected-section" aria-labelledby="selected-heading">
     <div class="section-heading">
@@ -36,4 +45,19 @@ const selected = publications.selected.map(id => publications.papers.find(paper 
     <div class="publication-list">{selected.map(paper => <Publication paper={paper} lang={lang} compact headingLevel={3} />)}</div>
   </section>
   </div>
+  <script>
+    const toggle = document.querySelector<HTMLButtonElement>('.news-toggle');
+    const earlierNews = document.querySelector<HTMLElement>('#older-news');
+    if (toggle && earlierNews) {
+      const label = toggle.querySelector('.news-toggle-label')!;
+      const setExpanded = (expanded: boolean) => {
+        earlierNews.hidden = !expanded;
+        toggle.setAttribute('aria-expanded', String(expanded));
+        label.textContent = expanded ? 'Less news' : 'More news';
+      };
+      setExpanded(false);
+      toggle.hidden = false;
+      toggle.addEventListener('click', () => setExpanded(earlierNews.hidden));
+    }
+  </script>
 </BaseLayout>

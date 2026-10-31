@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 
 const root = path.resolve('dist');
 const origin = new URL(process.env.SITE_URL || 'https://guoqingwang1.github.io').origin;
+const news = JSON.parse(await readFile('src/data/news.json', 'utf8'));
 const staticPages = [
   ['index.html', '/', 'en'],
   ['publications/index.html', '/publications/', 'en'],
@@ -89,7 +90,7 @@ for (const filename of output) {
     const logo = navigation.find(anchor => hasClass(anchor, 'site-name'));
     assert(logo?.href && absolute(logo.href) === absolute('/'), `Logo must point to English homepage: ${relative}`);
     const blogPath = lang === 'zh-CN' ? '/zh/blog/' : '/blog/';
-    for (const [label, route] of [['About', '/'], ['News', '/#news'], ['Publications', '/publications/'], ['Blog', blogPath]]) {
+    for (const [label, route] of [['About', '/'], ['Publications', '/publications/'], ['Blog', blogPath]]) {
       assert(navigation.some(anchor => anchor.text === label && anchor.href && absolute(anchor.href) === absolute(route)), `Missing English navigation ${label} → ${route}: ${relative}`);
     }
     assert(!navigation.some(anchor => anchor.href && new URL(anchor.href, origin).origin === origin && /^\/(?:en\/|zh\/(?!blog\/))/.test(new URL(anchor.href, origin).pathname)), `Header links to a legacy or translated non-Blog page: ${relative}`);
@@ -117,7 +118,7 @@ for (const filename of output) {
   if (relative === 'index.html') {
     const elements = tags(html, '[a-z][a-z0-9:-]*');
     assert(elements.some(element => element.id === 'news'), 'Homepage lacks #news');
-    assert.equal(elements.filter(element => hasClass(element, 'news-item')).length, 3, 'Homepage must contain three verified News items');
+    assert.equal(elements.filter(element => hasClass(element, 'news-item')).length, news.length, 'Homepage must include every verified News item');
   }
   for (const match of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
     const value = decode(match[1]);
