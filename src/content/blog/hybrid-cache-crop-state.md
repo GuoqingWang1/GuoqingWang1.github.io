@@ -7,6 +7,7 @@ translationKey: hybrid-cache-crop-state
 topic: model
 tags: [KV Cache, Transformers, 混合注意力]
 pubDate: "2026-11-01T06:32:29+08:00"
+updatedDate: "2026-11-01T07:53:34+08:00"
 order: 9
 draft: false
 review: true
@@ -34,6 +35,56 @@ review: true
 
 类似地，`reset` 通常是清空状态，也不能代替恢复某个已经计算好的前缀。清空、裁剪和恢复历史快照，应当视为三种不同操作。
 
+## 用一个小状态看裁剪前后
+
+可以用一个独立的 toy 看清这个区别：列表记录已处理的输入，另一个整数按 `state = 10 * state + value` 更新。这个递推式不是任何模型的计算公式，也不是缓存污染的实测；它只让“按位置保存的数据”和“已经累积的状态”变得容易手算。
+
+```python
+class ToyCache:
+    def __init__(self):
+        self.slots = []
+        self.state = 0
+
+    def append(self, value):
+        self.slots.append(value)
+        self.state = 10 * self.state + value
+
+    def crop(self, length):
+        self.slots = self.slots[:length]  # 不恢复递推状态
+
+reused = ToyCache()
+for value in [1, 2]:
+    reused.append(value)
+assert reused.state == 12
+
+reused.append(3)  # 续写 A
+reused.crop(2)
+assert len(reused.slots) == 2
+assert reused.state == 123  # 长度回到 2，状态没有回到 12
+reused.append(4)  # 接着处理续写 B
+
+fresh = ToyCache()
+for value in [1, 2, 4]:
+    fresh.append(value)
+
+assert reused.slots == fresh.slots == [1, 2, 4]
+assert (reused.state, fresh.state) == (1234, 124)
+```
+
+按定义逐步展开，得到下面的预期关系：
+
+| 路径阶段 | 列表中的输入 | 递推状态 |
+|---|---|---:|
+| 只处理前缀 | `[1,2]` | 12 |
+| 追加 A | `[1,2,3]` | 123 |
+| 裁回前缀长度 | `[1,2]` | 123 |
+| 裁剪后追加 B | `[1,2,4]` | 1234 |
+| 从新状态处理前缀与 B | `[1,2,4]` | 124 |
+
+最后两行连列表内容都相同，递推状态却不同。如果只检查长度，甚至只检查可裁剪那部分的内容，就会漏掉这一区别。表中的数值来自 toy 的整数递推，不是模型分数；它说明的是检查完整状态的必要性。
+
+在这个 toy 中，前缀状态 `12` 很容易写出来，但 `crop` 没有恢复它。真实模型需要的是对应前缀的有效状态，而不是按这个虚构公式反算。若选择 `reset`，也要重新消费前缀，不能清空之后直接接上 B。
+
 ## 独立评分先隔离状态
 
 一种直接的做法，是让每个独立评分任务拥有自己的 cache。任务内部可以在连续输入块之间复用它；切换到另一条独立续写时，重新从前缀建立状态。
@@ -48,5 +99,7 @@ review: true
 这会重新计算前缀，所以不能把它描述成免费的优化。它的价值是让状态边界清楚：第二条续写不会依赖“裁剪是否恢复了每一层状态”这个未经确认的假设。
 
 如果确实要共享前缀计算，应使用模型与缓存实现明确支持的分支、复制或恢复方式，并确认卷积、循环状态和 KV 都被包含。仅复制 Python 容器，或者仅看到 KV 长度相同，不足以证明两个任务已隔离；可变张量是否共享存储也需要检查。
+
+例如，两个变量都指向同一个 cache 时，给 A 追加内容也会改变 B 随后看到的状态。是否能够安全复制，应由具体缓存类型的接口保证，不能把通用 `deepcopy` 当作所有实现都支持的回滚方案。验证时，应把复用路径与重新消费相同前缀的路径对照，检查所需状态和输出，而不只看一个长度字段。
 
 复用 cache 前，先确认一个问题：**模型被保证处于哪一段历史之后？** 把状态归属和恢复语义讲清楚，再决定如何节省前缀计算。

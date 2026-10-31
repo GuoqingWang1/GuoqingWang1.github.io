@@ -6,6 +6,7 @@ lang: en
 topic: model
 tags: [语言模型, LogProb, 张量对齐]
 pubDate: "2026-11-01T06:32:29+08:00"
+updatedDate: "2026-11-01T07:53:34+08:00"
 order: 2
 draft: false
 review: true
@@ -36,15 +37,42 @@ Transformers v5.12.1’s `ForCausalLMLoss` follows this correspondence: it align
 
 ## Shift only once
 
-When extracting scores from complete logits yourself, the following simplified form is useful. It assumes there is no padding and that logit positions have not been trimmed. Entry `i` in the returned result corresponds to input token `i+1`.
+When extracting scores from complete logits yourself, separate two choices: which row to read, and which vocabulary entry to select in that row. The first follows from subtracting one from the target position; the second comes from the target token ID. `gather(dim=-1)` performs only the second operation—it does not fix temporal alignment. The [`torch.gather` interface](https://docs.pytorch.org/docs/2.15/generated/torch.gather.html) requires explicit indices and has no `ignore_index` argument.
+
+Below, we add one right-padding position to the sequence above. The synthetic vocabulary has five entries, with IDs `3, 4` assigned to answer tokens `A0, A1`. `labels` aligns with the original input positions; prefix and padding positions use `-100` to exclude them from scoring. These `labels` are not the `input_ids` passed to the model, and the code does not construct the `attention_mask` used in the model’s forward pass.
 
 ```python
-def next_token_logprobs(logits, token_ids):
-    # logits: [B, L, V]; token_ids: [B, L]
+import torch
+
+def masked_next_token_logprobs(logits, labels):
+    # Full, untrimmed logits; labels have not been shifted.
+    assert logits.ndim == 3 and labels.shape == logits.shape[:2]
+    assert labels.dtype == torch.long and labels.device == logits.device
+
+    targets = labels[:, 1:]
+    keep = targets.ne(-100)
+    invalid = keep & ((targets < 0) | (targets >= logits.shape[-1]))
+    if invalid.any():
+        raise ValueError("target ID outside vocabulary")
+
+    # -100 is not a valid vocabulary index; use a safe index only at ignored positions.
+    safe_targets = targets.masked_fill(~keep, 0)
     logp = logits[:, :-1, :].log_softmax(dim=-1)
-    targets = token_ids[:, 1:]
-    return logp.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
+    scores = logp.gather(-1, safe_targets.unsqueeze(-1)).squeeze(-1)
+    return scores, keep
+
+logits = torch.zeros((1, 6, 5), dtype=torch.float32, device="cpu")
+labels = torch.tensor([[-100, -100, -100, 3, 4, -100]], dtype=torch.long, device="cpu")
+scores, keep = masked_next_token_logprobs(logits, labels)
+
+assert keep.tolist() == [[False, False, True, True, False]]
+assert labels[:, 1:][keep].tolist() == [3, 4]
+assert scores[keep].numel() == 2
 ```
+
+After shifting, entry `i` in `scores` corresponds to input token `i+1`, so this example keeps only prediction rows `2, 3`. The placeholder index `0` merely makes `gather` valid; scores at ignored positions have no scoring meaning and must still be excluded with `keep` before aggregation. Indexing with `-100` first and multiplying by a mask afterward cannot repair an invalid indexing operation. [`masked_fill`](https://docs.pytorch.org/docs/2.15/generated/torch.Tensor.masked_fill.html) returns a new tensor here without rewriting the original labels.
+
+This example checks position and mask relationships. The zero logits are placeholder inputs, and the assertions describe expected relationships rather than measured model scores. If there are no scoring positions, the caller should also handle that empty set explicitly instead of taking its mean directly.
 
 If a loss interface already shifts labels internally, do not shift them beforehand as well. An intended one-position offset would become two. First establish whether an interface returns complete logits, selected prediction rows, or token logprobs that have already been aligned.
 
@@ -52,9 +80,18 @@ Real batches also require aligned scoring masks. A target-token mask must move w
 
 ## The first target in a chunk may belong to the previous chunk
 
-Suppose the current input chunk covers global positions `[s, e)`. Row `0` of its output is global prediction row `s`, which predicts `x[s+1]`. For a target at global position `j`, the local prediction-row index is `j-1-s`.
+Suppose the current input chunk covers global positions `[s, e)` and its output rows have not been trimmed. Row `0` of its output is global prediction row `s`, which predicts `x[s+1]`. For a target at global position `j`, the local prediction-row index is `j-1-s`. If rows have already been selected, use the saved row mapping rather than applying this offset directly.
 
 The easy-to-miss case is `j=s`: the target is exactly at the beginning of the chunk, so the local prediction-row index becomes `-1`. That is not permission to let Python select the current chunk’s final row. It tells us that the required prediction row is **at the end of the previous chunk**.
+
+Split the six positions above into chunks `[0,3)` and `[3,6)`. The answer-token mapping can be worked out directly:
+
+| Target | Global target position `j` | Prediction row `j-1` | Chunk producing the row | Local row in that chunk |
+|---|---:|---:|---|---:|
+| `A0` | 3 | 2 | `[0,3)` | 2 |
+| `A1` | 4 | 3 | `[3,6)` | 0 |
+
+Although the second chunk contains both answer tokens, its own row `0` supplies only the prediction for `A1`. The prediction for `A0` must come from the first chunk’s final row. Checking `s <= j-1 < e` before indexing explicitly rejects targets whose prediction rows belong elsewhere, rather than silently letting a negative index wrap to the end.
 
 Enabling a KV cache does not automatically bring the previous chunk’s logits into the current output. The scoring schedule can assign this target to the previous chunk’s final row, or retain the prediction result needed from that row; the choice depends on the existing output interface. Having the target token in the current chunk does not justify substituting the current chunk’s first logit row.
 

@@ -7,6 +7,7 @@ translationKey: system-prompt-after-adapter
 topic: runtime
 tags: [Agent, 上下文, 推理接口]
 pubDate: "2026-11-01T06:32:29+08:00"
+updatedDate: "2026-11-01T07:53:34+08:00"
 order: 10
 draft: false
 review: true
@@ -14,13 +15,13 @@ review: true
 
 When debugging agent requests, it is easy to focus only on the local message list: the old messages are unchanged, one state update has been appended, and we infer that the next request merely appends content too.
 
-While reading a provider compatibility branch in Pi, we noticed an easy-to-miss step: the message list still has to pass through an adapter before it becomes request parameters. An append at the earlier layer does not guarantee that the next layer retains the same beginning.
+While reading a provider compatibility branch in Pi, we noticed an easy-to-miss step: the message list still has to be adapted into request parameters. To understand the effect of an update, inspect the local events, the resolved state, and the request fields separately.
 
-The example below covers one fixed version and the path where `supportsMidConvoSystemMessages` is `false`. It is a source-derived illustration of the fields, not a capture of live HTTP traffic.
+The example below uses the Pi commit pinned by the links and the `supportsMidConvoSystemMessages=false` branch. It presents source-derived checks, not captured live traffic or a newly executed cache test.
 
-## The log gains just one update
+## The local events gain just one update
 
-Suppose the initial system message contains fixed rules and a state value, which later changes from `Old` to `New`. Synthetic data can represent this as follows:
+The initial system message contains fixed rules and state `Old`. A later patch changes the state to `New`. Synthetic data can represent this as follows:
 
 ```javascript
 const before = { messages: [
@@ -35,35 +36,83 @@ const after = { messages: [...before.messages,
 ] };
 ```
 
-In this array, the original two messages are still present and the update appears only at the end. `sections` is the structure used here to express a state patch; it is not a raw HTTP field already sent to the server.
+At this point, `before.messages.length` is 2 and `after.messages.length` is 3. The first message in the latter list still says `state: "Old"`; the new value appears only in the last patch. This is the event-log view: it records what happened without requiring the original object to be rewritten in place.
 
-Pi's session code produces similar patches by comparing sections of the system prompt. Up to this point, the observation that the history has only appended a message is correct.
+`sections` is Pi's structure for system-section updates, not an HTTP field already sent to the server. Session code produces patches by comparing these sections; a later stage still needs to interpret them.
 
-## The adapter rebuilds the beginning
+## The adapter changes the current state without changing old events
 
-The key branch is in [`resolveTranscript`](https://github.com/earendil-works/pi/blob/89e12ccd4a5eb587bfa3f4a823baa7cad1549735/packages/ai/src/utils/transcript.ts#L108). When the interface does not support system messages in the middle of a conversation, it calls `collapseSystemMessages`: all system updates are replayed into a new leading message representing the current state, and the original intermediate system messages are removed.
+The key branch is in [`resolveTranscript`](https://github.com/earendil-works/pi/blob/89e12ccd4a5eb587bfa3f4a823baa7cad1549735/packages/ai/src/utils/transcript.ts#L108). When the interface does not support system messages in the middle of a conversation, it calls `collapseSystemMessages`: updates are replayed into a new leading system message, and the original system events are removed from the output list. Messages with other roles remain.
 
-During replay, a new value overwrites the old value of a section with the same name. The new leading message therefore still has `rules: "Fixed"`, but its `state` is now `"New"`.
+During replay, a new value overwrites the old value of a section with the same name. The resolved leading message therefore contains `rules: "Fixed"` and `state: "New"`, while the original event list still retains the initial `Old`. They are different objects.
 
-The [text-rendering function](https://github.com/earendil-works/pi/blob/89e12ccd4a5eb587bfa3f4a823baa7cad1549735/packages/ai/src/utils/text.ts#L15) then assembles the sections into system text, producing this change:
+For a debugging script placed at the root of that fixed-version repository, using an environment that can load these TypeScript files directly, the imports can use the paths below. Continuing with the data above, the assertions should capture these distinctions:
 
-```text
-System text before: Fixed\n\nOld
-System text after:  Fixed\n\nNew
+```javascript
+import assert from "node:assert/strict";
+import { resolveTranscript } from "./packages/ai/src/utils/transcript.ts";
+import { getSystemMessageText } from "./packages/ai/src/utils/text.ts";
+
+const resolvedBefore = resolveTranscript(before, false);
+const resolvedAfter = resolveTranscript(after, false);
+
+assert.equal(before.messages.length, 2);
+assert.equal(after.messages.length, 3);
+assert.equal(after.messages[0].sections.state, "Old");
+assert.equal(resolvedBefore.messages[0].sections.state, "Old");
+assert.equal(resolvedAfter.messages[0].sections.state, "New");
+assert.equal(resolvedBefore.messages.length, 2);
+assert.equal(resolvedAfter.messages.length, 2);
 ```
 
-Here, `\n` denotes a newline. Further down the path, the [request-construction code](https://github.com/earendil-works/pi/blob/89e12ccd4a5eb587bfa3f4a823baa7cad1549735/packages/ai/src/api/anthropic-messages.ts#L1132) uses this text to populate the `system` parameter.
+The first entry in the original log has not been changed to `New`. Instead, a current view has been rebuilt from all the events. Printing only the original list's first message would miss this change. The resolved list also has two messages both before and after the update; comparing counts alone does not establish unchanged contents.
 
-The log has not modified an old message, yet the leading content produced by the adapter is different. This is compatibility handling for the interface's capabilities; the change alone does not establish a bug.
+## The request's system text comes from the resolved view
 
-## Look one layer further when debugging
+The [text-rendering function](https://github.com/earendil-works/pi/blob/89e12ccd4a5eb587bfa3f4a823baa7cad1549735/packages/ai/src/utils/text.ts#L15) then joins the content and section values. For these inputs, the expected text can be written explicitly:
 
-For a problem such as “the old log entries did not change, so why did the request change?”, I would move the inspection point one step further: inspect the application's message history, then the request fields after provider adaptation, instead of printing only the original `messages`.
+```javascript
+const oldText = getSystemMessageText(resolvedBefore.messages[0]);
+const newText = getSystemMessageText(resolvedAfter.messages[0]);
 
-At a minimum, record the adapter version and compatibility flags, and inspect changes to `system`, tool definitions, and conversation messages separately. Label which layer each record comes from. Otherwise, it becomes difficult to tell later whether a “pre-send log” was captured before or after conversion.
+assert.equal(oldText, "Fixed\n\nOld");
+assert.equal(newText, "Fixed\n\nNew");
+```
 
-This also explains why the compatibility flag should not be forced to `true` just to preserve a prefix: it describes an interface capability. For state that must change, first ensure that the new value is delivered correctly, then consider reuse within the request paths the interface supports.
+The [non-OAuth branch in `buildParams`](https://github.com/earendil-works/pi/blob/89e12ccd4a5eb587bfa3f4a823baa7cad1549735/packages/ai/src/api/anthropic-messages.ts#L1132) places this text into a text block in `params.system`. Omitting model parameters and optional cache settings, the fields relevant to this example compare as follows:
 
-So far, we have established only that request content changes. Which token prefixes remain reusable, whether the backend hits its cache, and how cost or latency changes each require their own runtime evidence. A system-prompt rewrite must not be described automatically as “the entire cache was invalidated.”
+| Observation point | Before the update | After the update |
+|---|---|---|
+| Number of local events | `2` | `3` |
+| `state` in the first local entry | `Old` | `Old` |
+| Number of resolved messages | `2` | `2` |
+| `state` in the first resolved entry | `Old` | `New` |
+| `system[0].text` in the non-OAuth request | `Fixed\n\nOld` | `Fixed\n\nNew` |
 
-The reminder from this example is to follow the actual conversion path when judging the effect of a context update. An append in the log is only the beginning of that path.
+Here, `\n` denotes a newline. The final row follows the field mapping in request-construction code; it is not a record captured after an actual network send. Old log entries have not been rewritten, but the current text used by the adapter is different.
+
+A useful control is an update that repeats the same value: make the patch `state: "Old"`. The local log still gains one event, but the collapsed text should match the original:
+
+```javascript
+const sameValueUpdate = { messages: [...before.messages,
+  { role: "system", content: "", timestamp: 2,
+    sections: { state: "Old" } }
+] };
+const resolvedSame = resolveTranscript(sameValueUpdate, false);
+assert.equal(sameValueUpdate.messages.length, 3);
+assert.equal(getSystemMessageText(resolvedSame.messages[0]), oldText);
+```
+
+The number of added events therefore proves neither unchanged request contents nor an inevitable content change. This control checks the resulting text; whether there is any real cache benefit remains a separate question.
+
+## Place checks along the actual conversion path
+
+For a similar issue, I would retain three inspection points in order: what was appended to the event list; what the leading system message contains after adaptation; and what changed in the constructed `system`, tool definitions, and conversation messages.
+
+Records should identify the adapter version, compatibility flags, and stage. “Pre-send log” is not precise enough: it may refer to a point before or after conversion. To judge the bytes ultimately sent, continue into the sending layer instead of treating an intermediate object as a complete HTTP request.
+
+This branch handles interface compatibility, so rewriting alone does not establish a bug. In particular, do not force the compatibility flag to `true` merely to preserve a prefix. Required state changes must still be delivered correctly, and the interface must support the chosen representation.
+
+The example establishes only a content change. The text `Fixed` remains the same, but which token prefixes remain reusable, whether the backend hits its cache, and how cost or latency changes require corresponding runtime evidence. A system-prompt rewrite cannot simply be equated with invalidating the entire cache.
+
+An append in the log is only the starting point. Following the same update through each conversion stage establishes which representation of state is actually being compared.

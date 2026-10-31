@@ -1,12 +1,13 @@
 ---
 title: "Ray Actor 的初始化还没执行，导入为什么已经失败？"
-description: "构造参数也需要反序列化，准备业务依赖的代码有时必须比 Actor 初始化更早执行。"
+description: "从一个带模块引用的恢复对象出发，解释参数解包为什么早于初始化，以及如何把依赖准备放到正确位置。"
 category: technical
 topic: training
 lang: zh-CN
 translationKey: ray-arguments-before-bootstrap
 tags: [Ray, serialization, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
+updatedDate: "2026-11-01T07:53:34+08:00"
 order: 6
 draft: false
 review: true
@@ -34,6 +35,30 @@ driver 构造恢复状态
 
 我们当时已经处理了 Actor 类本体的加载，遗漏的是参数里嵌套的状态对象。把外层容器换成 `dict` 也不一定有用：字典内部仍可以放着需要相应业务模块的实例。
 
+例如，假设业务模块 `app_state.py` 定义了这样一个小对象。字段与数值都是合成的：
+
+```python
+# app_state.py
+from dataclasses import dataclass
+
+@dataclass
+class ResumeState:
+    cursor: int
+    pending: tuple[str, ...]
+```
+
+driver 能导入这个模块，于是可以创建 `ResumeState(cursor=7, pending=("a", "b"))`。但若该类按模块引用序列化，worker 还原实例时仍需要找到 `app_state.ResumeState`。这些数据字段足够简单，也不会消除类本身的导入要求。
+
+[cloudpickle 的说明](https://github.com/cloudpipe/cloudpickle/blob/master/README.md#overriding-pickles-serialization-mechanism-for-importable-constructs)区分了按值与按引用序列化：它可以按值处理动态类，但对 driver 上可导入的模块，默认按引用并不保证远端也装有该模块。因此，这里讨论的是**仍需要模块引用的参数**，不是所有 Python 对象都会在这一步失败。
+
+| 传给 Actor 的构造参数 | worker 在进入 `__init__` 前需要还原什么 |
+|---|---|
+| `ResumeState(...)` | 业务对象及其类引用 |
+| `{"state": ResumeState(...)}` | 字典，以及里面的业务对象 |
+| `cloudpickle.dumps(state)` 的结果 | 外层 `bytes`；内部业务对象留到显式解包时还原 |
+
+最后一行改变的是解包时机。它没有让业务模块从此变得不再需要。
+
 ## 把依赖准备放到正确阶段
 
 通常应先考虑让 worker 的运行环境提前具备依赖。Ray 的 [`runtime_env`](https://docs.ray.io/en/latest/ray-core/handling-dependencies.html)提供了按任务或 Actor 配置代码与依赖的入口，这比在业务构造函数中临时补环境更直接。
@@ -46,7 +71,17 @@ Ray：传输 bytes
 worker：准备业务环境 → 解包内部状态 → 执行原恢复逻辑
 ```
 
-这里延后的是业务对象的还原，入口自身及其最小依赖仍须已经可用。下面只是 worker 内部辅助函数的顺序示意，`bootstrap` 由已经可用的启动代码提供：
+对于上面的合成对象，driver 端的封装可以写成：
+
+```python
+import cloudpickle
+from app_state import ResumeState
+
+state = ResumeState(cursor=7, pending=("a", "b"))
+payload = cloudpickle.dumps(state)
+```
+
+worker 端延后业务对象的还原，入口自身及其最小依赖仍须已经可用。下面是 worker 内部的辅助函数，`bootstrap` 由已经可用的启动代码提供；它需要让正确版本的 `app_state` 及依赖可导入：
 
 ```python
 import cloudpickle
@@ -55,16 +90,33 @@ def restore_trusted_state(payload, bootstrap):
     if not isinstance(payload, bytes):
         raise TypeError("expected serialized internal state")
     bootstrap()
-    return cloudpickle.loads(payload)
+    from app_state import ResumeState
+
+    restored = cloudpickle.loads(payload)
+    if not isinstance(restored, ResumeState):
+        raise TypeError("unexpected restored state type")
+    if type(restored.cursor) is not int or restored.cursor < 0:
+        raise ValueError("invalid cursor")
+    if not isinstance(restored.pending, tuple) or not all(
+        isinstance(item, str) for item in restored.pending
+    ):
+        raise ValueError("invalid pending members")
+    return restored
 ```
 
-这个入口只处理自有系统生成的可信恢复产物；bytes 并不提供安全隔离，也不能拿来加载来源不明的 pickle。新建任务没有恢复状态时，应继续走自己的正常路径。非法恢复数据应明确失败，而不是悄悄退回空状态。
+这些片段解释对象结构和 worker 内部顺序，没有替代 Actor 工厂或部署配置。尤其不要把一个同样依赖缺失模块的 `bootstrap` 函数又作为远程构造参数传过去，否则可能重新遇到参数提前还原的问题。
+
+这个入口只处理自有系统生成的可信恢复产物。[反序列化 pickle 可以执行代码](https://docs.python.org/3/library/pickle.html)，所以 `bytes` 类型检查和解包后的字段检查都不是安全隔离，也不能拿来加载来源不明的数据。新建任务没有恢复状态时，应继续走自己的正常路径。非法恢复数据应明确失败，而不是悄悄退回空状态。
 
 ## 验证还原出来的对象，而不只验证构造成功
 
 当时的修复没有清空原缓存，也没有重新生成数据。我们先保留了“直接传业务对象仍会在缺模块环境中失败”的负例，再检查延后解包是否跨过同一个报错点。
 
 正例也不能只看 Actor 是否活着。对象往返后，关键张量与元数据、成员顺序、缓存内容和进度计数都需要按原接口检查，否则很容易把“重新开始”误当成“恢复成功”。后续原生运行还要确认这些状态确实被消费。
+
+上面的合成对象应当恢复出 `cursor == 7`、`pending == ("a", "b")`，而不是得到一个 `cursor == 0` 的新对象。对应测试可以分三层：先确认无模块时直接传对象仍在参数还原阶段失败；再确认延后解包调用顺序确实为 bootstrap → 导入/解包 → 原恢复校验；最后比较字段与成员顺序，并让真实消费者读取这些恢复内容。
+
+入口日志也可以按这三个阶段放置，而不要只在整个构造流程外打印一个“恢复失败”。在日志本身可靠的前提下，初始化首条日志有没有出现，能帮助缩小失败发生的位置；它不能替代实际 traceback。
 
 大对象变成 bytes 后，序列化、传输和内存成本仍然存在。这种改动解决的是依赖就绪与解包的先后顺序，不应自动包装成性能优化。
 
