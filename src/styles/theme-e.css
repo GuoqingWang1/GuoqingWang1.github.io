@@ -60,7 +60,7 @@
   max-width: 900px;
   margin: 0;
   font-family: var(--serif);
-  font-size: 26px;
+  font-size: 23px;
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: -.015em;
@@ -98,7 +98,6 @@
 .theme-e .news-item a:hover { border-color: currentColor; }
 .theme-e .news-role { color: var(--muted); }
 .theme-e .news-distinction { font-weight: 600; }
-.theme-e .older-news { margin-top: 25px; }
 .theme-e .news-toggle { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; min-height: 40px; margin: 18px 0 -10px; padding: 0; border: 0; background: transparent; font-size: 13px; line-height: 1.6; color: var(--muted); }
 .theme-e .news-toggle:hover { color: var(--ink); }
 .theme-e .news-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -159,14 +158,13 @@
   .theme-e .site-nav a { font-size: 14px; padding: 2px 0 5px; }
   .theme-e .page { padding-bottom: 64px; }
   .theme-e .intro { padding: 36px 0 40px; }
-  .theme-e .intro-copy { font-size: 21px; line-height: 1.65; }
+  .theme-e .intro-copy { font-size: 19px; line-height: 1.65; }
   .theme-e .home-sections { display: block; }
   .theme-e .news-section { display: block; }
   .theme-e .selected-section { margin-top: 44px; }
   .theme-e .section-heading { padding-top: 14px; margin-bottom: 23px; }
   .theme-e .section-heading h2 { font-size: 24px; }
   .theme-e .news-list { gap: 18px; }
-  .theme-e .older-news { margin-top: 18px; }
   .theme-e .news-item { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 15px; align-items: baseline; }
   .theme-e .news-item time { margin: 0; font-size: 12px; }
   .theme-e .news-item p { font-size: 16px; }
@@ -191,7 +189,6 @@
   .theme-e .header-actions { gap: 8px; }
   .theme-e .header-language-switch { padding-left: 8px; font-size: 12px; }
   .theme-e .page-heading h1 { font-size: 40px; }
-  .theme-e .intro-copy { font-size: 20px; }
   .theme-e .section-heading { gap: 10px 16px; }
   .theme-e .section-heading h2 { font-size: 22px; }
   .theme-e .news-item { grid-template-columns: 1fr; gap: 3px; }
@@ -207,6 +204,6 @@
   .theme-e .site-shell { width: 100%; max-width: none; }
   .theme-e .intro { padding-top: 20px; }
   .theme-e .publication { break-inside: avoid; }
-  .theme-e .older-news[hidden] { display: grid !important; }
+  .theme-e .news-item { display: block !important; }
   .theme-e .news-toggle { display: none; }
 }

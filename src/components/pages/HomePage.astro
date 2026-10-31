@@ -10,8 +10,6 @@ const { lang } = Astro.props;
 const t = copy[lang];
 const selected = publications.selected.map(id => publications.papers.find(paper => paper.id === id)!);
 const localizedNews = news.map(item => lang === 'zh-CN' ? { ...item, ...item.zh } : item);
-const recentNews = localizedNews.slice(0, 5);
-const olderNews = localizedNews.slice(5);
 ---
 <BaseLayout lang={lang}>
   <section class="intro" id="about" aria-label={t.about} tabindex="-1">
@@ -20,18 +18,15 @@ const olderNews = localizedNews.slice(5);
   <div class="home-sections">
   <section class="news-section" id="news" aria-labelledby="news-heading" tabindex="-1">
     <div class="section-heading"><h2 id="news-heading">{t.news}</h2></div>
-    <ul class="news-list">
-      {recentNews.map(item => <NewsItem item={item} />)}
+    <ul class="news-list" id="news-items">
+      {localizedNews.map(item => <NewsItem item={item} />)}
     </ul>
-    {olderNews.length > 0 && <>
-      <ul class="news-list older-news" id="older-news" aria-label={t.earlierNews}>
-        {olderNews.map(item => <NewsItem item={item} />)}
-      </ul>
-      <button class="news-toggle" type="button" aria-expanded="true" aria-controls="older-news" data-more-label={t.moreNews} data-less-label={t.lessNews} hidden>
+    {localizedNews.length > 3 &&
+      <button class="news-toggle" type="button" aria-expanded="true" aria-controls="news-items" data-more-label={t.moreNews} data-less-label={t.lessNews} hidden>
         <span class="news-toggle-label">{t.lessNews}</span>
         <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
       </button>
-    </>}
+    }
   </section>
   <section class="selected-section" aria-labelledby="selected-heading">
     <div class="section-heading">
@@ -45,17 +40,24 @@ const olderNews = localizedNews.slice(5);
   </div>
   <script>
     const toggle = document.querySelector<HTMLButtonElement>('.news-toggle');
-    const earlierNews = document.querySelector<HTMLElement>('#older-news');
-    if (toggle && earlierNews) {
+    const newsList = document.querySelector<HTMLElement>('#news-items');
+    if (toggle && newsList) {
       const label = toggle.querySelector('.news-toggle-label')!;
-      const setExpanded = (expanded: boolean) => {
-        earlierNews.hidden = !expanded;
+      const items = Array.from(newsList.querySelectorAll<HTMLElement>('.news-item'));
+      const compactLayout = window.matchMedia('(max-width: 760px)');
+      let expanded = false;
+      const renderNews = () => {
+        const limit = compactLayout.matches ? 3 : 5;
+        const focusWillBeHidden = !expanded && items.slice(limit).some(item => item.contains(document.activeElement));
+        items.forEach((item, index) => { item.hidden = !expanded && index >= limit; });
         toggle.setAttribute('aria-expanded', String(expanded));
         label.textContent = expanded ? toggle.dataset.lessLabel! : toggle.dataset.moreLabel!;
+        toggle.hidden = items.length <= limit;
+        if (focusWillBeHidden) toggle.focus();
       };
-      setExpanded(false);
-      toggle.hidden = false;
-      toggle.addEventListener('click', () => setExpanded(earlierNews.hidden));
+      renderNews();
+      toggle.addEventListener('click', () => { expanded = !expanded; renderNews(); });
+      compactLayout.addEventListener('change', renderNews);
     }
   </script>
 </BaseLayout>
