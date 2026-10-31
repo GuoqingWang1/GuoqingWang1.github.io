@@ -43,7 +43,7 @@ const olderNews = news.slice(5);
       <a class="more-link" href={localizedPath('/publications/',lang)}>{t.allPublications}<span aria-hidden="true"> →</span></a>
     </div>
     <div class="publication-list">
-      {selected.map(paper => <Publication paper={paper} lang={lang} compact headingLevel={3} />)}
+      {selected.map(paper => <Publication paper={paper} lang={lang} compact showAuthors showAuthorship headingLevel={3} />)}
     </div>
   </section>
   </div>

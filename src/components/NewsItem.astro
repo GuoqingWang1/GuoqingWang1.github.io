@@ -1,6 +1,6 @@
 ---
 interface Props {
-  item: { date: string; label: string; name: string; text: string; url: string; role?: string; distinction?: string };
+  item: { date: string; label: string; name: string; text: string; url: string; prefix?: string; role?: string; roleAtEnd?: boolean; highlight?: string; ending?: string };
 }
 const { item } = Astro.props;
 const role = item.role?.toLowerCase() === 'first author' ? undefined : item.role;
@@ -8,8 +8,12 @@ const role = item.role?.toLowerCase() === 'first author' ? undefined : item.role
 <li class="news-item">
   <time datetime={item.date}>{item.label}</time>
   <p>
+    {item.prefix && <>{item.prefix} </>}
     <a href={item.url} target="_blank" rel="noopener noreferrer">{item.name}</a>
-    {role && <> <span class="news-role">({role})</span></>}
-    {' '}{item.text}{item.distinction && <> <strong class="news-distinction">{item.distinction}</strong></>}
+    {role && !item.roleAtEnd && <> <span class="news-role">({role})</span></>}
+    {item.text && <> {item.text}</>}
+    {item.highlight && <> <strong class="news-distinction">{item.highlight}</strong></>}
+    {role && item.roleAtEnd && <> <span class="news-role">({role})</span></>}
+    {item.ending}
   </p>
 </li>

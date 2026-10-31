@@ -1,51 +1,68 @@
 [
   {
     "date": "2026-08-21",
-    "label": "Aug 2026",
+    "label": "2026.08",
     "name": "MemPro",
     "role": "co-first author",
-    "text": "was accepted to EMNLP 2026 (Main Conference).",
-    "distinction": "Oral presentation.",
-    "url": "https://github.com/wanghai673/MemPro"
+    "text": "was accepted to",
+    "url": "https://github.com/wanghai673/MemPro",
+    "prefix": "Our paper",
+    "highlight": "EMNLP 2026 (Main Conference, Oral)",
+    "ending": "."
   },
   {
     "date": "2026-08-21",
-    "label": "Aug 2026",
+    "label": "2026.08",
     "name": "EviNoteRAG",
     "role": "co-first author",
-    "text": "was accepted to EMNLP 2026 (Main Conference).",
-    "url": "https://github.com/Da1yuqin/EviNoteRAG"
+    "text": "was accepted to",
+    "url": "https://github.com/Da1yuqin/EviNoteRAG",
+    "prefix": "Our paper",
+    "highlight": "EMNLP 2026 (Main Conference)",
+    "ending": "."
   },
   {
     "date": "2026-04-22",
-    "label": "Apr 2026",
+    "label": "2026.04",
     "name": "DR-Venus",
     "role": "core contributor",
-    "text": "code and model checkpoints were released.",
-    "url": "https://github.com/inclusionAI/DR-Venus"
+    "text": "code and model checkpoints",
+    "url": "https://github.com/inclusionAI/DR-Venus",
+    "prefix": "We released the",
+    "roleAtEnd": true,
+    "ending": "."
   },
   {
     "date": "2026-01-26",
-    "label": "Jan 2026",
+    "label": "2026.01",
     "name": "IGPO",
     "role": "first author",
-    "text": "was accepted to ICLR 2026.",
-    "url": "https://github.com/GuoqingWang1/IGPO"
+    "text": "was accepted to",
+    "url": "https://github.com/GuoqingWang1/IGPO",
+    "prefix": "Our paper",
+    "highlight": "ICLR 2026",
+    "ending": "."
   },
   {
     "date": "2025-08-18",
-    "label": "Aug 2025",
+    "label": "2025.08",
     "name": "Atom-Searcher",
-    "text": "technical report was released.",
+    "text": "is now available",
     "url": "https://arxiv.org/abs/2508.12800",
-    "role": "core contributor"
+    "role": "core contributor",
+    "prefix": "Our technical report",
+    "roleAtEnd": true,
+    "ending": "."
   },
   {
     "date": "2025-04-11",
-    "label": "Apr 2025",
+    "label": "2025.04",
     "name": "DMC",
     "role": "first author",
-    "text": "was published in the AAAI 2025 proceedings.",
-    "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723"
+    "text": "was published in the",
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723",
+    "prefix": "Our paper",
+    "highlight": "AAAI 2025 proceedings (Oral)",
+    "ending": "."
   }
 ]
