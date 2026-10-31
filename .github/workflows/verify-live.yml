@@ -1,0 +1,68 @@
+name: Verify live website
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify public HTTPS and redirects
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://guoqingwang1.github.io' }}
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures, json, os, re
+          from html.parser import HTMLParser
+          from urllib.parse import urljoin, urlparse
+          from urllib.request import build_opener, HTTPRedirectHandler
+
+          base = os.environ['SITE_URL'].rstrip('/') + '/'
+          host = urlparse(base).hostname
+          assert base.startswith('https://')
+          class Trace(HTTPRedirectHandler):
+              def __init__(self): self.chain = []
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  self.chain.append({'status': code, 'from': req.full_url, 'to': newurl})
+                  return super().redirect_request(req, fp, code, msg, headers, newurl)
+          def fetch(url):
+              handler = Trace()
+              with build_opener(handler).open(url, timeout=30) as response:
+                  body = response.read()
+                  assert response.status == 200
+                  assert response.url.startswith(base), (url, response.url)
+                  return {'url': url, 'status': response.status, 'final_url': response.url,
+                          'bytes': len(body), 'redirects': handler.chain, 'body': body}
+          urls = [base, base+'blog/', base+'rss.xml', base+'sitemap.xml',
+                  'http://'+host+'/', 'https://guoqingwang1.github.io/']
+          if not host.endswith('.github.io'): urls.append('https://www.'+host+'/')
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+              results = list(pool.map(fetch, urls))
+          home = results[0]['body'].decode()
+          assert 'Guoqing Wang' in home and 'D6vayD4AAAAJ' in home
+          assert 'href="'+base+'"' in home
+          assert base in results[2]['body'].decode()
+          assert base in results[3]['body'].decode()
+          class Assets(HTMLParser):
+              paths = []
+              def handle_starttag(self, tag, attrs):
+                  a = dict(attrs)
+                  if tag == 'link' and a.get('rel') in ('stylesheet', 'icon'):
+                      self.paths.append(a['href'])
+          parser = Assets(); parser.feed(home)
+          assert parser.paths
+          for asset in parser.paths:
+              url = urljoin(base, asset)
+              assert urlparse(url).hostname == host
+              results.append(fetch(url))
+          summary = [{k: v for k, v in result.items() if k != 'body'} for result in results]
+          print(json.dumps(summary, indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
+              f.write('## Live website verified\n\n')
+              f.write('HTTPS certificate validation, homepage identity, Blog, RSS, sitemap, assets and redirects passed.\n\n')
+              f.write('```json\n'+json.dumps(summary, indent=2)+'\n```\n')
+          PY
