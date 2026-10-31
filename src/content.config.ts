@@ -10,6 +10,8 @@ const blog = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     category: z.enum(['technical', 'reflection']),
+    topic: z.enum(['model', 'training', 'runtime']).optional(),
+    order: z.number().int().nonnegative().optional(),
     lang: z.enum(['en', 'zh-CN']).default('zh-CN'),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(true),

@@ -8,7 +8,15 @@ const t = copy[lang];
 const posts = await publishedPosts(lang);
 const otherLang: Locale = lang === 'en' ? 'zh-CN' : 'en';
 const otherLanguagePosts = posts.length === 0 ? await publishedPosts(otherLang) : [];
-const categories = ['technical', 'reflection'] as const;
+const topicOf = (post: typeof posts[number]) => post.data.topic ?? post.data.category;
+const categories = [
+  { key: 'all', label: t.allTopics },
+  { key: 'model', label: t.modelTopic },
+  { key: 'training', label: t.trainingTopic },
+  { key: 'runtime', label: t.runtimeTopic },
+  { key: 'technical', label: t.technical },
+  { key: 'reflection', label: t.reflection },
+].filter(category => category.key === 'all' || posts.some(post => topicOf(post) === category.key));
 ---
 <BaseLayout lang={lang} title={t.blog} active="blog" description={t.blogDescription}>
   <header class="page-heading blog-heading"><h1>{t.blog}</h1></header>
@@ -16,12 +24,12 @@ const categories = ['technical', 'reflection'] as const;
     {posts.length > 0 ? <>
       <div class="blog-layout">
         <div class="category-legend" role="group" aria-label={lang === 'zh-CN' ? '文章分类' : 'Article category'}>
-          {categories.map(category => <button class={`category-button ${category}`} type="button" data-category={category} aria-pressed="false">
-            <span class="category-mark" aria-hidden="true" />{t[category]}
+          {categories.map(category => <button class={`category-button ${category.key}`} type="button" data-category={category.key} aria-controls="post-list" aria-pressed={category.key === 'all' ? 'true' : 'false'}>
+            <span class="category-mark" aria-hidden="true" />{category.label}
           </button>)}
         </div>
         <div class="blog-list" id="post-list">
-          {posts.map(post => <a class={`blog-entry ${post.data.category}`} data-post-category={post.data.category} data-description={post.data.description} href={postPath(post)}>
+          {posts.map(post => <a class={`blog-entry ${post.data.category}`} data-post-category={topicOf(post)} data-description={post.data.description} href={postPath(post)}>
             <time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
             <span class="post-title" lang={post.data.lang}>{post.data.title}</span>
           </a>)}
@@ -48,9 +56,9 @@ const categories = ['technical', 'reflection'] as const;
   let currentRow: HTMLAnchorElement | null = null;
   const hideNote = () => { note?.classList.remove('visible'); overlay?.classList.remove('visible'); currentRow = null; };
   buttons.forEach(button => button.addEventListener('click', () => {
-    selected = selected === button.dataset.category ? null : button.dataset.category!;
+    selected = button.dataset.category === 'all' || selected === button.dataset.category ? null : button.dataset.category!;
     hideNote();
-    buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.category === selected)));
+    buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.category === (selected ?? 'all'))));
     let visible = 0;
     rows.forEach(row => { row.hidden = selected !== null && row.dataset.postCategory !== selected; if (!row.hidden) visible++; });
     const empty = document.getElementById('filtered-empty');

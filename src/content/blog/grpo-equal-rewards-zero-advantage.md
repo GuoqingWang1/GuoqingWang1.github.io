@@ -2,6 +2,7 @@
 title: "奖励完全一样，GRPO 的优势为什么不是零？"
 description: "从一次同奖组归一化异常，谈浮点归约、精确判等和容易遗漏的边界测试。"
 category: technical
+topic: model
 lang: zh-CN
 tags: [GRPO, PyTorch, 数值稳定性]
 pubDate: "2026-11-01T05:12:52+08:00"

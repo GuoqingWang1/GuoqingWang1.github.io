@@ -15,7 +15,7 @@ export async function publishedPosts(lang?: Locale) {
       throw new Error(`Post filename/slug must be lowercase words separated by hyphens: ${post.id}`);
     }
   }
-  return posts.filter(post => !lang || post.data.lang === lang).sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime() || a.id.localeCompare(b.id));
+  return posts.filter(post => !lang || post.data.lang === lang).sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime() || (a.data.order ?? 0) - (b.data.order ?? 0) || a.id.localeCompare(b.id));
 }
 export function readingMinutes(body = '') {
   const cjk = (body.match(/[\u3400-\u9fff]/g) || []).length;

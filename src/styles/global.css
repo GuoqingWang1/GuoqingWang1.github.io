@@ -56,8 +56,7 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
 .theme-e .category-button[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
 .theme-e .category-button[aria-pressed="true"] { font-weight: 600; }
 .theme-e .category-mark { width: 12px; height: 12px; flex: 0 0 12px; border: 1px solid #656565; }
-.theme-e .technical .category-mark { background: #656565; }
-.theme-e .reflection .category-mark { background: transparent; }
+.theme-e .category-button[aria-pressed="true"] .category-mark { background: var(--ink); border-color: var(--ink); }
 .theme-e .blog-list { display: flex; flex-direction: column; min-width: 0; }
 .theme-e .blog-entry {
   display: grid;
