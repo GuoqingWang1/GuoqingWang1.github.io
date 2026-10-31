@@ -39,17 +39,11 @@ const olderNews = news.slice(5);
   </section>
   <section class="selected-section" aria-labelledby="selected-heading">
     <div class="section-heading">
-      <h2 id="selected-heading">{t.selectedWork}</h2>
+      <h2 id="selected-heading">{t.selectedPublications}</h2>
       <a class="more-link" href={localizedPath('/publications/',lang)}>{t.allPublications}<span aria-hidden="true"> →</span></a>
     </div>
     <div class="publication-list">
       {selected.map(paper => <Publication paper={paper} lang={lang} compact headingLevel={3} />)}
-      {publications.selectedResources.map(resource => <article class="publication publication-compact compact" id={resource.id}>
-        <div class="pub-title-line">
-          <h3 class="pub-title"><a href={resource.url} target="_blank" rel="noopener noreferrer">{resource.title}</a></h3>
-          <span class="pub-inline-meta"><span class="venue">[{t.paperCollection}]</span></span>
-        </div>
-      </article>)}
     </div>
   </section>
   </div>

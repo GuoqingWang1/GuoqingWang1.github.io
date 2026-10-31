@@ -142,7 +142,8 @@
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34723",
       "type": "conference",
       "authorship": "first",
-      "publishedDate": "2025-04-11"
+      "publishedDate": "2025-04-11",
+      "distinction": "Oral"
     },
     {
       "id": "atom-searcher",
@@ -187,7 +188,8 @@
       "url": "https://ojs.aaai.org/index.php/AAAI/article/view/33424",
       "type": "conference",
       "authorship": "co-author",
-      "publishedDate": "2025-04-11"
+      "publishedDate": "2025-04-11",
+      "distinction": "Oral"
     },
     {
       "id": "mempro",
@@ -298,11 +300,13 @@
       "publishedDate": "2025-11-10"
     }
   ],
-  "selectedResources": [
-    {
-      "id": "awesome-dllm-papers",
-      "title": "Awesome dLLM Papers",
-      "url": "https://github.com/GuoqingWang1/Awesome-dLLM-Papers"
-    }
+  "priorityOrder": [
+    "igpo",
+    "dr-venus",
+    "mempro",
+    "evinoterag",
+    "webfilter",
+    "atom-searcher",
+    "dmc"
   ]
 }

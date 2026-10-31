@@ -7,20 +7,17 @@ import { copy, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
-const papers = [...publications.papers].sort((a,b) => b.publishedDate.localeCompare(a.publishedDate));
-const isLeadWorkOrReport = (paper: typeof papers[number]) => paper.authorship === 'first' || paper.authorship === 'co-first' || paper.type === 'technical-report';
-const sections = [
-  { id: 'lead-work-and-reports', title: t.leadWorkAndReports, papers: papers.filter(isLeadWorkOrReport) },
-  { id: 'other-publications', title: t.otherPublications, papers: papers.filter(paper => !isLeadWorkOrReport(paper)) },
-].filter(section => section.papers.length);
+const priorityIds = new Set(publications.priorityOrder);
+const priorityPapers = publications.priorityOrder.map(id => publications.papers.find(paper => paper.id === id)!);
+const otherPapers = publications.papers.filter(paper => !priorityIds.has(paper.id)).sort((a,b) => b.publishedDate.localeCompare(a.publishedDate));
+const papers = [...priorityPapers, ...otherPapers];
 ---
 <BaseLayout lang={lang} title={t.publications} active="publications" description={t.publicationsDescription}>
   <header class="page-heading publications-heading">
     <h1>{t.publications}</h1>
     <a class="scholar-text-link" href={profile.scholar} target="_blank" rel="noopener noreferrer">Google Scholar<span aria-hidden="true"> ↗</span></a>
   </header>
-  {sections.map(section => <section class="publication-section" aria-labelledby={section.id}>
-    <div class="section-heading"><h2 id={section.id}>{section.title}</h2></div>
-    <div class="publication-list">{section.papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={3} showAuthorship />)}</div>
-  </section>)}
+  <div class="publication-list publications-list">
+    {papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={2} showAuthorship />)}
+  </div>
 </BaseLayout>
