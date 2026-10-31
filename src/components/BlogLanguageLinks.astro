@@ -1,0 +1,13 @@
+---
+import { copy, localizedPath, type Locale } from '../lib/i18n';
+interface Props { lang: Locale; article?: boolean }
+const { lang, article = false } = Astro.props;
+const otherLang: Locale = lang === 'en' ? 'zh-CN' : 'en';
+const t = copy[lang];
+---
+<nav class="language-links" aria-label="Blog language" lang="en">
+  {article ? <a class="language-switch" href={localizedPath('/blog/', otherLang)} lang={otherLang} hreflang={otherLang} aria-label={t.otherBlog}>{t.otherBlog}</a> : <>
+    <a class:list={{ 'language-switch': lang !== 'en' }} href="/blog/" lang="en" hreflang="en" aria-current={lang === 'en' ? 'page' : undefined} data-equivalent={lang !== 'en' || undefined} aria-label={lang === 'en' ? 'English' : 'Switch to English'}>English</a>
+    <a class:list={{ 'language-switch': lang !== 'zh-CN' }} href="/zh/blog/" lang="zh-CN" hreflang="zh-CN" aria-current={lang === 'zh-CN' ? 'page' : undefined} data-equivalent={lang !== 'zh-CN' || undefined} aria-label={lang === 'zh-CN' ? '中文' : '切换为中文'}>中文</a>
+  </>}
+</nav>

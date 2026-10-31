@@ -7,7 +7,7 @@ interface Props { lang?: Locale }
 const { lang = 'en' } = Astro.props;
 const t = copy[lang];
 ---
-<div class="social-links" aria-label={t.profiles}>
+<div class="social-links profile-links" aria-label={t.profiles}>
   <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><span aria-hidden="true" set:html={github} /></a>
   <a href={profile.scholar} target="_blank" rel="noopener noreferrer" aria-label={t.scholar} title={t.scholar}><span aria-hidden="true" set:html={scholar} /></a>
 </div>

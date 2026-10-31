@@ -1,6 +1,7 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogLanguageLinks from '../BlogLanguageLinks.astro';
 import { readingMinutes } from '../../lib/posts';
 import { copy, localizedPath } from '../../lib/i18n';
 interface Props { post: CollectionEntry<'blog'> }
@@ -13,6 +14,7 @@ const toc = headings.filter(h => h.depth === 2);
 <BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article published={post.data.pubDate} updated={post.data.updatedDate}>
   <article>
     <header class="article-header">
+      <BlogLanguageLinks lang={lang} article />
       <h1>{post.data.title}</h1>
       <div class="article-meta">
         <time datetime={post.data.pubDate.toISOString().slice(0,10)}>{post.data.pubDate.toISOString().slice(0,10)}</time>

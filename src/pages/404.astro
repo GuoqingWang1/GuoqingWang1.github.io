@@ -4,6 +4,6 @@ import { copy } from '../lib/i18n';
 const t = copy.en;
 ---
 <BaseLayout title={t.notFound} noindex>
-  <p>{t.notFound}.</p>
+  <header class="page-heading"><h1>{t.notFound}</h1></header>
   <a href="/" class="text-link">{t.home}</a>
 </BaseLayout>

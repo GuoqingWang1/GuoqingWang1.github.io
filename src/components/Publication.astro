@@ -13,13 +13,11 @@ const { paper, lang = 'en', compact = false, headingLevel = 2, showStatus = true
 const t = copy[lang];
 const Title = headingLevel === 3 ? 'h3' : 'h2';
 ---
-<article class:list={['publication', { 'publication-compact': compact }]} id={paper.id}>
-  <div class="pub-content">
+<article class:list={['publication', { 'publication-compact': compact, compact }]} id={paper.id}>
     <Title class="pub-title" lang="en"><a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a></Title>
     {!compact && <p class="pub-authors" lang="en">{paper.authors.map((author, index) => <>{author === profile.name ? <strong>{author}</strong> : author}{index < paper.authors.length - 1 ? ', ' : ''}</>)}</p>}
-    <div class="pub-details">
-      <p class="pub-meta"><span lang="en">{paper.venue} {paper.year}</span>{showStatus && paper.type === 'preprint' && <span class="pub-status">{t.technicalReport}</span>}</p>
+    <div class="pub-meta">
+      <span class="venue" lang="en">{paper.venue} {paper.year}</span>{showStatus && paper.type === 'preprint' && <span class="pub-type">{t.technicalReport}</span>}
       {!compact && paper.code && <a class="code-link" href={paper.code} target="_blank" rel="noopener noreferrer" aria-label={lang === 'zh-CN' ? `${paper.title} 的代码` : `Code for ${paper.title}`} title={t.code}><span aria-hidden="true" set:html={github} /><span>{t.code}</span></a>}
     </div>
-  </div>
 </article>

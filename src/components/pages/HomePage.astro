@@ -11,13 +11,14 @@ const t = copy[lang];
 const selected = publications.selected.map(id => publications.papers.find(paper => paper.id === id)!).sort((a,b) => b.year - a.year);
 ---
 <BaseLayout lang={lang}>
-  <section class="intro intro-profile" aria-label={t.about}>
-    <div class="intro-identity">
-      <h1 lang="en">{profile.name}</h1>
+  <section class="intro" id="about" aria-label={t.about} tabindex="-1">
+    <div class="intro-heading">
       <p class="affiliation">{t.affiliation}</p>
+      <h1 lang="en">{profile.name}</h1>
     </div>
-    <div class="intro-bio"><p>{t.interests}</p></div>
+    <p class="intro-copy">{t.interests}</p>
   </section>
+  <div class="home-sections">
   <section class="news-section" id="news" aria-labelledby="news-heading" tabindex="-1">
     <div class="section-heading"><h2 id="news-heading">News</h2></div>
     <ul class="news-list">
@@ -27,11 +28,12 @@ const selected = publications.selected.map(id => publications.papers.find(paper 
       </li>)}
     </ul>
   </section>
-  <section class="selected-research" aria-labelledby="selected-heading">
+  <section class="selected-section" aria-labelledby="selected-heading">
     <div class="section-heading">
       <h2 id="selected-heading">{t.selectedPublications}</h2>
-      <a class="all-publications" href={localizedPath('/publications/',lang)}>{t.allPublications}<span aria-hidden="true"> →</span></a>
+      <a class="more-link" href={localizedPath('/publications/',lang)}>{t.allPublications}<span aria-hidden="true"> →</span></a>
     </div>
     <div class="publication-list">{selected.map(paper => <Publication paper={paper} lang={lang} compact headingLevel={3} />)}</div>
   </section>
+  </div>
 </BaseLayout>

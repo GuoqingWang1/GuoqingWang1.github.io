@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogLanguageLinks from '../BlogLanguageLinks.astro';
 import { publishedPosts, postPath } from '../../lib/posts';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
@@ -9,6 +10,7 @@ const posts = await publishedPosts(lang);
 const categories = ['technical', 'reflection'] as const;
 ---
 <BaseLayout lang={lang} title={t.blog} active="blog" description={t.blogDescription}>
+  <header class="page-heading blog-heading"><h1>{t.blog}</h1><BlogLanguageLinks lang={lang} /></header>
   <section aria-label={t.blog}>
     {posts.length > 0 ? <>
       <div class="blog-layout">
@@ -28,7 +30,7 @@ const categories = ['technical', 'reflection'] as const;
       <div class="branch-overlay" aria-hidden="true"><svg><path d="" /></svg></div>
       <p class="hover-note" aria-hidden="true"></p>
       <footer class="blog-footer"><a href={localizedPath('/rss.xml', lang)}>{t.rss}</a></footer>
-    </> : <p class="blog-empty">{t.noPosts}</p>}
+    </> : <p class="blog-empty empty-state">{t.noPosts}</p>}
   </section>
 </BaseLayout>
 <script>

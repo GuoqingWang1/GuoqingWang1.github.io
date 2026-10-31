@@ -13,9 +13,9 @@ const sections = [
 ].filter(section => section.papers.length);
 ---
 <BaseLayout lang={lang} title={t.publications} active="publications" description={t.publicationsDescription}>
-  <h1 class="page-title">{t.publications}</h1>
+  <header class="page-heading"><h1>{t.publications}</h1></header>
   {sections.map(section => <section class="publication-section" aria-labelledby={section.id}>
-    <h2 class="publication-section-title" id={section.id}>{section.title}</h2>
+    <div class="section-heading"><h2 id={section.id}>{section.title}</h2></div>
     <div class="publication-list">{section.papers.map(paper => <Publication paper={paper} lang={lang} headingLevel={3} showStatus={false} />)}</div>
   </section>)}
 </BaseLayout>
