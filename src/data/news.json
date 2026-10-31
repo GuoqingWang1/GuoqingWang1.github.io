@@ -20,6 +20,7 @@
     "date": "2026-04-22",
     "label": "Apr 2026",
     "name": "DR-Venus",
+    "role": "core contributor",
     "text": "code and model checkpoints were released.",
     "url": "https://github.com/inclusionAI/DR-Venus"
   },
@@ -27,7 +28,7 @@
     "date": "2026-01-26",
     "label": "Jan 2026",
     "name": "IGPO",
-    "role": "co-first author",
+    "role": "first author",
     "text": "was accepted to ICLR 2026.",
     "url": "https://github.com/GuoqingWang1/IGPO"
   },

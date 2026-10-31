@@ -8,6 +8,6 @@ const { lang = 'en' } = Astro.props;
 const t = copy[lang];
 ---
 <div class="social-links profile-links" aria-label={t.profiles}>
-  <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><span class="profile-icon" aria-hidden="true" set:html={github} /><span class="profile-label">GitHub</span></a>
-  <a href={profile.scholar} target="_blank" rel="noopener noreferrer" aria-label={t.scholar} title={t.scholar}><span class="profile-icon" aria-hidden="true" set:html={scholar} /><span class="profile-label">{t.scholar}</span></a>
+  <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><span aria-hidden="true" set:html={github} /></a>
+  <a href={profile.scholar} target="_blank" rel="noopener noreferrer" aria-label={t.scholar} title={t.scholar}><span aria-hidden="true" set:html={scholar} /></a>
 </div>

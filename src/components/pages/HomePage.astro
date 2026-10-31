@@ -10,8 +10,8 @@ interface Props { lang: Locale }
 const { lang } = Astro.props;
 const t = copy[lang];
 const selected = publications.selected.map(id => publications.papers.find(paper => paper.id === id)!).sort((a,b) => b.year - a.year);
-const recentNews = news.slice(0, 4);
-const olderNews = news.slice(4);
+const recentNews = news.slice(0, 3);
+const olderNews = news.slice(3);
 ---
 <BaseLayout lang={lang}>
   <section class="intro" id="about" aria-label={t.about} tabindex="-1">
