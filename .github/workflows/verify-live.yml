@@ -67,6 +67,7 @@ jobs:
                   if 'news-item' in a.get('class', '').split(): self.news += 1
                   if tag == 'article' and 'publication' in a.get('class', '').split(): self.paper_languages.append(a.get('lang'))
                   if tag == 'html': self.lang = a.get('lang')
+                  if tag == 'script' and a.get('src'): self.assets.append(a['src'])
                   if tag == 'header' and 'site-header' in a.get('class', '').split():
                       self.in_header = True; self.header_lang = a.get('lang')
                   if tag == 'nav' and self.in_header and a.get('id') == 'main-navigation': self.in_navigation = True

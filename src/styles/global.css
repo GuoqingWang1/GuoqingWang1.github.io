@@ -142,6 +142,8 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
 .theme-e .article-toc { display: flex; flex-direction: column; gap: 9px; margin: 28px 0 36px; padding-left: 18px; border-left: 1px solid var(--line); font-size: 14px; line-height: 1.6; }
 .theme-e .article-toc a { color: var(--muted); overflow-wrap: anywhere; text-wrap: balance; }
 .theme-e .article-toc a:hover { color: var(--ink); text-decoration: underline; }
+.theme-e .article-toc a[aria-current="location"] { color: var(--ink); font-weight: 600; }
+.theme-e .header-language-switch.is-reading { position: fixed; top: 16px; right: max(16px, calc((100vw - 1080px) / 2)); z-index: 20; min-width: 44px; min-height: 36px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--bg); color: var(--ink); }
 .theme-e .article-body { font-family: var(--sans); font-size: 17px; line-height: 1.85; overflow-wrap: anywhere; }
 .theme-e .article-body p { margin: 0 0 1.2em; }
 .theme-e .article-body h2 { margin: 40px 0 18px; font-size: 26px; line-height: 1.35; font-weight: 600; letter-spacing: -.02em; scroll-margin-top: 24px; }
@@ -164,6 +166,15 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
 .theme-e .article-body :not(pre) > code { font-size: .84em; background: var(--surface); padding: 2px 5px; border-radius: 3px; }
 .theme-e .article-body pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; line-height: 1.75; overflow-wrap: normal; tab-size: 4; }
 .theme-e .article-body pre code { font-size: inherit; }
+.theme-e .code-block { position: relative; margin: 24px 0; min-width: 0; }
+.theme-e .article-body .code-block pre { margin: 0; padding-top: 46px; }
+.theme-e .code-copy { position: absolute; top: 6px; right: 8px; min-width: 48px; min-height: 32px; padding: 4px 8px; border: 0; border-radius: 3px; background: var(--bg); color: var(--muted); font: 12px/1.5 var(--sans); cursor: pointer; }
+.theme-e .code-copy:hover, .theme-e .code-copy:focus-visible { color: var(--ink); background: var(--surface); }
+.theme-e .code-copy-status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (hover: hover) and (pointer: fine) {
+  .theme-e .code-copy { opacity: 0; }
+  .theme-e .code-block:hover .code-copy, .theme-e .code-block:focus-within .code-copy, .theme-e .code-block[data-copy-state] .code-copy { opacity: 1; }
+}
 .theme-e .article-body table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 24px 0; font-family: var(--sans); font-size: 14px; line-height: 1.7; font-variant-numeric: tabular-nums; }
 .theme-e .article-body th, .theme-e .article-body td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
 .theme-e .article-body th { font-weight: 600; }
@@ -200,6 +211,8 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
   .theme-e .article-body h2 { font-size: 23px; }
   .theme-e .article-body h3 { font-size: 22px; }
   .theme-e .article-body pre { padding: 14px; font-size: 12px; }
+  .theme-e .code-copy { opacity: 1; min-height: 36px; }
+  .theme-e .article-body .code-block pre { padding-top: 48px; }
   .theme-e .plain-page { padding: 44px 0 64px; }
 }
 @media (max-width: 380px) {
@@ -217,5 +230,7 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
   .theme-e .blog-layout { display: block; max-width: none; }
   .theme-e .article-page { max-width: none; width: 100%; }
   .theme-e .article-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .theme-e .code-copy, .theme-e .code-copy-status, .theme-e .header-language-switch.is-reading { display: none !important; }
+  .theme-e .article-body .code-block pre { padding: 18px 20px; }
   .theme-e .article-header, .theme-e .article-body h2, .theme-e .article-body h3 { break-after: avoid; }
 }

@@ -20,7 +20,8 @@ if (otherVersion) {
 }
 ---
 <BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article articleTranslations={articleTranslations} articleAnchors={articleAnchors} published={post.data.pubDate} updated={post.data.updatedDate}>
-  <article data-translation-key={postKey(post)}>
+  <article data-translation-key={postKey(post)} data-reading-article
+    data-copy-label={t.copyCode} data-copied-label={t.codeCopied} data-copy-failed-label={t.copyFailed} data-copy-aria-label={t.copyCodeLabel}>
     <header class="article-header">
       <h1>{post.data.title}</h1>
       <div class="article-meta">
@@ -42,3 +43,15 @@ if (otherVersion) {
   </article>
   <a class="article-back" href={localizedPath('/blog/', lang)}>← {t.allPosts}</a>
 </BaseLayout>
+<script>
+  import { setupCodeCopy } from '../../scripts/code-copy';
+  import { setupArticleReading } from '../../scripts/article-reading';
+  const article = document.querySelector<HTMLElement>('[data-reading-article]');
+  if (article) {
+    setupCodeCopy(article.querySelector<HTMLElement>('.article-body')!, {
+      copy: article.dataset.copyLabel!, copied: article.dataset.copiedLabel!,
+      failed: article.dataset.copyFailedLabel!, copyLabel: article.dataset.copyAriaLabel!,
+    });
+    setupArticleReading(article);
+  }
+</script>

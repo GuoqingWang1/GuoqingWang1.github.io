@@ -116,15 +116,9 @@ const schema = article ? {
       <main id="main" class:list={['page', `${pageKind}-page`]} tabindex="-1"><slot /></main>
     </div>
     <script is:inline>
-      const languageLink = document.querySelector('.language-switch[data-equivalent], .language-switch[data-article-translation]');
+      const languageLink = document.querySelector('.language-switch[data-equivalent]');
       if (languageLink) {
-        const anchorMap = languageLink.dataset.anchorMap ? JSON.parse(languageLink.dataset.anchorMap) : null;
-        const preserveAnchor = () => {
-          if (!anchorMap) { languageLink.hash = location.hash; return; }
-          let key;
-          try { key = decodeURIComponent(location.hash.slice(1)); } catch { key = ''; }
-          languageLink.hash = Object.prototype.hasOwnProperty.call(anchorMap, key) ? anchorMap[key] : '';
-        };
+        const preserveAnchor = () => { languageLink.hash = location.hash; };
         preserveAnchor();
         window.addEventListener('hashchange', preserveAnchor);
       }
