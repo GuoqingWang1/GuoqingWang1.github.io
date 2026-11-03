@@ -77,6 +77,7 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
   transition: color .16s ease;
 }
 .theme-e .blog-entry:hover .post-title { color: #626262; text-decoration: underline; text-decoration-thickness: 1px; }
+.theme-e .post-summary { display: none; }
 .theme-e .filter-empty { padding: 16px 0; font-size: 16px; color: var(--muted); }
 .theme-e .blog-empty {
   margin: 0;
@@ -208,8 +209,9 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
   .theme-e .blog-layout { display: block; padding-top: 18px; max-width: none; }
   .theme-e .category-legend { position: static; flex-direction: row; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 24px; }
   .theme-e .category-button { padding: 8px 10px; font-size: 13px; }
-  .theme-e .blog-entry { grid-template-columns: 76px minmax(0, 1fr); gap: 14px; padding: 16px 0; }
+  .theme-e .blog-entry { grid-template-columns: 76px minmax(0, 1fr); gap: 6px 14px; padding: 16px 0; }
   .theme-e .blog-entry .post-title { font-size: 19px; }
+  .theme-e .post-summary { display: block; grid-column: 2; color: var(--muted); font: 13px/1.65 var(--sans); overflow-wrap: anywhere; }
   .theme-e .blog-empty { padding-top: 30px; padding-bottom: 100px; }
   .theme-e .article-page { padding: 44px 0 64px; }
   .theme-e .article-header h1 { font-size: 30px; }
@@ -223,6 +225,7 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
 }
 @media (max-width: 380px) {
   .theme-e .blog-entry { grid-template-columns: 1fr; gap: 5px; }
+  .theme-e .post-summary { grid-column: 1; }
   .theme-e .article-header h1 { font-size: 29px; }
 }
 @media (prefers-reduced-motion: reduce) {

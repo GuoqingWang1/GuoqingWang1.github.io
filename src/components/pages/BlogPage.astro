@@ -30,6 +30,7 @@ const categories = [
           {posts.map(post => <a class={`blog-entry ${post.data.category}`} data-post-key={postKey(post)} data-post-category={topicOf(post)} data-description={post.data.description} href={postPath(post)}>
             <time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
             <span class="post-title" lang={post.data.lang}>{post.data.title}</span>
+            <span class="post-summary" lang={post.data.lang}>{post.data.description}</span>
           </a>)}
           <p class="filter-empty" id="filtered-empty" hidden>{t.noCategoryPosts}</p>
         </div>
