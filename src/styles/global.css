@@ -185,6 +185,12 @@ summary:focus-visible, input:focus-visible, textarea:focus-visible {
 .theme-e .article-body hr { border: 0; border-top: 1px solid var(--line); margin: 36px 0; }
 .theme-e .article-back { display: inline-block; margin-top: 36px; font-size: 14px; color: var(--muted); }
 .theme-e .article-back:hover { color: var(--ink); text-decoration: underline; }
+.theme-e .related-notes { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); }
+.theme-e .related-notes h2 { margin: 0 0 12px; color: var(--muted); font: 500 13px/1.6 var(--sans); }
+.theme-e .related-notes ul { display: grid; gap: 8px; }
+.theme-e .related-notes a { display: inline-block; padding-block: 4px; font: 16px/1.6 var(--sans); text-decoration: underline; text-decoration-thickness: 1px; text-decoration-color: #b8b8b8; overflow-wrap: anywhere; }
+.theme-e .related-notes a:hover { text-decoration-color: currentColor; }
+.theme-e .related-notes + .article-back { margin-top: 24px; }
 .theme-e .plain-page { max-width: 720px; margin-inline: auto; padding: 64px 0 88px; }
 .theme-e .plain-page > .page-heading { padding: 0 0 32px; }
 .theme-e .plain-page > p { font: 24px/1.5 var(--serif); margin-bottom: 24px; }

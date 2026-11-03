@@ -1,0 +1,13 @@
+{
+  "grpo-equal-rewards-zero-advantage": ["causal-logprob-row-alignment", "test-rejection-stage"],
+  "logits-to-keep-zero": ["causal-logprob-row-alignment", "hybrid-cache-crop-state"],
+  "causal-logprob-row-alignment": ["logits-to-keep-zero", "hybrid-cache-crop-state"],
+  "hybrid-cache-crop-state": ["logits-to-keep-zero", "system-prompt-after-adapter"],
+  "cancelled-queued-work": ["judge-timing-in-rollout"],
+  "judge-timing-in-rollout": ["cancelled-queued-work"],
+  "resume-first-mixed-batch": ["numpy-string-dtype-width", "ray-arguments-before-bootstrap"],
+  "numpy-string-dtype-width": ["resume-first-mixed-batch", "test-rejection-stage"],
+  "ray-arguments-before-bootstrap": ["resume-first-mixed-batch"],
+  "test-rejection-stage": ["grpo-equal-rewards-zero-advantage", "resume-first-mixed-batch"],
+  "system-prompt-after-adapter": ["hybrid-cache-crop-state"]
+}

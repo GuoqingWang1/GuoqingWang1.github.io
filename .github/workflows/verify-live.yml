@@ -33,6 +33,8 @@ jobs:
               expected_news = json.load(source)
           with open('src/data/publications.json') as source:
               expected_publications = json.load(source)
+          with open('src/data/related-posts.json') as source:
+              related_post_keys = json.load(source)
           with open('src/data/share-images.json') as source:
               share_images = json.load(source)
           assert base.startswith('https://')
@@ -216,6 +218,11 @@ jobs:
               assert parser.rss_links == [home+'rss.xml'], path
               back = [a for a in parser.links if 'article-back' in a.get('class', '').split()]
               assert len(back) == 1 and back[0].get('href') == home+'blog/', path
+              related = [a for a in parser.links if a.get('data-related-key')]
+              expected_related = related_post_keys[parser.article_key]
+              assert 1 <= len(related) <= 2 and [a['data-related-key'] for a in related] == expected_related, path
+              assert [a['href'] for a in related] == [home+'blog/'+key+'/' for key in expected_related], path
+              assert all(a.get('lang') == lang for a in related), path
               for anchor in parser.links:
                   href = anchor.get('href', '')
                   if href.startswith('#') and len(href) > 1: assert unquote(href[1:]) in parser.ids, (path, href)

@@ -1,7 +1,7 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { readingMinutes, formatPostDate, postKey, postPath, translationsForPost } from '../../lib/posts';
+import { readingMinutes, formatPostDate, postKey, postPath, translationsForPost, relatedPosts } from '../../lib/posts';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { post: CollectionEntry<'blog'> }
 const { post } = Astro.props;
@@ -10,6 +10,7 @@ const t = copy[lang];
 const { Content, headings } = await render(post);
 const toc = headings.filter(h => h.depth === 2);
 const versions = await translationsForPost(post);
+const related = await relatedPosts(post);
 const articleTranslations = Object.fromEntries(versions.map(version => [version.data.lang, postPath(version)])) as Partial<Record<Locale, string>>;
 const otherVersion = versions.find(version => version.data.lang !== lang);
 let articleAnchors: Record<string, string> = {};
@@ -41,6 +42,10 @@ if (otherVersion) {
       <div class="article-body"><Content /></div>
     </div>
   </article>
+  {related.length > 0 && <nav class="related-notes" aria-label={t.relatedNotes}>
+    <h2>{t.relatedNotes}</h2>
+    <ul>{related.map(note => <li><a href={postPath(note)} lang={lang} data-related-key={postKey(note)}>{note.data.title}</a></li>)}</ul>
+  </nav>}
   <a class="article-back" href={localizedPath('/blog/', lang)}>← {t.allPosts}</a>
 </BaseLayout>
 <script>

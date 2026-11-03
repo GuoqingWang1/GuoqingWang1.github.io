@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { localizedPath, type Locale } from './i18n';
+import relatedPostKeys from '../data/related-posts.json';
 const publicationDateFormat = new Intl.DateTimeFormat('en', {
   timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
 });
@@ -27,6 +28,11 @@ export function postKey(post: RoutablePost) {
 }
 export async function translationsForPost(post: CollectionEntry<'blog'>) {
   return (await publishedPosts()).filter(candidate => postKey(candidate) === postKey(post));
+}
+export async function relatedPosts(post: CollectionEntry<'blog'>) {
+  const keys = (relatedPostKeys as Record<string, string[]>)[postKey(post)] ?? [];
+  const available = new Map((await publishedPosts(post.data.lang)).map(candidate => [postKey(candidate), candidate]));
+  return keys.filter(key => key !== postKey(post)).map(key => available.get(key)).filter((candidate): candidate is CollectionEntry<'blog'> => Boolean(candidate));
 }
 export function readingMinutes(body = '') {
   const cjk = (body.match(/[\u3400-\u9fff]/g) || []).length;

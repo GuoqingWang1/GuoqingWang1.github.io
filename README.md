@@ -49,6 +49,8 @@ Publish and review both versions together, preserving article dates, category, t
 
 Article scripts progressively add a localized copy button to code blocks, preserving code text and indentation. Copy uses the browser Clipboard API after a click; failures show a manual-copy message. The current H2 is highlighted as readers scroll, and the article language link follows that section's translation without changing browser history. The same language control stays reachable after the main header scrolls out of view. Without JavaScript, code, table-of-contents links and the static same-article language link remain usable.
 
+Each article ends with one or two curated related-note links from `src/data/related-posts.json`. The map uses shared article keys; titles and destinations come from the published version in the current language. These links appear after the body, outside the article TOC and translated-section map.
+
 An explicitly authorized public review draft uses `draft: false` with `review: true`; the latter displays a small Draft/初稿 label and does not override draft or future-date filtering. Dates are displayed in Asia/Shanghai, while metadata and RSS retain the publication instant. Use a timezone-qualified `pubDate` timestamp when publishing immediately near a date boundary.
 
 Only articles with `draft: false` and a publication date no later than build time appear on the site. The default is draft. **This flag does not make a file private in a public GitHub repository.** Keep private notes and unfinished research outside this repository; copy only publication-approved material here. The template is an example of structure, not an article.

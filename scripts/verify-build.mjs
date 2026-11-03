@@ -7,6 +7,7 @@ const root = path.resolve('dist');
 const origin = new URL(process.env.SITE_URL || 'https://guoqingwang1.github.io').origin;
 const news = JSON.parse(await readFile('src/data/news.json', 'utf8'));
 const publications = JSON.parse(await readFile('src/data/publications.json', 'utf8'));
+const relatedPostKeys = JSON.parse(await readFile('src/data/related-posts.json', 'utf8'));
 const shareImages = JSON.parse(await readFile('src/data/share-images.json', 'utf8'));
 const staticPages = [
   ['index.html', '/', 'en'],
@@ -204,8 +205,8 @@ for (const filename of output) {
         const key = articleEnRoute.split('/')[2];
         assert.equal(tags(html, 'article')[0]['data-translation-key'], key, `Wrong shared article key: ${relative}`);
         assert.equal(tags(otherHtml, 'article')[0]['data-translation-key'], key, `Counterpart belongs to a different article: ${relative}`);
-        const sourceHeadings = tags(html, 'h2').map(heading => heading.id);
-        const targetHeadings = tags(otherHtml, 'h2').map(heading => heading.id);
+        const sourceHeadings = tags(html, 'h2').filter(heading => heading.id).map(heading => heading.id);
+        const targetHeadings = tags(otherHtml, 'h2').filter(heading => heading.id).map(heading => heading.id);
         const anchorMap = JSON.parse(switches[0]['data-anchor-map']);
         assert.deepEqual(Object.keys(anchorMap), sourceHeadings, `Missing source section mapping: ${relative}`);
         assert.deepEqual(Object.values(anchorMap), targetHeadings, `Wrong translated section mapping: ${relative}`);
@@ -227,6 +228,22 @@ for (const filename of output) {
       }
     } else {
       assert.equal(alternates.length, 0, `Page advertises an unprovided translation: ${relative}`);
+    }
+  }
+  if (isArticle) {
+    const key = articleEnRoute.split('/')[2];
+    const expectedKeys = relatedPostKeys[key];
+    assert(expectedKeys?.length >= 1 && expectedKeys.length <= 2, `Expected one or two related notes: ${key}`);
+    assert(new Set(expectedKeys).size === expectedKeys.length && !expectedKeys.includes(key), `Duplicate/self related note: ${key}`);
+    const relatedLinks = anchors.filter(anchor => anchor['data-related-key']);
+    assert.deepEqual(relatedLinks.map(anchor => anchor['data-related-key']), expectedKeys, `Wrong related-note order: ${relative}`);
+    for (const anchor of relatedLinks) {
+      const route = `${lang === 'zh-CN' ? '/zh' : ''}/blog/${anchor['data-related-key']}/`;
+      assert.equal(anchor.href, route, `Related note must stay in the same language: ${relative}`);
+      assert.equal(anchor.lang, lang, `Related-note title language: ${relative}`);
+      const target = await readFile(path.join(root, route.slice(1), 'index.html'), 'utf8');
+      const title = decode(target.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1].replace(/<[^>]*>/g, '') || '').trim();
+      assert.equal(anchor.text, title, `Related-note title differs from its target: ${relative}`);
     }
   }
   if (['blog/index.html', 'zh/blog/index.html'].includes(relative)) {
@@ -264,6 +281,7 @@ for (const [en, zh] of [['index.html', 'zh/index.html'], ['publications/index.ht
   assert.deepEqual(renderedPapers.get(zh), renderedPapers.get(en), `Paper order and complete English records must match across UI languages: ${en}`);
 }
 assert.deepEqual(blogCatalogs.get('blog/index.html'), blogCatalogs.get('zh/blog/index.html'), 'Both Blog languages must show the same articles in the same order');
+assert.deepEqual(Object.keys(relatedPostKeys).sort(), [...blogCatalogs.get('blog/index.html')].sort(), 'Related-note map must cover the published catalog exactly');
 assert.equal(articleCount, 2 * blogCatalogs.get('blog/index.html').length, 'Every public article must have one English and one Chinese version');
 const robots = await readFile(path.join(root, 'robots.txt'), 'utf8');
 assert(robots.includes(`${origin}/sitemap.xml`));
