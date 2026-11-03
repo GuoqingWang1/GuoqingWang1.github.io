@@ -9,5 +9,6 @@
   "numpy-string-dtype-width": ["resume-first-mixed-batch", "test-rejection-stage"],
   "ray-arguments-before-bootstrap": ["resume-first-mixed-batch"],
   "test-rejection-stage": ["grpo-equal-rewards-zero-advantage", "resume-first-mixed-batch"],
-  "system-prompt-after-adapter": ["hybrid-cache-crop-state"]
+  "system-prompt-after-adapter": ["hybrid-cache-crop-state"],
+  "agentic-rl-research-and-systems": ["grpo-equal-rewards-zero-advantage", "cancelled-queued-work"]
 }
