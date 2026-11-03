@@ -50,6 +50,7 @@ jobs:
                   assert response.status == 200 and response.url.startswith(base), (url, response.url)
                   return {'url': url, 'status': response.status, 'final_url': response.url,
                           'bytes': len(body), 'content_type': response.headers.get_content_type(),
+                          'sha256': hashlib.sha256(body).hexdigest(),
                           'redirects': handler.chain, 'body': body}
           class Page(HTMLParser):
               def __init__(self):
