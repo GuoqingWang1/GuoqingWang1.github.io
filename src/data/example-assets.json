@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/examples/README.md",
+    "sha256": "96c0a375d5c46eb454ab91758610f8861b50de701a1ceae4ebdeb49554161b2b"
+  },
+  {
+    "path": "/examples/cancelled-queued-work.py",
+    "sha256": "0e195a02a0a799e1dfe3d6a05b60d6ead2c1884a26df4d7ae666eb849d57e757"
+  },
+  {
+    "path": "/examples/cpu-verification.json",
+    "sha256": "90153a0c04eb12e4283bac65d6242ae1c1eb1fd5fd2fdc364ab980947d9c05f3"
+  },
+  {
+    "path": "/examples/grpo-equal-rewards-zero-advantage.py",
+    "sha256": "d071ead117a3145af00abcde2731e4ca8053bdcd9c211e5d2cc00bb64a2218ef"
+  },
+  {
+    "path": "/examples/numpy-string-dtype-width.py",
+    "sha256": "5ebd5c772bac258f759c11ad478d3a0440aa97b204b2b399a06bc2498d24609d"
+  },
+  {
+    "path": "/examples/requirements-cpu.txt",
+    "sha256": "c876f8875a9db89fce64a2fa29a76a6c8c6b3f58ef22c9a3c1dd2791adcee886"
+  }
+]

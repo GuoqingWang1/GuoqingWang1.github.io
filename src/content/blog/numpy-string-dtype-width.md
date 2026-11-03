@@ -7,7 +7,7 @@ translationKey: numpy-string-dtype-width
 topic: training
 tags: [NumPy, 数据类型, 合批]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T18:45:02+08:00"
 order: 5
 draft: false
 review: true
@@ -105,3 +105,18 @@ assert b.dtype == np.dtype("U5") and b.tolist() == ["retry"]
 把所有字段都改成 `object`，会让字符串、数值和误混入的对象具有同一种 dtype，单靠 dtype 判等便难以区分。对象数组可以是明确的数据设计，但不适合作为躲开 schema 检查的统一补丁。
 
 本文的范围是定宽 `U`／`S`。NumPy 2.0 起提供的变长 `StringDType` 使用另一种表示，需要单独考虑。把“类型不兼容”和“同类字符串容量不同”分开，才能同时保住合法数据和有效检查。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/numpy-string-dtype-width.py)。正文的第二、三段代码沿用前面定义的 `np`、`a` 和 `b`；完整脚本把它们串起来，并补充输入保护和拒绝用例，可以作为单个文件运行。
+
+2026-11-03 在 macOS arm64 的 CPU 上，使用 **Python 3.11.11、NumPy 2.2.4** 实跑通过。将脚本保存到 Python 3.11 的虚拟环境工作目录后运行：
+
+```sh
+python -m pip install numpy==2.2.4
+python numpy-string-dtype-width.py
+```
+
+脚本输出 JSON，本次 **20 项检查全部通过**：`U2` 与 `U5` 拼接后保留 `ok`、`retry`；缩窄到 `U2` 得到 `re`，而 `safe` 缩窄被拒绝；200 个码点的 Unicode 字符串完整保留。全部 18 份原输入的 dtype、形状和内容均未改变。
+
+结果包含同宽、字节串、空数组成员，以及空列表、混合种类和非法形状等边界，见[实测记录](/examples/cpu-verification.json)。这是对合成字符串示例的检查，不是对训练框架合批入口的重跑。

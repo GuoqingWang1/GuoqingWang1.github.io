@@ -7,7 +7,7 @@ translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:19:23+08:00"
+updatedDate: "2026-11-03T18:45:02+08:00"
 order: 3
 draft: false
 review: true
@@ -47,7 +47,8 @@ def case(cancel_work):
 
     def work_a():
         a_entered.set()
-        release_a.wait()
+        if not release_a.wait(timeout=15):
+            raise TimeoutError("A was not released")
 
     def work_b():
         b_called.set()
@@ -65,10 +66,13 @@ def case(cancel_work):
             fb = pool.submit(work_b)
             fb.add_done_callback(publish)
             assert not fb.running()
-            assert fa.cancel() is False
-            assert result_channel.cancel() is True
+            a_cancelled = fa.cancel()
+            channel_cancelled = result_channel.cancel()
+            assert a_cancelled is False
+            assert channel_cancelled is True
             if cancel_work:
-                assert fb.cancel() is True
+                b_cancelled = fb.cancel()
+                assert b_cancelled is True
             assert not b_called.is_set()
         finally:
             release_a.set()
@@ -76,11 +80,15 @@ def case(cancel_work):
     assert fa.done() and fb.done()
     return b_called.is_set()
 
-assert case(False) is True   # 只取消结果通道，B 仍执行
-assert case(True) is False  # 取消尚未开始的工作，B 不执行
+result_only = case(False)
+cancel_pending = case(True)
+assert result_only is True   # 只取消结果通道，B 仍执行
+assert cancel_pending is False  # 取消尚未开始的工作，B 不执行
 ```
 
-`a_entered` 确认 A 已开始；`release_a` 决定它何时结束。[`Event.wait()`](https://docs.python.org/3/library/threading.html#event-objects) 等待的是明确状态，五秒只是防挂起的上限，不是“睡一会儿，估计线程已经启动”。检查取消时，A 仍占着唯一 worker，因此 B 不可能抢先运行。
+`a_entered` 确认 A 已开始；`release_a` 决定它何时结束。[`Event.wait()`](https://docs.python.org/3/library/threading.html#event-objects) 等待的是明确状态，5 秒的启动确认和 15 秒的放行等待都是失败上限，不是用睡眠猜测线程进度。检查取消时，A 仍占着唯一 worker，因此 B 不可能抢先运行。
+
+这里把操作与断言分开：先调用 `cancel()` 或 `case()`，再检查返回值。[Python 的 `-O` 会移除 `assert` 语句](https://docs.python.org/3/reference/simple_stmts.html#the-assert-statement)，所以 `assert fb.cancel()` 会连取消操作也一起删除。文末的完整脚本使用显式检查，普通运行和 `-O` 下都会执行并核验这两种情况。
 
 退出线程池的 `with` 块会等待工作收尾，所以末尾检查 `b_called` 时，观察窗口已经闭合。两条断言表达的区别是：取消结果通道只让迟到结果被丢弃；取消 B 的工作 Future 才阻止了这次排队调用。示例只覆盖成功函数与取消关系，省略了生产调度器的异常转发和重试逻辑。
 
@@ -101,3 +109,24 @@ assert case(True) is False  # 取消尚未开始的工作，B 不执行
 自建并发限制时，容量必须由执行器中的真实工作持有，直到函数退出或收尾完成。外层协程先返回就归还名额，会让下一项工作进来，而旧工作还在执行。线程池本身管理 worker 是否忙碌；额外加的 semaphore 或 permit 也不能提前记作空闲。
 
 检查取消是否正确，至少要同时看排队工作有没有启动、运行工作何时结束，以及其他 job 能否继续完成。这仍只覆盖进程内关系：本地取消异常并不能证明代理、HTTP 连接和远端计算都已经停止。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/cancelled-queued-work.py)。它只需要 Python 标准库，补充了取消返回值、Future 终态和回调完成情况的显式检查。2026-11-03 使用 **Python 3.11.11、macOS arm64 CPU** 分别运行：
+
+```sh
+python cancelled-queued-work.py
+python -O cancelled-queued-work.py
+```
+
+两次均退出为 0，**两个受控 case 共 42 项检查全部通过，结果一致**：
+
+| 观察项 | 只取消结果通道 | 额外取消排队中的 B |
+|---|---|---|
+| 取消运行中 A 的返回值 | `False` | `False` |
+| 取消结果通道的返回值 | `True` | `True` |
+| B 的函数是否执行 | 是，返回 `"B"` | 否，Future 为 cancelled |
+| 结果通道最终状态 | cancelled | cancelled |
+| 回调错误 | 无 | 无 |
+
+完整 JSON 见[实测记录](/examples/cpu-verification.json)。这不是压力测试，也没有验证 asyncio、HTTP 或远端取消。回调检查覆盖的是“跳过已取消结果通道”这条路径，不代表并发写入结果的竞态已经解决；等待超时也不能强制停止任意阻塞线程。

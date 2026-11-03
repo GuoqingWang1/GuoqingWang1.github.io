@@ -6,7 +6,7 @@ topic: model
 lang: en
 tags: [GRPO, PyTorch, 数值稳定性]
 pubDate: "2026-11-01T05:12:52+08:00"
-updatedDate: "2026-11-01T06:52:26+08:00"
+updatedDate: "2026-11-03T18:45:02+08:00"
 draft: false
 review: true
 translationKey: grpo-equal-rewards-zero-advantage
@@ -164,3 +164,28 @@ This single-group function also cannot tell that a group intended to contain eig
 In subsequent validation of an actual training run, the equal-reward groups that were checked had both `advantages` and `returns` restored to exact zero. This zeroes the group-relative advantage component. Other loss terms such as KL, or optimizer state, may still affect parameter updates; it does not require the entire training step to make no update.
 
 For this kind of normalization code, two complementary requirements are worth keeping in the test suite: **do not invent a relative advantage when there is no within-group difference, and do not casually erase a small difference that is actually present.**
+
+## Run the example locally
+
+[Download the complete script](/examples/grpo-equal-rewards-zero-advantage.py). The three Python blocks above are meant to run in order: the later functions and checks reuse the earlier `torch` import. The complete script includes every definition and uses explicit checks. It creates only small CPU tensors and loads no model.
+
+It was run on 2026-11-03 with **Python 3.11.11, PyTorch 2.6.0, and one CPU thread on macOS arm64**. With a Python 3.11 virtual environment active, install the CPU build for your platform and save the script:
+
+```sh
+python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python grpo-equal-rewards-zero-advantage.py
+```
+
+**All 21 checks passed, but the raw formula already returned zero: this run did not reproduce the historical nonzero residual.** The measured values were:
+
+| This local CPU calculation | Observed value |
+|---|---:|
+| Each FP32 reward | `-0.10000000149011612` |
+| FP32 mean | `-0.10000000149011612` |
+| Numerator residual and standard deviation | Both `0` |
+| Raw and corrected advantages | `0` for all eight members |
+| Difference created by `nextafter` | `7.450580596923828e-9` |
+
+The same stored values converted to FP64 also produced zero raw advantages. Nearly equal and ordinary mixed groups retained the raw formula's output. NaN/Inf, single-member, empty, integer, and non-vector inputs were rejected according to the script's rules. See the [recorded output](/examples/cpu-verification.json).
+
+This establishes that the example runs in this environment and that the exact-zero branch and these input checks behave as intended. It does not replay the historical training environment, nor does zero raw advantage here establish that every reduction path is free of residuals.

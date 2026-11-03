@@ -1,0 +1,473 @@
+{
+  "verified_on": "2026-11-03",
+  "environment": {
+    "python": "3.11.11",
+    "system": "macOS",
+    "architecture": "arm64",
+    "device": "CPU",
+    "numpy": "2.2.4",
+    "torch": "2.6.0",
+    "torch_threads": 1
+  },
+  "scope": "Synthetic standalone examples, not training or service validation.",
+  "results": {
+    "numpy-string-dtype-width": {
+      "python_version": "3.11.11",
+      "numpy_version": "2.2.4",
+      "check_count": 20,
+      "checks": [
+        {
+          "name": "inferred_U2_and_U5",
+          "passed": true,
+          "observed": {
+            "dtypes": [
+              "<U2",
+              "<U5"
+            ]
+          }
+        },
+        {
+          "name": "strict_dtype_equality_would_reject",
+          "passed": true
+        },
+        {
+          "name": "numpy_concatenation_promotes_without_truncation",
+          "passed": true,
+          "observed": {
+            "dtype": "<U5",
+            "values": [
+              "ok",
+              "retry"
+            ]
+          }
+        },
+        {
+          "name": "default_unsafe_cast_truncates",
+          "passed": true,
+          "observed": {
+            "dtype": "<U2",
+            "values": [
+              "re"
+            ]
+          }
+        },
+        {
+          "name": "U5_to_U2_is_not_safe",
+          "passed": true,
+          "observed": false
+        },
+        {
+          "name": "safe_narrowing_raises",
+          "passed": true,
+          "observed": {
+            "exception": "TypeError"
+          }
+        },
+        {
+          "name": "helper_aligns_to_U5",
+          "passed": true,
+          "observed": {
+            "dtypes": [
+              "<U5",
+              "<U5"
+            ]
+          }
+        },
+        {
+          "name": "safe_widening_preserves_content_and_order",
+          "passed": true,
+          "observed": {
+            "values": [
+              "ok",
+              "retry"
+            ]
+          }
+        },
+        {
+          "name": "same_width_unicode",
+          "passed": true
+        },
+        {
+          "name": "S2_and_S5_widen_within_bytes",
+          "passed": true,
+          "observed": {
+            "dtype": "|S5"
+          }
+        },
+        {
+          "name": "long_unicode_is_preserved_in_code_point_capacity",
+          "passed": true,
+          "observed": {
+            "dtype": "<U200",
+            "long_value_code_points": 200
+          }
+        },
+        {
+          "name": "empty_1D_member_is_allowed",
+          "passed": true
+        },
+        {
+          "name": "all_empty_1D_members_are_allowed",
+          "passed": true
+        },
+        {
+          "name": "empty_list_is_rejected",
+          "passed": true,
+          "observed": {
+            "exception": "ValueError"
+          }
+        },
+        {
+          "name": "mixed_U_S_is_rejected",
+          "passed": true,
+          "observed": {
+            "exception": "TypeError"
+          }
+        },
+        {
+          "name": "numeric_dtype_is_rejected",
+          "passed": true,
+          "observed": {
+            "exception": "TypeError"
+          }
+        },
+        {
+          "name": "object_dtype_is_rejected",
+          "passed": true,
+          "observed": {
+            "exception": "TypeError"
+          }
+        },
+        {
+          "name": "2D_shape_is_rejected",
+          "passed": true,
+          "observed": {
+            "exception": "ValueError"
+          }
+        },
+        {
+          "name": "0D_shape_is_rejected",
+          "passed": true,
+          "observed": {
+            "exception": "ValueError"
+          }
+        },
+        {
+          "name": "all_original_inputs_unchanged",
+          "passed": true,
+          "observed": {
+            "arrays_checked": 18,
+            "changed": []
+          }
+        }
+      ]
+    },
+    "cancelled-queued-work": {
+      "python_version": "3.11.11",
+      "cases": [
+        {
+          "name": "result_channel_only",
+          "cancel_work": false,
+          "cancel_returns": {
+            "running_a": false,
+            "result_channel": true,
+            "pending_b": null
+          },
+          "callback": {
+            "called": true,
+            "skipped_done_channel": true,
+            "errors": []
+          },
+          "errors": [],
+          "before_cancel": {
+            "a": {
+              "running": true,
+              "done": false,
+              "cancelled": false
+            },
+            "b": {
+              "running": false,
+              "done": false,
+              "cancelled": false
+            },
+            "result_channel": {
+              "running": false,
+              "done": false,
+              "cancelled": false
+            }
+          },
+          "before_release": {
+            "a": {
+              "running": true,
+              "done": false,
+              "cancelled": false
+            },
+            "b": {
+              "running": false,
+              "done": false,
+              "cancelled": false
+            },
+            "result_channel": {
+              "running": false,
+              "done": true,
+              "cancelled": true
+            },
+            "b_called": false
+          },
+          "results": {
+            "a": {
+              "status": "returned",
+              "value": "A"
+            },
+            "b": {
+              "status": "returned",
+              "value": "B"
+            },
+            "result_channel": {
+              "status": "cancelled"
+            }
+          },
+          "final": {
+            "a": {
+              "running": false,
+              "done": true,
+              "cancelled": false
+            },
+            "b": {
+              "running": false,
+              "done": true,
+              "cancelled": false
+            },
+            "result_channel": {
+              "running": false,
+              "done": true,
+              "cancelled": true
+            },
+            "a_exited": true,
+            "b_called": true
+          },
+          "return_value": true
+        },
+        {
+          "name": "cancel_pending_work",
+          "cancel_work": true,
+          "cancel_returns": {
+            "running_a": false,
+            "result_channel": true,
+            "pending_b": true
+          },
+          "callback": {
+            "called": true,
+            "skipped_done_channel": true,
+            "errors": []
+          },
+          "errors": [],
+          "before_cancel": {
+            "a": {
+              "running": true,
+              "done": false,
+              "cancelled": false
+            },
+            "b": {
+              "running": false,
+              "done": false,
+              "cancelled": false
+            },
+            "result_channel": {
+              "running": false,
+              "done": false,
+              "cancelled": false
+            }
+          },
+          "before_release": {
+            "a": {
+              "running": true,
+              "done": false,
+              "cancelled": false
+            },
+            "b": {
+              "running": false,
+              "done": true,
+              "cancelled": true
+            },
+            "result_channel": {
+              "running": false,
+              "done": true,
+              "cancelled": true
+            },
+            "b_called": false
+          },
+          "results": {
+            "a": {
+              "status": "returned",
+              "value": "A"
+            },
+            "b": {
+              "status": "cancelled"
+            },
+            "result_channel": {
+              "status": "cancelled"
+            }
+          },
+          "final": {
+            "a": {
+              "running": false,
+              "done": true,
+              "cancelled": false
+            },
+            "b": {
+              "running": false,
+              "done": true,
+              "cancelled": true
+            },
+            "result_channel": {
+              "running": false,
+              "done": true,
+              "cancelled": true
+            },
+            "a_exited": true,
+            "b_called": false
+          },
+          "return_value": false
+        }
+      ],
+      "checks": {
+        "result_channel_only.a_started": true,
+        "result_channel_only.a_running_before_cancel": true,
+        "result_channel_only.b_pending_before_cancel": true,
+        "result_channel_only.channel_pending_before_cancel": true,
+        "result_channel_only.running_a_cancel_rejected": true,
+        "result_channel_only.channel_cancel_accepted": true,
+        "result_channel_only.pending_b_cancel_result": true,
+        "result_channel_only.channel_cancelled": true,
+        "result_channel_only.b_cancelled_before_release": true,
+        "result_channel_only.a_still_running": true,
+        "result_channel_only.b_not_called_before_release": true,
+        "result_channel_only.callback_finished_in_time": true,
+        "result_channel_only.a_finished_normally": true,
+        "result_channel_only.b_terminal": true,
+        "result_channel_only.b_final_cancellation": true,
+        "result_channel_only.b_result": true,
+        "result_channel_only.b_execution_matches_case": true,
+        "result_channel_only.channel_stays_cancelled": true,
+        "result_channel_only.callback_skipped_cancelled_channel": true,
+        "result_channel_only.no_callback_errors": true,
+        "result_channel_only.no_case_errors": true,
+        "cancel_pending_work.a_started": true,
+        "cancel_pending_work.a_running_before_cancel": true,
+        "cancel_pending_work.b_pending_before_cancel": true,
+        "cancel_pending_work.channel_pending_before_cancel": true,
+        "cancel_pending_work.running_a_cancel_rejected": true,
+        "cancel_pending_work.channel_cancel_accepted": true,
+        "cancel_pending_work.pending_b_cancel_result": true,
+        "cancel_pending_work.channel_cancelled": true,
+        "cancel_pending_work.b_cancelled_before_release": true,
+        "cancel_pending_work.a_still_running": true,
+        "cancel_pending_work.b_not_called_before_release": true,
+        "cancel_pending_work.callback_finished_in_time": true,
+        "cancel_pending_work.a_finished_normally": true,
+        "cancel_pending_work.b_terminal": true,
+        "cancel_pending_work.b_final_cancellation": true,
+        "cancel_pending_work.b_result": true,
+        "cancel_pending_work.b_execution_matches_case": true,
+        "cancel_pending_work.channel_stays_cancelled": true,
+        "cancel_pending_work.callback_skipped_cancelled_channel": true,
+        "cancel_pending_work.no_callback_errors": true,
+        "cancel_pending_work.no_case_errors": true
+      },
+      "check_count": 42
+    },
+    "grpo-equal-rewards-zero-advantage": {
+      "example": "grpo-equal-rewards-zero-advantage",
+      "python_version": "3.11.11",
+      "torch_version": "2.6.0",
+      "device": "cpu",
+      "dtype": "float32",
+      "torch_threads": 1,
+      "std_correction": 1,
+      "epsilon": 1e-06,
+      "raw_fp32": {
+        "dtype": "torch.float32",
+        "stored_reward": -0.10000000149011612,
+        "mean": -0.10000000149011612,
+        "residual": 0.0,
+        "std": 0.0,
+        "raw_advantages": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "same_stored_values_in_fp64": {
+        "dtype": "torch.float64",
+        "stored_reward": -0.10000000149011612,
+        "mean": -0.10000000149011612,
+        "residual": 0.0,
+        "std": 0.0,
+        "raw_advantages": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "corrected_advantages": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nextafter_gap": 7.450580596923828e-09,
+      "check_count": 21,
+      "checks": [
+        "stored_rewards_exactly_equal",
+        "equal_group_exact_zero",
+        "equal_input_unchanged",
+        "dtype_and_device_preserved",
+        "near_group_not_exactly_equal",
+        "near_group_within_allclose",
+        "near_group_preserves_raw_result",
+        "near_input_unchanged",
+        "mixed_group_preserves_raw_result",
+        "mixed_input_unchanged",
+        "constant_-1.0_exact_zero",
+        "constant_0.0_exact_zero",
+        "constant_0.9_exact_zero",
+        "constant_1.0_exact_zero",
+        "reject_nan",
+        "reject_positive_inf",
+        "reject_negative_inf",
+        "reject_single_member",
+        "reject_empty_group",
+        "reject_integer_rewards",
+        "reject_non_vector"
+      ],
+      "status": "passed"
+    }
+  },
+  "cancellation_optimized_mode": {
+    "flags": [
+      "-O"
+    ],
+    "exit_code": 0,
+    "same_results_as_normal": true
+  },
+  "script_sha256": {
+    "numpy-string-dtype-width.py": "5ebd5c772bac258f759c11ad478d3a0440aa97b204b2b399a06bc2498d24609d",
+    "grpo-equal-rewards-zero-advantage.py": "d071ead117a3145af00abcde2731e4ca8053bdcd9c211e5d2cc00bb64a2218ef",
+    "cancelled-queued-work.py": "0e195a02a0a799e1dfe3d6a05b60d6ead2c1884a26df4d7ae666eb849d57e757"
+  }
+}

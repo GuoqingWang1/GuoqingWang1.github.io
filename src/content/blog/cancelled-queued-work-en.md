@@ -7,7 +7,7 @@ translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:19:23+08:00"
+updatedDate: "2026-11-03T18:45:02+08:00"
 order: 3
 draft: false
 review: true
@@ -47,7 +47,8 @@ def case(cancel_work):
 
     def work_a():
         a_entered.set()
-        release_a.wait()
+        if not release_a.wait(timeout=15):
+            raise TimeoutError("A was not released")
 
     def work_b():
         b_called.set()
@@ -65,10 +66,13 @@ def case(cancel_work):
             fb = pool.submit(work_b)
             fb.add_done_callback(publish)
             assert not fb.running()
-            assert fa.cancel() is False
-            assert result_channel.cancel() is True
+            a_cancelled = fa.cancel()
+            channel_cancelled = result_channel.cancel()
+            assert a_cancelled is False
+            assert channel_cancelled is True
             if cancel_work:
-                assert fb.cancel() is True
+                b_cancelled = fb.cancel()
+                assert b_cancelled is True
             assert not b_called.is_set()
         finally:
             release_a.set()
@@ -76,11 +80,15 @@ def case(cancel_work):
     assert fa.done() and fb.done()
     return b_called.is_set()
 
-assert case(False) is True   # Cancelling only the result channel still lets B run
-assert case(True) is False  # Cancelling the pending work prevents B from running
+result_only = case(False)
+cancel_pending = case(True)
+assert result_only is True   # Cancelling only the result channel still lets B run
+assert cancel_pending is False  # Cancelling the pending work prevents B from running
 ```
 
-`a_entered` confirms that A has started; `release_a` controls when it can finish. [`Event.wait()`](https://docs.python.org/3/library/threading.html#event-objects) waits for an explicit state. The five-second timeout only guards against a hung wait; synchronization does not depend on sleeping for a while and guessing that the thread has started. When cancellation is checked, A still occupies the only worker, so B cannot race ahead and start running.
+`a_entered` confirms that A has started; `release_a` controls when it can finish. [`Event.wait()`](https://docs.python.org/3/library/threading.html#event-objects) waits for an explicit state. The five-second startup check and fifteen-second release wait are failure bounds, not sleeps used to guess thread progress. When cancellation is checked, A still occupies the only worker, so B cannot race ahead and start running.
+
+Keep operations separate from assertions: call `cancel()` or `case()` first, then check the return value. [Python's `-O` removes `assert` statements](https://docs.python.org/3/reference/simple_stmts.html#the-assert-statement), so `assert fb.cancel()` also removes the cancellation itself. The complete script linked at the end uses explicit checks, so both cases run and are verified with or without `-O`.
 
 Leaving the pool's `with` block waits for the work to finish, so the observation window is closed when `b_called` is checked at the end. The two assertions express the distinction: cancelling the result channel merely discards the late result; cancelling B's work Future prevents that queued invocation. The example covers successful functions and cancellation, omitting the exception forwarding and retry logic of a production dispatcher.
 
@@ -101,3 +109,24 @@ Conversely, `False` alone does not prove that work is still running: completed w
 For a custom concurrency limit, capacity must remain owned by the actual work in the executor until the function or its cleanup finishes. Returning the slot as soon as the outer coroutine exits allows new work to enter while the old work is still executing. The thread pool manages whether its workers are busy; any additional semaphore or permit must not be marked available prematurely either.
 
 To check cancellation, observe whether queued work starts, when running work ends, and whether other jobs can still complete. These checks cover relationships within the process. A local cancellation exception does not prove that a proxy, an HTTP connection, and remote computation have all stopped.
+
+## Run the example locally
+
+[Download the complete script](/examples/cancelled-queued-work.py). It uses only the Python standard library and adds explicit checks for cancellation return values, final Future states, and callback completion. On 2026-11-03, both commands were run with **Python 3.11.11 on a macOS arm64 CPU**:
+
+```sh
+python cancelled-queued-work.py
+python -O cancelled-queued-work.py
+```
+
+Both exited with code 0. **All 42 checks across the two controlled cases passed, with identical results**:
+
+| Observation | Cancel only the result channel | Also cancel pending B |
+|---|---|---|
+| Return value from cancelling running A | `False` | `False` |
+| Return value from cancelling the result channel | `True` | `True` |
+| Was B's function called? | Yes; returned `"B"` | No; its Future was cancelled |
+| Final result-channel state | cancelled | cancelled |
+| Callback errors | None | None |
+
+The full JSON is in the [recorded output](/examples/cpu-verification.json). This is not a stress test and does not verify asyncio, HTTP, or remote cancellation. The callback check covers skipping an already-cancelled result channel; it does not establish safety of concurrent result delivery. A wait timeout also cannot forcibly stop an arbitrary blocking thread.

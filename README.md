@@ -53,6 +53,8 @@ At the existing mobile breakpoint (760px and below), Blog entries show the artic
 
 Each article ends with one or two curated related-note links from `src/data/related-posts.json`. The map uses shared article keys; titles and destinations come from the published version in the current language. These links appear after the body, outside the article TOC and translated-section map.
 
+The NumPy, cancellation and GRPO articles include independent synthetic CPU examples under `public/examples/`, with tested versions, commands and recorded results. `src/data/example-assets.json` pins the published files by SHA256. Keep results tied to the actual script revisions; update both article languages together. These examples do not replay training runs or prove behavior outside their stated checks.
+
 An explicitly authorized public review draft uses `draft: false` with `review: true`; the latter displays a small Draft/初稿 label and does not override draft or future-date filtering. Dates are displayed in Asia/Shanghai, while metadata and RSS retain the publication instant. Use a timezone-qualified `pubDate` timestamp when publishing immediately near a date boundary.
 
 Only articles with `draft: false` and a publication date no later than build time appear on the site. The default is draft. **This flag does not make a file private in a public GitHub repository.** Keep private notes and unfinished research outside this repository; copy only publication-approved material here. The template is an example of structure, not an article.

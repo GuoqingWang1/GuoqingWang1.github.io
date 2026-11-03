@@ -7,7 +7,7 @@ translationKey: numpy-string-dtype-width
 topic: training
 tags: [NumPy, 数据类型, 合批]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T18:45:02+08:00"
 order: 5
 draft: false
 review: true
@@ -105,3 +105,18 @@ Regression cases should include equal-width strings, different-width strings of 
 Casting every field to `object` gives strings, numbers, and accidentally mixed-in objects the same dtype, making dtype equality alone less useful for distinguishing them. Object arrays can be a deliberate representation choice, but are not a general patch for bypassing schema checks.
 
 This discussion covers fixed-width `U` and `S`. The variable-width `StringDType` introduced in NumPy 2.0 uses a different representation and needs separate consideration. Separating incompatible types from different capacities within the same string kind protects both valid data and useful checks.
+
+## Run the example locally
+
+[Download the complete script](/examples/numpy-string-dtype-width.py). The second and third code blocks above reuse `np`, `a`, and `b` from the first. The complete script combines them and adds input-preservation and rejection cases, so it can run as a single file.
+
+The check passed on 2026-11-03 with **Python 3.11.11 and NumPy 2.2.4**, on a macOS arm64 CPU. Save the script in your working directory with a Python 3.11 virtual environment active, then run:
+
+```sh
+python -m pip install numpy==2.2.4
+python numpy-string-dtype-width.py
+```
+
+The script prints JSON. **All 20 checks passed**: concatenating `U2` and `U5` preserved `ok` and `retry`; narrowing to `U2` produced `re`, while `safe` narrowing was rejected; a 200-code-point Unicode string was preserved. All 18 original input arrays retained their dtype, shape, and contents.
+
+The results cover equal-width inputs, byte strings, empty array members, and rejection of empty lists, mixed kinds, and invalid shapes. See the [recorded output](/examples/cpu-verification.json). These are synthetic string-example checks, not a replay of a training framework's batch-assembly entry point.

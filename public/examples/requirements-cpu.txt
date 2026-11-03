@@ -1,0 +1,4 @@
+# Versions used for the synthetic CPU checks (Python 3.11.11).
+# Install the PyTorch build appropriate for your platform; scripts use CPU only.
+numpy==2.2.4
+torch==2.6.0

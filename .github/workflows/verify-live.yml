@@ -35,6 +35,8 @@ jobs:
               expected_publications = json.load(source)
           with open('src/data/related-posts.json') as source:
               related_post_keys = json.load(source)
+          with open('src/data/example-assets.json') as source:
+              example_assets = json.load(source)
           with open('src/data/share-images.json') as source:
               share_images = json.load(source)
           assert base.startswith('https://')
@@ -283,6 +285,12 @@ jobs:
               digest = hashlib.sha256(result['body']).hexdigest()
               assert digest == image['sha256'], 'Live share-image content differs from manifest'
               result.update({'sha256':digest, 'width':image['width'], 'height':image['height'], 'anonymous_image_access':True})
+              results.append(result)
+          for asset in example_assets:
+              assert re.fullmatch(r'/examples/[a-zA-Z0-9][a-zA-Z0-9._-]*', asset['path'])
+              result = fetch(urljoin(base, asset['path']))
+              assert result['final_url'] == result['url'] and not result['redirects']
+              assert result['sha256'] == asset['sha256'], 'Example asset differs from verified source: '+asset['path']
               results.append(result)
           results.append(fetch('http://'+host+'/'))
           if not host.endswith('.github.io'): results.append(fetch('https://www.'+host+'/'))

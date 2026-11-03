@@ -7,7 +7,7 @@ lang: zh-CN
 translationKey: grpo-equal-rewards-zero-advantage
 tags: [GRPO, PyTorch, 数值稳定性]
 pubDate: "2026-11-01T05:12:52+08:00"
-updatedDate: "2026-11-01T06:52:26+08:00"
+updatedDate: "2026-11-03T18:45:02+08:00"
 draft: false
 review: true
 ---
@@ -164,3 +164,28 @@ assert torch.equal(near, before)  # 修补不能改写输入奖励
 后续实际训练验收中，检查到的同奖组，其 `advantages` 和 `returns` 都恢复为了精确的零。这里归零的是这一项组内相对优势；KL 等其他损失项或优化器状态仍可能影响参数更新，不能据此要求整个训练步都不更新。
 
 对这类归一化代码，值得在测试里长期保留两个互补的要求：**没有组内差异时，不凭空制造相对优势；确实存在微小差异时，也不随手将它抹掉。**
+
+## 运行本文示例
+
+[下载完整脚本](/examples/grpo-equal-rewards-zero-advantage.py)。正文的三个 Python 片段需要按顺序执行，后面的函数和检查沿用前面的 `torch` 导入；完整脚本已包含全部定义，并使用显式检查。它只创建小型 CPU 张量，不加载模型。
+
+2026-11-03 使用 **Python 3.11.11、PyTorch 2.6.0、macOS arm64 CPU、单线程** 运行。在 Python 3.11 虚拟环境中安装对应平台的 CPU 构建并保存脚本：
+
+```sh
+python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python grpo-equal-rewards-zero-advantage.py
+```
+
+这次 **21 项检查全部通过，但原式已经得到零，没有复现历史非零残差**。实际结果为：
+
+| 本次本地 CPU 计算 | 实际值 |
+|---|---:|
+| 每条 FP32 奖励 | `-0.10000000149011612` |
+| FP32 均值 | `-0.10000000149011612` |
+| 分子残差、标准差 | 均为 `0` |
+| 原式优势、修补后优势 | 八个成员均为 `0` |
+| `nextafter` 构造的差值 | `7.450580596923828e-9` |
+
+同一组已存储值转成 FP64 后，原式优势也为零。近似同奖组和普通混合组保留原式结果，NaN／Inf、单成员、空组、整型和非向量输入按脚本规则被拒绝，见[实测记录](/examples/cpu-verification.json)。
+
+因此，本次确认的是这个环境下示例可运行、归零分支和这些输入边界符合预期。它不是历史训练环境的重放，也不能把“这里原式为零”推广成所有归约路径都不会产生残差。

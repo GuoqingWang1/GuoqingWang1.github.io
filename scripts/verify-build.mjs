@@ -8,6 +8,7 @@ const origin = new URL(process.env.SITE_URL || 'https://guoqingwang1.github.io')
 const news = JSON.parse(await readFile('src/data/news.json', 'utf8'));
 const publications = JSON.parse(await readFile('src/data/publications.json', 'utf8'));
 const relatedPostKeys = JSON.parse(await readFile('src/data/related-posts.json', 'utf8'));
+const exampleAssets = JSON.parse(await readFile('src/data/example-assets.json', 'utf8'));
 const shareImages = JSON.parse(await readFile('src/data/share-images.json', 'utf8'));
 const staticPages = [
   ['index.html', '/', 'en'],
@@ -120,13 +121,18 @@ for (const required of [...staticByFile.keys(), ...aliases.keys(), '404.html', '
   await access(path.join(root, required));
 }
 const output = await files(root);
+for (const asset of exampleAssets) {
+  assert(/^\/examples\/[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(asset.path), `Invalid example asset path: ${asset.path}`);
+  const bytes = await readFile(path.join(root, asset.path.slice(1)));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, `Example asset hash mismatch: ${asset.path}`);
+}
 const renderedPapers = new Map();
 const blogCatalogs = new Map();
 let pages = 0, articleCount = 0;
 for (const filename of output) {
   const relative = path.relative(root, filename);
   assert(!/(^|\/)(editorial|work|node_modules|src|\.git)(\/|$)/.test(relative), `Source directory leaked: ${relative}`);
-  if (!/\.(html|js|css|xml|txt|svg|json|map|md)$/.test(filename)) continue;
+  if (!/\.(html|js|css|xml|txt|svg|json|map|md|py)$/.test(filename)) continue;
   const text = await readFile(filename, 'utf8');
   assert(!/(\/Users\/|file:\/\/|localhost:\d|127\.0\.0\.1|FIRST_NEW_UPDATES|native-attempt|__VERIFICATION_)/.test(text), `Unexpected local/private/test marker in ${relative}`);
   if (!filename.endsWith('.html')) continue;
