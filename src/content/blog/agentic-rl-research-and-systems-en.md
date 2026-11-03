@@ -7,7 +7,7 @@ translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T05:28:55+08:00"
+updatedDate: "2026-11-04T07:16:44+08:00"
 draft: false
 review: false
 presentation: true
@@ -23,179 +23,146 @@ Deep Research agents combine reasoning, search, and page visits over many turns;
 - **Cost**: track logical rounds, total generated tokens, and length per round together to detect longer-response compensation.
 - **Two efficiencies**: systems reduce waiting and repeated computation; algorithms learn better actions. Each needs its own validation.
 
-### 1.2 Inference pipeline: the action–observation loop
+### 1.2 Agent loop: reason, call a tool, observe, reason again
 
-Tool observations return to context, and the agent continues acting or produces its final answer.
-
-<figure class="talk-figure dr-figure" data-talk-figure="inference-pipeline" lang="en" aria-labelledby="talk-inference-pipeline-title">
-<p class="tf-title" id="talk-inference-pipeline-title">Deep Research · inference pipeline</p>
-<div class="dr-panel"><p class="dr-stage">Fixed policy · multi-turn interaction</p><div class="dr-three dr-inference-grid"><div class="dr-node dr-checkpoint dr-soft-blue"><strong>Trained checkpoint</strong></div><span class="dr-down dr-weight-arrow" aria-hidden="true">↓</span><div class="dr-node dr-question"><strong>User question</strong><small>Task and constraints</small></div><span class="dr-arrow dr-question-arrow" aria-hidden="true"></span><div class="dr-node dr-policy dr-blue"><strong>Agent policy</strong><small>AgentLoop · SGLang</small></div><span class="dr-arrow dr-answer-arrow" aria-hidden="true"></span><div class="dr-node dr-answer dr-green"><strong>Final answer</strong><small>On the finish action</small></div></div><div class="dr-interaction"><span>Tool calls</span><b aria-hidden="true">↕</b><span>Observations back to context</span></div><div class="dr-tools"><p class="dr-stage">Tool environment · choose as needed</p><div class="dr-tool-options"><div class="dr-node dr-soft-blue"><strong>Search</strong><small>Query → search results</small></div><div class="dr-node dr-peach"><strong>Visit</strong><small>URL → page content</small><div class="dr-service-chain"><span>Reader</span><b aria-hidden="true">→</b><span>Summary</span></div></div></div></div></div>
-<figcaption>Figure 1 · Multi-turn interaction with fixed weights. Search and Visit are alternative actions; Reader / Summary follow the configured backend.</figcaption>
+<figure class="talk-figure al-figure" data-talk-figure="inference-pipeline" lang="en" aria-labelledby="talk-inference-pipeline-title">
+<p class="tf-title" id="talk-inference-pipeline-title">Deep Research Agent loop</p>
+<div class="al-flow"><div class="al-node al-question">Question</div><span class="al-arrow" aria-hidden="true"></span><div class="al-cycle"><div class="al-turn"><div class="al-node ">Think</div><span class="al-arrow" aria-hidden="true"></span><div class="al-node ">Tool call</div><span class="al-arrow" aria-hidden="true"></span><div class="al-node al-observation">Tool response</div></div><div class="al-repeat"><span>Repeat as needed · zero or more times</span></div></div><span class="al-arrow" aria-hidden="true"></span><div class="al-finish"><div class="al-node ">Think</div><span class="al-arrow" aria-hidden="true"></span><div class="al-node al-answer">Answer</div></div></div>
+<figcaption>The Agent decides whether to call another tool or answer with the information already available.</figcaption>
 </figure>
-
-- Search and Visit are selected as needed; HTTP success does not establish reliable evidence.
-- Retain actual generated actions, behavior probabilities, and policy versions. Tool responses and controller text enter context but are not policy actions.
-- A task does not update weights during inference; training supplies new policies for later sampling.
-
-### 1.3 Training pipeline: from trajectories to the next policy
-
-Outcome and optional process/cost signals form advantages, followed by Actor updates and weight publication.
-
-<figure class="talk-figure dr-figure" data-talk-figure="training-pipeline" lang="en" aria-labelledby="talk-training-pipeline-title">
-<p class="tf-title" id="talk-training-pipeline-title">Deep Research · RL training pipeline</p>
-<div class="dr-training-grid"><div class="dr-panel"><p class="dr-stage">01 · Rollout</p><div class="dr-three dr-entry"><div class="dr-node "><strong>Training tasks</strong><small>Questions only</small></div><span class="dr-arrow " aria-hidden="true"></span><div class="dr-node dr-blue"><strong>Multi-trajectory rollout</strong><small>AgentLoop · SGLang</small></div><span class="dr-arrow " aria-hidden="true"></span><div class="dr-node dr-soft-blue"><strong>Trajectories &amp; policy version</strong><small>Action tokens · behaviour logprob</small></div></div></div><div class="dr-flow-down" aria-hidden="true">↓</div><div class="dr-panel"><p class="dr-stage">02 · Scoring and credit</p><div class="dr-supervision"><strong>Reference answers</strong> → Judge and IG scoring only</div><div class="dr-scorers"><div class="dr-node dr-green"><strong>Judge</strong><small>Outcome quality</small></div><div class="dr-node dr-yellow"><strong>IG scoring</strong><small>Turn-level information gain</small></div><div class="dr-node dr-peach"><strong>Cost</strong><small>Interaction and generation</small></div></div><div class="dr-merge" aria-hidden="true"></div><div class="dr-node dr-advantage dr-soft-blue"><strong>Credit &amp; advantages</strong></div></div><div class="dr-actor-feed" aria-hidden="true"></div><div class="dr-panel"><p class="dr-stage">03 · VERL: update and synchronization</p><div class="dr-update-row"><div class="dr-adv-input">Combined advantage</div><span class="dr-adv-input-arrow" aria-hidden="true">↓</span><div class="dr-node dr-reference"><strong>Reference policy</strong><small>ref logprob · KL</small></div><span class="dr-arrow dr-kl-arrow" aria-hidden="true"></span><div class="dr-node dr-actor dr-blue"><strong>Actor · PPO</strong><small>Combined advantage + old logprob</small></div><span class="dr-arrow dr-sync-arrow" aria-hidden="true"></span><div class="dr-node dr-sync dr-soft-blue"><strong>Weight sync</strong><small>Publish new policy</small></div></div><div class="dr-out-branches" aria-hidden="true"><span></span><span></span></div><div class="dr-outputs"><div class="dr-node dr-soft-blue"><strong>Future rollouts</strong></div><div class="dr-node dr-green dr-eval"><strong>Development evaluation</strong><small>Q / R / T / U</small></div></div></div></div><div class="dr-save-state"><strong>Save / restore</strong><span>Model · optimizer · data cursor · Partial state</span></div>
-<figcaption>Figure 2 · References enter scoring only. The training side recomputes old/ref; development evaluation supplies no gradients. Signals and execution order depend on the recipe.</figcaption>
-</figure>
-
-- Rollout, tools, and Judge produce trajectories and scores; the recipe prepares advantages and old/ref probabilities.
-- Actor updates synchronize to inference, with model, optimizer, and applicable data/sampling state saved.
-- Shared GPUs are scheduled by stage; Partial does not mean Actor and rollout always execute concurrently.
 
 ## 2. Infrastructure and Efficiency
 
-### 2.1 Three construction tracks: runtime, training, and tools
+### 2.1 Objective: less repeated work, less waiting, recoverable runs
 
-The available engineering record spans August to early November 2026, with deliveries along three tracks.
+Deep Research training combines GPU computation, multi-turn sampling, and external services. Four modules make the system runnable and reduce repeated computation, tail waits, and recovery work.
 
-| Track | Foundations (2026-08) | Later delivery (2026-09–10) |
+<figure class="talk-figure im-figure" data-talk-figure="infra-map" lang="en" aria-labelledby="talk-infra-map-title">
+<p class="tf-title" id="talk-infra-map-title">Infra: supporting a complete research iteration</p>
+<div class="im-modules" role="group" aria-label="Four cooperating capabilities for research iteration"><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="9" r="5"/><path d="m13 13 4 4M16 4h5M16 8h5M4 20h7m5 0 2 2 4-5"/></svg><strong>Tools and judging</strong></div><div class="im-lines"><span>Search / Visit caches · concurrency</span><span>Retries and cancellation · Judge</span></div></div><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3"/></svg><strong>Training compute</strong></div><div class="im-lines"><span>Qwen / B300 stack · Actor optimization</span><span>Compiler cache / kernels · IG and logprob</span></div></div><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 5h13M3 10h9M3 15h6"/><circle cx="17" cy="16" r="5"/><path d="M17 13v3l2 1"/></svg><strong>Sampling and evaluation</strong></div><div class="im-lines"><span>Partial · complete groups and versions</span><span>Continuous scheduling · complete Eval</span></div></div><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 4 6v6c0 4.7 4.2 7.5 8 9 3.8-1.5 8-4.3 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><strong>Reliable execution</strong></div><div class="im-lines"><span>Data versions · save and restore</span><span>Observability · result archives</span></div></div></div><div class="im-connector" aria-hidden="true"></div><div class="im-objective"><span class="im-objective-label">Optimization objectives</span><strong>Less repeated work · shorter waits · recoverable complete experiments</strong></div>
+</figure>
+
+### 2.2 Tools and judging: reusable services for external dependencies
+
+#### Tool Server: cache at the right reuse boundaries
+
+The Python-to-Go service evolution covers search results, page bodies, and goal-dependent summaries, with version compatibility, concurrency, and persistence semantics.
+
+<figure class="talk-figure tc-figure" data-talk-figure="tool-stack" lang="en" aria-labelledby="talk-tool-stack-title">
+<p class="tf-title" id="talk-tool-stack-title">Tool caching: reuse work at distinct stages</p>
+<div class="tc-layers"><div class="tc-row"><strong>Search results</strong><span>Matching tool, query, and parameters</span><span class="tc-result">Avoid repeated searches</span></div><div class="tc-row"><strong>Reader body</strong><span>Page content remains valid</span><span class="tc-result">Reuse the fetch for a new goal</span></div><div class="tc-row"><strong>Goal summary</strong><span>Matching content, goal, model, and prompt</span><span class="tc-result">Avoid repeated summarization</span></div></div>
+<figcaption>Hits depend on version, expiry, and content checks. These are reuse boundaries, not a fixed three-stage call chain.</figcaption>
+</figure>
+
+| Area | Implemented work and purpose |
+| --- | --- |
+| Search caching | Isolate by tool and parameters; retain batch-item results; cover web, scholar, image, maps, and reverse-image search |
+| Body/summary separation | Cache Reader bodies independently; reuse a body for a new goal; isolate summaries by content, goal, model, prompt, and related identities |
+| Consistency and lifetime | Default 365-day TTL with explicit overrides; validate version, expiry, and content dependencies; scope legacy Python reads and distinguish queued from durable writes |
+| Result admission | Validate empty bodies, malformed results, refusal, and filtering; allow validated fallback summaries; storage failure does not rewrite a successful tool outcome |
+| Concurrency and extensions | Coalesce identical work within a process; support custom prompts and equivalent-default reuse; isolate multimodal final-summary caches while sharing Reader bodies and locks |
+
+These capabilities avoid repeated searches, fetches, and summaries. A comparable overall cache-speedup factor has not been measured.
+
+#### Tool Server: manage the entire call lifecycle
+
+Beyond caching, the service must handle concurrency, streaming, retries, cancellation, and observability.
+
+- **Execution and recovery**: retry failed queries/URLs only, retain successes and the original deadline, manage queues and admission, and release running capacity only when work exits.
+- **Summary and transport**: primary/fallback routing, long-input routing, stream termination, and JSON validation; expose Reader business errors and per-item failures to the agent.
+- **Observability**: link root requests, upstream attempts, Reader/Summary stages, cache operations, and actual routing; a central dashboard covers 6 instances each of Search/Visit/Router and 10 Summary instances.
+
+A historical 6-question Go-path acceptance completed 27 Search and 9 Visit calls with 0 tool errors. Separately, targeted reproduction localized 42 Reader timeouts to waiting for response headers: one verifies a usable path, the other narrows upstream diagnosis.
+
+#### LLM Judge: durable tasks, bounded execution, explicit semantics
+
+Judge evolved from a scoring call into a task service shared by training and evaluation.
+
+| Module | Implemented work | Role in training and evaluation |
 | --- | --- | --- |
-| Images and runtime | Dependencies/ABI, B300 operations, 8-GPU communication | Hybrid-model support, real updates, saving, policy synchronization |
-| RL training | Stage timing and long-context paths | Actor/IG optimization, Partial, continuous Eval, recovery |
-| Tool server | Request and streaming-state observability | Go migration, two-level caching, failure-subset retries, cancellation, Judge semantics |
+| Tasks and results | Durable tasks, identity-based deduplication, status queries, result reuse, and recovery | Resume interruptions without repeating completed scoring |
+| Execution | Worker queues, shared quotas, rate limits, primary/fallback routes, conditional review | Attempts and deadlines belong to the same task; recovery does not reset its budget |
+| Scoring semantics | Strict output checks; aliases, units, years, and citations; preserve unknown | Do not silently turn uncertainty or technical failure into an incorrect reward of 0 |
+| Consumers and observation | Separate generation/scoring, preserve legacy interfaces, select new protocols explicitly, persist events and collect them centrally | Identify the actual model route, scoring state, and failure location |
 
-Early compute-only checks disabled tools and Judge; they do not replace real Deep Research training validation.
+Reviewing 36,601 historical requests confirmed 172 misjudgments. On a separate 40-case development panel, expected handling rose from 38 to 40, including 2 required unknown outcomes. Production acceptance of the four-route service actually exercised one route; detailed denominators are in Appendix B03.
 
-### 2.2 Qwen3.5 × B300: a working hybrid-model stack
+### 2.3 Training computation: runtime, Actor, and IG scoring
 
-In the September real-tool runs, GRPO and IGPO each completed 384 trajectories, 3 Actor updates, and a final checkpoint.
+#### Establish a repeatable path into real training
+
+Qwen3.5's hybrid architecture, B300 kernels, training frameworks, and inference engines must work together; successful imports are only the beginning.
 
 | Layer | Work |
 | --- | --- |
-| Model and kernels | Separate support for standard attention and GatedDeltaNet, with position and long-context checks |
-| Training and conversion | VERL, Megatron-Core, MBridge, Transformer Engine |
-| Inference and hardware | SGLang, Triton, one machine with 8×B300 |
-| End-to-end validation | Real Search/Visit/Judge, 8-rank updates, saving, synchronization, normal exit |
+| Images and kernels | Pin dependencies and ABI; support standard attention, GatedDeltaNet, and long-context paths separately |
+| Training and inference | Connect VERL, Megatron-Core, MBridge, Transformer Engine, and SGLang; validate training-to-inference weight conversion |
+| Trajectories and numerics | Preserve actual action tokens, behavior logprobs, masks, and policy versions; distinguish old/ref from rollout probabilities |
+| Full lifecycle | On 8×B300, GRPO and IGPO each completed 384 real-tool trajectories, 3 Actor updates, final saving, and weight synchronization |
 
-The scope is the actual Qwen3.5-4B configuration; larger-model Eval or installation on three machines does not replace training validation.
+#### Reduce repeated compilation and unnecessary scoring work
 
-### 2.3 Tool server: caching, fallback, and lifecycle
+- **Actor**: persist compilation artifacts, isolate cache environments, reduce repeated convolution specialization for dynamic shapes, retain autotuning, and validate integration in real three-step training.
+- **IG scoring**: project target prediction rows only, check three-axis mRoPE, reuse rollout context, and handle scoring boundaries across policy versions.
+- **End-to-end diagnosis**: connect timing across rollout, tools/Judge, old/ref, Actor, synchronization, and saving; optimize the observed critical path.
 
-The tool chain retains successful results and propagates failures and cancellation to the work that actually runs.
+The fixed Actor cache replay observed 1925.39→656.15 seconds, but strict numerical equivalence failed; this is not a lossless-speedup result. That comparison and the later independent NB check remain in Appendix B02.
 
-<figure class="talk-figure tr-figure" data-talk-figure="tool-stack" lang="en" aria-labelledby="talk-tool-stack-title">
-<p class="tf-title" id="talk-tool-stack-title">Tool server: search, reading, and summarization</p>
-<div class="tr-node tr-shared tr-blue"><strong>Agent tool call</strong><small>Choose Search or Visit for the action</small></div><div class="tr-two-branch tr-tool-branch" aria-hidden="true"><span>↓</span><span>↓</span></div><div class="tr-two tr-tools" role="group" aria-label="Alternative tools"><div class="tr-panel"><p class="tr-panel-heading">Search</p><div class="tr-node tr-search-card tr-soft-blue"><strong>Search service</strong><small>Rate limits · request cache</small></div></div><div class="tr-panel"><p class="tr-panel-heading">Visit</p><div class="tr-node tr-peach"><strong>Reader</strong><small>Content cache</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-peach"><strong>Summary</strong><small>Summary cache</small></div></div></div><div class="tr-join" aria-hidden="true"></div><div class="tr-node tr-shared tr-green"><strong>Structured results + per-item errors</strong><small>Return to the next Agent context</small></div>
-<figcaption>Figure 3 · Keep successful items and retry failures only. Cancellation follows the execution handle; capacity is released after running work exits.</figcaption>
-</figure>
+### 2.4 Sampling and evaluation: reduce idle capacity at the tail
 
-- **Go services and two-level caching**: Reader-body cache plus goal-dependent summary cache; a new goal can reuse the body.
-- **Failure-subset retries**: retain successful URL/query items and retry only failed items within the original deadline.
-- **Cancellation**: locate the executor handle for queued work; running threads retain capacity until exit. In-process checks do not prove remote HTTP termination.
-
-### 2.4 Tool observability: from timeouts to specific stages
-
-Link request IDs, Reader/Summary stages, retries, and cache states to trace a failed tool call to the work that ran.
-
-| Scope | Observation |
-| --- | --- |
-| 2,218 logical Visit calls | 52 business failures: 47 attributed to Reader, 5 to Summary |
-| Targeted reproduction of 46 historical failure URLs | 73 Reader attempts; all 42 timeouts waited for response headers |
-| Central dashboard | 6 instances each of Search/Visit/Router, 10 Summary instances |
-
-A business failure may still return HTTP 200. The wait was localized to Reader; the split among upstream queueing, fetching, and rendering remains unresolved.
-
-### 2.5 Judge: available service, trustworthy judgments
-
-Build bounded service calls and semantic checks together, so technical failures and uncertain answers do not silently become incorrect rewards.
-
-- **Service**: unify four model routes with fallback, rate limits, deadlines, and recoverable task identity while preserving the legacy interface.
-- **Semantics**: review 36,601 historical requests and confirm 172 misjudgments; repair alias, unit, year, and citation handling.
-- **Repair check**: expected handling rose from 38 to 40 cases on the same 40-case development panel, including 2 required unknown outcomes.
-
-40/40 describes final handling on that development panel; production acceptance actually exercised one route. Response reuse and denominators are detailed in Appendix B03.
-
-### 2.6 End-to-end timing: scoring waits are inside rollout
-
-A near-zero reward timer does not mean Judge has negligible cost.
-
-| One step on 2026-09-18 | Time | Scope |
-| --- | --- | --- |
-| Complete iteration | 5411.207 s | Driver whole-step wall time |
-| generate / rollout stage | 2859.381 s | Includes tools and scoring postprocessing |
-| Actor update | 1609.646 s | Driver stage |
-| Judge client | 881.243 s / 154 calls | Sum of concurrent requests, already inside generate |
-| reward | 0.000167 s | Reading existing results |
-
-Do not add cumulative Judge time again to whole-step wall time; Appendix B04 retains the complete stage table.
-
-### 2.7 Actor: persistent compilation cache and dynamic-shape specialization
-
-A fixed Actor replay fell from 1925.391 s to 656.149 s with retained cache, but strict numerical equivalence failed.
-
-<figure class="talk-figure" data-talk-figure="actor-cache" lang="en" aria-labelledby="talk-actor-cache-title">
-<p class="tf-title" id="talk-actor-cache-title">Fixed-input Actor replay: persistent-cache timing</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/actor-cache-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Fixed-input Actor replay: persistent-cache timing"><img src="/figures/agentic-rl-talk/actor-cache-en.svg" alt="The same 256 trajectories in two fresh processes: 1925.39 seconds with empty cache and 656.15 seconds with retained cache. Strict numerical equivalence failed." loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>Figure 4 · Fixed-input Actor-only timing in two fresh processes, not end-to-end speedup. Strict numerical equivalence failed. <a class="tf-caption-link" href="/figures/agentic-rl-talk/actor-cache-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
-
-- Both were new processes; observable compilation misses fell from 19,718 to 0. **65.92% is a single-stage performance observation.**
-- Cold/warm updates were not numerically equivalent, so losslessness is not established. Later controlled NB gradient/master equality is separate evidence.
-- Persistent caching and convolution NB de-specialization entered a real three-step run together; autotuning remained enabled, with no additional observable Actor JIT entries in the last two steps.
-
-### 2.8 IG scoring: fewer projections, reusable context
-
-Project only target prediction rows and reuse rollout context, while checking target tokens, three-axis mRoPE, and policy versions.
-
-| Validated scope | Observation |
-| --- | --- |
-| Fixed Qwen3 component workload | Median latency 158.56 → 87.65 ms |
-| Fixed Qwen3.5 workload with 12 target tokens | Incremental peak memory approximately 1.21 → 0.191 GB; scoring error 0 on this workload |
-| Attached path in a real three-step IGPO run | 5,224 score calls, 0 failures; mean 63.5 ms, P95 147.6 ms |
-
-Component comparisons and actual-call distributions use different workloads; they are not a single speedup series. Policy-version changes require boundary rescoring.
-
-### 2.9 Partial: less waiting, complete groups and versions retained
-
-A task pool supports pause/resume while training admits complete groups and retains behavior versions.
+#### Partial rollout: keep unfinished work and deliver complete groups
 
 <figure class="talk-figure tr-figure" data-talk-figure="partial-scheduling" lang="en" aria-labelledby="talk-partial-scheduling-title">
 <p class="tf-title" id="talk-partial-scheduling-title">Partial: retain task state and deliver complete groups</p>
 <div class="tr-two tr-schedule"><div class="tr-panel"><p class="tr-panel-heading">Synchronous batch</p><div class="tr-node "><strong>Start the whole batch</strong><small>One batch of tasks</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node "><strong>Wait for the whole batch</strong><small>Completion is set by the longest trajectory</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-green"><strong>Actor update</strong><small>Then begin the next batch</small></div></div><div class="tr-panel"><p class="tr-panel-heading">Partial rollout</p><div class="tr-node tr-soft-blue"><strong>Persistent task pool</strong><small>Keep unfinished trajectories</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-soft-blue"><strong>Complete groups ready</strong><small>Deliver whole groups; retain the rest</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-green"><strong>Phase transition</strong><small>Pause rollout → update Actor → resume</small></div></div></div>
-<figcaption>Figure 5 · Scheduling relationships, not a time scale. Shared GPUs switch between rollout and Actor phases; complete groups and policy versions are retained.</figcaption>
+<figcaption>Scheduling relationships, not a time scale. Shared GPUs switch between rollout and Actor phases; complete groups and policy versions are retained.</figcaption>
 </figure>
 
-- Four formal arms each used 96 questions × 8 trajectories, or 768 per arm, retaining groups, ready buffers, and cross-version records.
-- Observed container wall time fell by 11.41% for GRPO and 7.46% for IGPO.
-- Tool, cache, trajectory, and correction differences limit attribution to scheduling and do not establish long-term off-policy losslessness.
+Task pools, ready buffers, policy versions, pause/resume, and IG boundary rescoring jointly support Partial. Shared GPUs still switch between generation and update phases.
 
-### 2.10 Continuous Eval: replenish as tasks finish
+- Four formal arms each retained 96 questions × 8 trajectories, or 768 per arm, including the final tails.
+- Observed container time fell by 11.41% for GRPO and 7.46% for IGPO; long-term quality and off-policy effects remain separate questions.
 
-Both groups completed generation and scoring on the same 512 questions; full-Eval time fell from 4505.21 s to 4126.03 s, an observed 8.42% reduction.
+#### Continuous Eval: replenish as tasks finish
 
-<figure class="talk-figure" data-talk-figure="eval-scheduling" lang="en" aria-labelledby="talk-eval-scheduling-title">
-<p class="tf-title" id="talk-eval-scheduling-title">Scheduling observations for a complete Eval</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Scheduling observations for a complete Eval"><img src="/figures/agentic-rl-talk/eval-scheduling-en.svg" alt="Two complete Evals on the same 512 questions and model, with a zero-based wall-time axis." loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>Figure 6 · Shared tools, caching, and stochastic outputs limit causal attribution; individual-request latency also increased. <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
+Maintain active tasks and separate generation from scoring postprocessing, instead of waiting for the slowest sample in every batch before admitting the next.
 
-- Maintain active tasks to reduce idle capacity at batch tails.
-- Stochastic outputs, shared tools, and caching limit precise causal attribution; individual-request latency increased.
-- Standalone Eval and training-time Validate have separate lifecycles; this does not establish that both automatically use the same path.
+All 512 questions completed generation and scoring. Full Eval fell from 4505.21 to 4126.03 seconds, an observed 8.42% reduction; per-request latency increased. Standalone Eval adopted continuous replenishment, while training-time Validate retained its own path.
 
-### 2.11 Data and recovery: reaching actual consumption
+### 2.5 Run reliability: continue research after interruptions
 
-A recoverable system needs versioned data and complete state, beyond a successful load.
+Data versions, complete state, and observation identities connect sampling, updates, saving, and recovery to reduce lost work and repeated computation.
 
-| Delivery | Actual scope |
+| Module | Delivery |
 | --- | --- |
-| Fixed training version | 6,994 = 6,315 originals + 679 revisions; usable does not mean error-free gold data |
-| Priority research set | 512 records frozen independently, not a simple union with the 6,994 |
-| A009 recovery | Resume after 8 saved updates, add 47: 55 model-path updates and 28 policy publications |
-| Saving and consumption | Mixed batches, updates, sync, and subsequent validation; reconnect model, optimizer, and applicable data/sampling state |
+| Data versions | 6,994 usable exact versions: 6,315 original + 679 revised; a separate frozen 512-question research set, with sources and revision records |
+| Save/restore | Connect model, optimizer, data cursor, and applicable sampling state; handle mixed batches, formats, retention, and completeness checks |
+| Actual continuation | One complete run resumed after 8 saved updates and added 47, reaching 55 model-path updates and 28 policy publications |
+| Observation and archiving | Link runs, steps, trajectories, requests, and policy versions; retain complete results, failures, and recovery costs |
 
-Recovery must cross mixed batches, actual updates, and subsequent sampling; loading state alone does not establish correct continued training.
+Recovery acceptance crosses mixed batches, actual updates, and subsequent sampling. Usable data is not an error-free gold standard, and completed execution does not establish improved model quality.
+
+### 2.6 Measured effects in the corresponding workloads
+
+Compute optimizations reduce scoring latency and memory use; scheduling optimizations reduce waits in complete workloads.
+
+<figure class="talk-figure" data-talk-figure="infra-benefits" lang="en" aria-labelledby="talk-infra-benefits-title">
+<p class="tf-title" id="talk-infra-benefits-title">Infrastructure optimization results</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/infra-benefits-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure"><img src="/figures/agentic-rl-talk/infra-benefits-en.svg" alt="Infrastructure optimization results: IG scoring latency, incremental memory, Partial rollout, continuous evaluation." width="1024" height="672" loading="lazy" decoding="async"></a>
+<figcaption>Two fixed component comparisons and complete-run observations for Partial and continuous Eval; each panel retains its own units and scope. <a class="tf-caption-link" href="/figures/agentic-rl-talk/infra-benefits-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
+
+The panels come from separate component comparisons or scheduling experiments; gains cannot be added together. Tool Server and Judge also deliver reusable caches, bounded retries, durable recovery, and diagnosis, without claiming an unmeasured global speedup.
 
 ## 3. Algorithm Exploration: IGPO → CTF-IGPO
+
+The training framework turns trajectories and scores into policy updates, then uses new weights for subsequent rollouts.
+
+<figure class="talk-figure dr-figure" data-talk-figure="training-pipeline" lang="en" aria-labelledby="talk-training-pipeline-title">
+<p class="tf-title" id="talk-training-pipeline-title">Deep Research · RL training pipeline</p>
+<div class="dr-training-grid"><div class="dr-panel"><p class="dr-stage">01 · Rollout</p><div class="dr-three dr-entry"><div class="dr-node "><strong>Training tasks</strong><small>Questions only</small></div><span class="dr-arrow " aria-hidden="true"></span><div class="dr-node dr-blue"><strong>Multi-trajectory rollout</strong><small>AgentLoop · SGLang</small></div><span class="dr-arrow " aria-hidden="true"></span><div class="dr-node dr-soft-blue"><strong>Trajectories &amp; policy version</strong><small>Action tokens · behaviour logprob</small></div></div></div><div class="dr-flow-down" aria-hidden="true">↓</div><div class="dr-panel"><p class="dr-stage">02 · Scoring and credit</p><div class="dr-supervision"><strong>Reference answers</strong> → Judge and IG scoring only</div><div class="dr-scorers"><div class="dr-node dr-green"><strong>Judge</strong><small>Outcome quality</small></div><div class="dr-node dr-yellow"><strong>IG scoring</strong><small>Turn-level information gain</small></div><div class="dr-node dr-peach"><strong>Cost</strong><small>Interaction and generation</small></div></div><div class="dr-merge" aria-hidden="true"></div><div class="dr-node dr-advantage dr-soft-blue"><strong>Credit &amp; advantages</strong></div></div><div class="dr-actor-feed" aria-hidden="true"></div><div class="dr-panel"><p class="dr-stage">03 · VERL: update and synchronization</p><div class="dr-update-row"><div class="dr-adv-input">Combined advantage</div><span class="dr-adv-input-arrow" aria-hidden="true">↓</span><div class="dr-node dr-reference"><strong>Reference policy</strong><small>ref logprob · KL</small></div><span class="dr-arrow dr-kl-arrow" aria-hidden="true"></span><div class="dr-node dr-actor dr-blue"><strong>Actor · PPO</strong><small>Combined advantage + old logprob</small></div><span class="dr-arrow dr-sync-arrow" aria-hidden="true"></span><div class="dr-node dr-sync dr-soft-blue"><strong>Weight sync</strong><small>Publish new policy</small></div></div><div class="dr-out-branches" aria-hidden="true"><span></span><span></span></div><div class="dr-outputs"><div class="dr-node dr-soft-blue"><strong>Future rollouts</strong></div><div class="dr-node dr-green dr-eval"><strong>Development evaluation</strong><small>Q / R / T / U</small></div></div></div></div><div class="dr-save-state"><strong>Save / restore</strong><span>Model · optimizer · data cursor · Partial state</span></div>
+<figcaption>References enter scoring only. The training side recomputes old/ref; development evaluation supplies no gradients. Signals and execution order depend on the recipe.</figcaption>
+</figure>
 
 ### 3.1 IGPO: intermediate feedback for information acquisition
 
@@ -204,7 +171,7 @@ Recovery must cross mixed batches, actual updates, and subsequent sampling; load
 <figure class="talk-figure tr-figure" data-talk-figure="igpo-signal" lang="en" aria-labelledby="talk-igpo-signal-title">
 <p class="tf-title" id="talk-igpo-signal-title">IGPO: from final rewards to turn-level feedback</p>
 <div class="tr-panel tr-trajectory"><p class="tr-panel-heading">Multi-turn interaction within one task</p><div class="tr-three-flow"><div class="tr-node tr-soft-blue"><strong>Turn 1</strong><small>Action → observation</small></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-soft-blue"><strong>Later turns</strong><small>Action → observation</small></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-green"><strong>Final answer</strong></div></div></div><p class="tr-supervision">Training supervision · reference answer used for scoring</p><div class="tr-ig-sources"><div class="tr-panel"><p class="tr-panel-heading">Turn-level process signal</p><div class="tr-score-pair"><div class="tr-node tr-yellow"><strong>Score before observation</strong></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-yellow"><strong>Score after observation</strong></div></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-yellow"><strong>Change in reference-answer score</strong></div></div><div class="tr-panel tr-ig-result"><p class="tr-panel-heading">Final-outcome supervision</p><div class="tr-node tr-green"><strong>Answer quality</strong><small>Final outcome</small></div></div></div><div class="tr-join tr-ig-join" aria-hidden="true"></div><div class="tr-node tr-shared tr-blue"><strong>Train with process and outcome signals</strong></div>
-<figcaption>Figure 7 · IGPO adds turn-level feedback to outcome supervision. A score difference is a training proxy, not identified causal information value.</figcaption>
+<figcaption>IGPO adds turn-level feedback to outcome supervision. A score difference is a training proxy, not identified causal information value.</figcaption>
 </figure>
 
 - Identical final success/failure labels do not distinguish the contribution of intermediate interactions.
@@ -246,7 +213,7 @@ Adjust the cost channel's token weight by turn before combining advantages, reta
 <figure class="talk-figure tr-figure" data-talk-figure="ctf-objective" lang="en" aria-labelledby="talk-ctf-objective-title">
 <p class="tf-title" id="talk-ctf-objective-title">CTF-IGPO: PW advantage and update structure</p>
 <div class="tr-cost-inputs"><div class="tr-node tr-green"><strong>Quality</strong><small>Normalize separately</small></div><div class="tr-node tr-yellow"><strong>Information gain</strong><small>Calibrate / gate separately</small></div><div class="tr-node tr-peach"><strong>Cost-to-go</strong><small>Accumulate from this turn → preweight by turn</small></div></div><div class="tr-join tr-join-three" aria-hidden="true"></div><div class="tr-node tr-combined tr-soft-blue"><strong>Combined advantage</strong><span class="tr-symbol">A<sub>Q</sub> + A<sub>IG</sub> + A<sub>C</sub></span></div><span class="tr-down" aria-hidden="true"></span><div class="tr-update"><div class="tr-node tr-blue"><strong>One PPO / dual-clip</strong><small>Applied to the total advantage</small></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-soft-blue"><strong>Actor update</strong></div></div>
-<figcaption>Figure 8 · PW recipe: no renormalization after combination; all signals share one clipping operator. This structure is not a claim of optimality.</figcaption>
+<figcaption>PW recipe: no renormalization after combination; all signals share one clipping operator. This structure is not a claim of optimality.</figcaption>
 </figure>
 
 - Only cost receives `D_m/(K_m·n_t)`: valid tokens in the minibatch / nonempty valid turns in that minibatch / valid tokens in that turn.
@@ -262,7 +229,7 @@ PW scored 133/246, the trained control 122/246, and the initial SFT reference 12
 <figure class="talk-figure" data-talk-figure="short-run-results" lang="en" aria-labelledby="talk-short-run-results-title">
 <p class="tf-title" id="talk-short-run-results-title">Fixed short-run experiment: initial, control, and PW</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/short-run-results-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Fixed short-run experiment: initial, control, and PW"><img src="/figures/agentic-rl-talk/short-run-results-en.svg" alt="On 246 development questions, initial SFT answered 124 correctly, the trained control 122, and PW 133." loading="lazy" decoding="async" width="768" height="320"></a>
-<figcaption>Figure 9 · Fixed 256 training inputs and two updates; 246 development questions. Stable gains over the trained control are not established. <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>Fixed 256 training inputs and two updates; 246 development questions. Stable gains over the trained control are not established. <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 - **Training dose**: 256 fixed saved inputs and 2 Adam updates; evaluation used an exposed 246-question development panel.
@@ -276,7 +243,7 @@ All three training runs completed, but none simultaneously preserved quality, re
 <figure class="talk-figure" data-talk-figure="complete-quality" lang="en" aria-labelledby="talk-complete-quality-title">
 <p class="tf-title" id="talk-complete-quality-title">Quality across three complete training runs</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/complete-quality-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Quality across three complete training runs"><img src="/figures/agentic-rl-talk/complete-quality-en.svg" alt="Three panels preserve eight quality nodes each: original 120 to 1, weight cap 115 to 0, fixed cost 106 to 2; 246 questions per node." loading="lazy" decoding="async" width="768" height="420"></a>
-<figcaption>Figure 10 · 55 model-path updates per run and 246 questions per node; dashed lines are each run’s own initial values. None passed the joint quality-and-cost objective; no fair cross-run ranking is claimed. <a class="tf-caption-link" href="/figures/agentic-rl-talk/complete-quality-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>55 model-path updates per run and 246 questions per node; dashed lines are each run’s own initial values. None passed the joint quality-and-cost objective; no fair cross-run ranking is claimed. <a class="tf-caption-link" href="/figures/agentic-rl-talk/complete-quality-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 - Each used 6,994 members and 55 model-path updates; nodes 0/8/16/24/32/40/48/55 each evaluated 246 questions.
@@ -334,6 +301,12 @@ PW:         A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
 
 ### B02 Actor performance and numerical qualification
 
+<figure class="talk-figure" data-talk-figure="actor-cache" lang="en" aria-labelledby="talk-actor-cache-title">
+<p class="tf-title" id="talk-actor-cache-title">Fixed-input Actor replay: persistent-cache timing</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/actor-cache-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Fixed-input Actor replay: persistent-cache timing"><img src="/figures/agentic-rl-talk/actor-cache-en.svg" alt="The same 256 trajectories in two fresh processes: 1925.39 seconds with empty cache and 656.15 seconds with retained cache. Strict numerical equivalence failed." loading="lazy" decoding="async" width="768" height="336"></a>
+<figcaption>Fixed-input Actor-only timing in two fresh processes, not end-to-end speedup. Strict numerical equivalence failed. <a class="tf-caption-link" href="/figures/agentic-rl-talk/actor-cache-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
+
 Later NB qualification does not repair the numerical failure of the earlier cold/warm cache comparison.
 
 | Evidence | Performance record | Numerical boundary |
@@ -362,6 +335,12 @@ Requests, URLs, attempts, panel cases, and events are different units.
 All 42 timeouts waited for response headers; this does not distinguish upstream queueing, fetching, or rendering.
 
 ### B04 Complete timing and scheduling observations
+
+<figure class="talk-figure" data-talk-figure="eval-scheduling" lang="en" aria-labelledby="talk-eval-scheduling-title">
+<p class="tf-title" id="talk-eval-scheduling-title">Scheduling observations for a complete Eval</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Scheduling observations for a complete Eval"><img src="/figures/agentic-rl-talk/eval-scheduling-en.svg" alt="Two complete Evals on the same 512 questions and model, with a zero-based wall-time axis." loading="lazy" decoding="async" width="768" height="336"></a>
+<figcaption>Shared tools, caching, and stochastic outputs limit causal attribution; individual-request latency also increased. <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
 
 The gains cover different experiments and cannot be added or multiplied into a total speedup.
 
@@ -408,7 +387,7 @@ Every node has 246 questions: Q is number correct, R mean logical rounds, T tota
 <figure class="talk-figure" data-talk-figure="training-a009" lang="en" aria-labelledby="talk-training-a009-title">
 <p class="tf-title" id="talk-training-a009-title">Complete curves for the original combination</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the original combination"><img src="/figures/agentic-rl-talk/training-a009-en.svg" alt="Original combination: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>Figure 11 · All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 | Path updates | Number correct | Mean rounds | Total generated tokens | Tokens/round (pooled) |
@@ -429,7 +408,7 @@ Each run retains its own initial reference; cross-run curve heights do not estab
 <figure class="talk-figure" data-talk-figure="training-cap2" lang="en" aria-labelledby="talk-training-cap2-title">
 <p class="tf-title" id="talk-training-cap2-title">Complete curves for the update weight cap</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the update weight cap"><img src="/figures/agentic-rl-talk/training-cap2-en.svg" alt="Update weight cap: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>Figure 12 · All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 | Path updates | Number correct | Mean rounds | Total generated tokens | Tokens/round (pooled) |
@@ -450,7 +429,7 @@ All eight nodes are retained; decimals are rounded to three places for display, 
 <figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="en" aria-labelledby="talk-training-fixed-cost-title">
 <p class="tf-title" id="talk-training-fixed-cost-title">Complete curves for the fixed cost scale</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the fixed cost scale"><img src="/figures/agentic-rl-talk/training-fixed-cost-en.svg" alt="Fixed cost scale: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>Figure 13 · All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 | Path updates | Number correct | Mean rounds | Total generated tokens | Tokens/round (pooled) |
