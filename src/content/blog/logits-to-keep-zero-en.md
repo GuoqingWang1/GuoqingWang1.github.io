@@ -6,7 +6,7 @@ lang: en
 topic: model
 tags: [PyTorch, Transformers, Logits]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T06:52:26+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 1
 draft: false
 review: true
@@ -87,3 +87,16 @@ Also distinguish [target tokens from prediction rows](/blog/causal-logprob-row-a
 This article covers calls with **`labels=None` that only read logits**. If `labels` are also supplied to compute a loss, the selected prediction rows and labels must be aligned according to that interface. Empty or partial outputs cannot simply be paired with the full labels. This version enters the loss branch after selecting rows, so that ordering should be checked too. [Relevant source](https://github.com/huggingface/transformers/blob/ddb849abe009d1089e6c691bfc897f27211c663c/src/transformers/models/qwen3_5/modeling_qwen3_5.py#L1675-L1682)
 
 Finally, check whether an outer wrapper converts an empty list into the default integer `0`. That tiny conversion may raise no error while changing “zero positions” back into “all positions.” Preserving explicit parameter types and index counts is often more direct than trying to infer the amount of work from the result afterward.
+
+## Run the example locally
+
+[Download the complete script](/examples/logits-to-keep-zero.py). On 2026-11-03, all 22 checks passed on a macOS arm64 CPU with **Python 3.11.11, PyTorch 2.6.0, and one thread**. Save the script with a Python 3.11 virtual environment active, then run:
+
+```sh
+python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python logits-to-keep-zero.py
+```
+
+The four selectors produced logit shapes `[2,6,10]`, `[2,2,10]`, `[2,0,10]`, and `[2,2,10]`, respectively. The script also compares row contents, checks a nonzero-weight projection against Python scalar dot products, and covers out-of-range indices, empty sequences, and input preservation. See the [recorded output](/examples/cpu-verification-more.json).
+
+This executes the same selector expression and a small tensor projection; **it loads neither Transformers nor a model**. Backbone execution, caches, labels/loss, peak memory, and end-to-end speed are outside this check.

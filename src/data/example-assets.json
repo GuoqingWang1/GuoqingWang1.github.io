@@ -1,11 +1,19 @@
 [
   {
     "path": "/examples/README.md",
-    "sha256": "96c0a375d5c46eb454ab91758610f8861b50de701a1ceae4ebdeb49554161b2b"
+    "sha256": "b8a1887a5c084c3a3f0b666786d151971ba411b5ba6deb624e7445937bd949b6"
   },
   {
     "path": "/examples/cancelled-queued-work.py",
     "sha256": "0e195a02a0a799e1dfe3d6a05b60d6ead2c1884a26df4d7ae666eb849d57e757"
+  },
+  {
+    "path": "/examples/causal-logprob-row-alignment.py",
+    "sha256": "cd5ea472f56921a3f13349f5c8e7b3f54aa6ae5607824f47302b2faa0c301950"
+  },
+  {
+    "path": "/examples/cpu-verification-more.json",
+    "sha256": "0407f9478b3409135e71a0c5d193374ae35c8881743d2bc5b46ef1f01b9c629d"
   },
   {
     "path": "/examples/cpu-verification.json",
@@ -16,11 +24,39 @@
     "sha256": "d071ead117a3145af00abcde2731e4ca8053bdcd9c211e5d2cc00bb64a2218ef"
   },
   {
+    "path": "/examples/hybrid-cache-crop-state.py",
+    "sha256": "dc5f6176ce38c8092b933dea5e8deab76838776d6dd38f1c4e2af5f07145c49b"
+  },
+  {
+    "path": "/examples/judge-timing-in-rollout.py",
+    "sha256": "ebc797576c0add050941f1c4b7f3d9e67894890a5c4ffac65de39e86b6921299"
+  },
+  {
+    "path": "/examples/logits-to-keep-zero.py",
+    "sha256": "9dbb6867093f0a77a48e0f7e93d3f817d34fcd60491e0ad077b0fbf90c1d94ef"
+  },
+  {
     "path": "/examples/numpy-string-dtype-width.py",
     "sha256": "5ebd5c772bac258f759c11ad478d3a0440aa97b204b2b399a06bc2498d24609d"
   },
   {
+    "path": "/examples/ray-arguments-before-bootstrap.py",
+    "sha256": "a34ccff697cc5328229984758af1d3dbe2641559cc92305febfd79af8d728dd7"
+  },
+  {
     "path": "/examples/requirements-cpu.txt",
-    "sha256": "c876f8875a9db89fce64a2fa29a76a6c8c6b3f58ef22c9a3c1dd2791adcee886"
+    "sha256": "d63a78c7b7604faf053487d1a6947160f73748126f9c98a873ac78c79ba8b7f4"
+  },
+  {
+    "path": "/examples/resume-first-mixed-batch.py",
+    "sha256": "804a4cd7818d2819d6518d0d03c759cc20789e40a7e576e25aac78de29d454ce"
+  },
+  {
+    "path": "/examples/system-prompt-after-adapter.zip",
+    "sha256": "3b8fc004b382dc36898538afd7016737f6f0c26d54ac1cee0abe5081569245f1"
+  },
+  {
+    "path": "/examples/test-rejection-stage.py",
+    "sha256": "00398bc43d976c64d7770eeb4aadc33dfe57483c670a097727e6d910625e32c1"
   }
 ]

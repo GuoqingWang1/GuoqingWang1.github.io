@@ -7,7 +7,7 @@ lang: zh-CN
 translationKey: ray-arguments-before-bootstrap
 tags: [Ray, serialization, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 6
 draft: false
 review: true
@@ -121,3 +121,18 @@ def restore_trusted_state(payload, bootstrap):
 大对象变成 bytes 后，序列化、传输和内存成本仍然存在。这种改动解决的是依赖就绪与解包的先后顺序，不应自动包装成性能优化。
 
 遇到类似导入错误时，一个很有效的定位问题是：**失败发生在参数还原、构造函数内部，还是后续状态使用阶段？** 先把这三段分开，才能把修复放在真正来得及生效的位置。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/ray-arguments-before-bootstrap.py)。正文中的模块、driver 和 worker 片段属于不同位置，不能简单拼成一个文件；下载版生成临时合成模块与可信 payload，在隔离的本地 Python 子进程中检查解包顺序，并在结束后清理临时文件。
+
+2026-11-03 使用 **Python 3.11.11、cloudpickle 3.1.1、macOS arm64 CPU** 运行，17 项检查通过：
+
+```sh
+python -m pip install cloudpickle==3.1.1
+python ray-arguments-before-bootstrap.py
+```
+
+未准备模块时，解包以 `ModuleNotFoundError` 失败，普通 `Consumer` 构造函数没有被调用。先准备模块再解包时，`cursor=7` 和成员顺序 `["a","b"]` 被保留，并由这个本地消费者读取；错误类型、非法字段和损坏字节也被拒绝，见[实测记录](/examples/cpu-verification-more.json)。
+
+**没有启动 Ray、Actor 或集群。** 这验证的是 Python 模块引用的反序列化与后续字段消费，不是 Ray 远程传输、`runtime_env` 或原训练恢复链的验收。脚本只加载自己生成的可信 pickle，不应改成接受任意外部文件。

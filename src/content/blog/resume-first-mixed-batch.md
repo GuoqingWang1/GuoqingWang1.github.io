@@ -7,7 +7,7 @@ lang: zh-CN
 translationKey: resume-first-mixed-batch
 tags: [checkpoint, schema, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 4
 draft: false
 review: true
@@ -111,3 +111,15 @@ else:
 当时这条修复先通过了有界的新旧混批检查，随后在原训练路径里完成了真实混批和新的更新。它说明这个恢复接口问题已经跨过实际消费边界，不代表训练效果也因此得到保证。
 
 **恢复后的第一批混合数据，是一个值得单独测试的边界。** 很多问题既不在保存端单独出现，也不在新数据端单独出现，而是在两者相遇时才暴露。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/resume-first-mixed-batch.py)。正文三段代码需要按顺序执行；下载版已合并定义，仅使用标准库。2026-11-03 在 **Python 3.11.11、macOS arm64 CPU** 上完成 22 项检查：
+
+```sh
+python resume-first-mixed-batch.py
+```
+
+合法混批保留 `old-1 → new-1` 的顺序、奖励和 `trace`；被错误清理的旧成员被拒绝。即使两个坏成员的字段集合彼此一致，也不能绕过活跃 schema。全部 13 份已接受或已拒绝的输入均与独立快照一致，见[实测记录](/examples/cpu-verification-more.json)。
+
+这次只执行合成字典示例，没有读取 checkpoint 或训练数据，也没有运行框架恢复入口。dtype、张量形状、标识唯一性、功能关闭时的迁移和训练效果仍不在此脚本的证明范围内。

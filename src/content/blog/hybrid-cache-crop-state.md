@@ -7,7 +7,7 @@ translationKey: hybrid-cache-crop-state
 topic: model
 tags: [KV Cache, Transformers, 混合注意力]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 9
 draft: false
 review: true
@@ -103,3 +103,15 @@ assert (reused.state, fresh.state) == (1234, 124)
 例如，两个变量都指向同一个 cache 时，给 A 追加内容也会改变 B 随后看到的状态。是否能够安全复制，应由具体缓存类型的接口保证，不能把通用 `deepcopy` 当作所有实现都支持的回滚方案。验证时，应把复用路径与重新消费相同前缀的路径对照，检查所需状态和输出，而不只看一个长度字段。
 
 复用 cache 前，先确认一个问题：**模型被保证处于哪一段历史之后？** 把状态归属和恢复语义讲清楚，再决定如何节省前缀计算。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/hybrid-cache-crop-state.py)。它只依赖 Python 标准库。2026-11-03 使用 **Python 3.11.11、macOS arm64 CPU** 运行，20 项检查通过：
+
+```sh
+python hybrid-cache-crop-state.py
+```
+
+两条路径最终的列表都为 `[1,2,4]`，裁剪后继续复用的状态是 `1234`，独立重建的状态是 `124`。脚本还检查了同一对象的别名会共享修改，以及 `crop(0)` 清空列表却不清空递推状态，见[实测记录](/examples/cpu-verification-more.json)。
+
+这是对文中 **ToyCache 的整数／列表逻辑**的实际执行，不是对真实 KV cache、卷积状态、张量存储或 Transformers 的实测。固定版本真实缓存的行为仍由前面的源码引用支持。

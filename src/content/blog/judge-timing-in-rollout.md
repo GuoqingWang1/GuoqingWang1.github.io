@@ -7,7 +7,7 @@ translationKey: judge-timing-in-rollout
 topic: runtime
 tags: [Agent RL, 性能分析, 可观测性]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 7
 draft: false
 review: true
@@ -81,3 +81,15 @@ A 在第 `5` 秒返回，B 在第 `4` 秒已经返回，driver 因而等到第 `
 展示时可以把一个字段写清楚为“生成及评分后处理等待”，另一个写成“已返回评分的物化”，而不是让相似名称暗示相同范围。请求次数也应标明是客户端尝试数还是评分任务数，避免重试把计时与计数再次混在一起。
 
 遇到异常小的阶段数字，先列出计时器的开始、结束和真正等待的位置。边界对应上了，数字才能回答你想问的问题。
+
+## 运行本文示例
+
+[下载时间区间核对脚本](/examples/judge-timing-in-rollout.py)。正文的 `timer` 和 `generate_and_score` 是说明性占位符，不能直接作为完整训练程序运行。下载版仅用标准库 `Decimal` 核对表中合成区间，不读取时钟、不等待服务，也不发送请求。
+
+2026-11-03 使用 **Python 3.11.11、macOS arm64 CPU** 完成 23 项算术检查：
+
+```sh
+python judge-timing-in-rollout.py
+```
+
+合成的 Judge 请求累计为 `6` 秒、重叠 `2` 秒、区间并集 `4` 秒；driver 相邻区间合计 `5.01` 秒，重复加入 Judge 会得到错误的 `11.01` 秒，见[执行结果](/examples/cpu-verification-more.json)。这些数来自预先给定的时间表，**不是实测延迟，也不是性能基准**。

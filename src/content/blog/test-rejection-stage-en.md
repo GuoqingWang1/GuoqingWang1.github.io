@@ -7,7 +7,7 @@ translationKey: test-rejection-stage
 topic: training
 tags: [测试, 输入校验, padding]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 8
 draft: false
 review: true
@@ -93,3 +93,15 @@ Prefer a valid control that differs from the negative case only in the condition
 When adjusting the expectation, retain three requirements: the exception must correspond to the invalid condition being tested; valid control input must not be rejected along with it; and unknown or unrelated errors must not be swallowed by a broad `except Exception`.
 
 In the actual issue described earlier, the change was confined to the fixture's expectation. The production computation path was unchanged, and the CPU suite was not rerun at that time. Confirming the scope of a diff or its syntactic validity only establishes what changed; it cannot establish fresh acceptance of the full chain. Recording the expectation correction and execution validation separately helps prevent weakening safeguards just to turn a red test green.
+
+## Run the example locally
+
+[Download the complete script](/examples/test-rejection-stage.py). On 2026-11-03, 15 checks passed with **Python 3.11.11 on a macOS arm64 CPU**. The download uses only the standard library. The two article blocks were also assembled in order and executed successfully with **pytest 8.3.5**.
+
+```sh
+python test-rejection-stage.py
+```
+
+Valid input called `postcheck` once. Invalid padding was rejected in `materialize`, with zero calls to `postcheck`. Directly testing the later guard still produced `stage="postcheck"`. The shape error from `None` and the unrelated missing-field `KeyError` were not accepted as successful padding tests. See the [recorded output](/examples/cpu-verification-more.json).
+
+This checks the article's synthetic functions and their corresponding tests. It does not rerun the historical production fixture or complete training suite. The earlier statement that the CPU suite was not rerun at that time remains a historical fact.

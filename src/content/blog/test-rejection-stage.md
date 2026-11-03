@@ -7,7 +7,7 @@ translationKey: test-rejection-stage
 topic: training
 tags: [测试, 输入校验, padding]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 8
 draft: false
 review: true
@@ -93,3 +93,15 @@ with pytest.raises(TypeError, match=r"^expected a three-element list$"):
 调整预期时，仍应保留三个要求：异常必须对应这条非法条件；正常对照输入不能一起被拒绝；未知或无关错误不能被宽泛的 `except Exception` 吞掉。
 
 在前面的真实问题里，修改范围落在夹具预期，生产计算路径没有因此改变，当时也没有重新执行 CPU 套件。确认差异范围或语法合法，只能说明改动是什么；不能据此宣布整条链已通过新的验收。把预期修正与执行验证分别记录，才能避免为消除红色测试而降低保护。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/test-rejection-stage.py)。2026-11-03 在 **Python 3.11.11、macOS arm64 CPU** 上运行，15 项检查通过。下载版仅使用标准库；正文两段代码也按顺序组装，并使用 **pytest 8.3.5** 执行通过。
+
+```sh
+python test-rejection-stage.py
+```
+
+正常输入调用了一次 `postcheck`；非法 padding 在 `materialize` 被拒绝，`postcheck` 的调用次数为零。直接测试后置校验仍能得到 `stage="postcheck"`，而 `None` 的形状错误与缺失字段的 `KeyError` 没有被冒充为 padding 检查通过，见[实测记录](/examples/cpu-verification-more.json)。
+
+这验证的是文章中的合成函数及对应检查，不是历史生产夹具或完整训练套件的重跑。前文“当时没有重新执行 CPU 套件”的历史事实保持不变。

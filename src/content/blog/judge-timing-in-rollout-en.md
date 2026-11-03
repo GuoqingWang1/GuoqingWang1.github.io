@@ -7,7 +7,7 @@ translationKey: judge-timing-in-rollout
 topic: runtime
 tags: [Agent RL, 性能分析, 可观测性]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 7
 draft: false
 review: true
@@ -81,3 +81,15 @@ Preserve the containment relationship when interpreting the results. A Judge spa
 A display could explicitly label one field “generation, including the wait for scoring in postprocessing” and another “materializing returned scores,” rather than letting similar names imply identical scope. Counts should also distinguish client attempts from scoring tasks, so retries do not blur timing and counting once more.
 
 When a stage number looks unexpectedly small, identify where its timer starts, where it ends, and where the actual wait occurs. Once those boundaries line up, the number can answer the question you intended to ask.
+
+## Run the example locally
+
+[Download the interval-checking script](/examples/judge-timing-in-rollout.py). The article's `timer` and `generate_and_score` are explanatory placeholders, not a complete training program. The download uses standard-library `Decimal` arithmetic to check the synthetic table. It reads no clocks, waits for no service, and sends no requests.
+
+On 2026-11-03, 23 arithmetic checks passed with **Python 3.11.11 on a macOS arm64 CPU**:
+
+```sh
+python judge-timing-in-rollout.py
+```
+
+The synthetic Judge intervals sum to `6` seconds, overlap for `2`, and have a union of `4`. The adjacent driver intervals total `5.01` seconds; adding Judge time again incorrectly gives `11.01`. See the [execution output](/examples/cpu-verification-more.json). These values come from the predefined timeline: **they are not measured latency or a performance benchmark**.

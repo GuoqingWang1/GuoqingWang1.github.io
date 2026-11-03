@@ -7,7 +7,7 @@ translationKey: system-prompt-after-adapter
 topic: runtime
 tags: [Agent, 上下文, 推理接口]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 10
 draft: false
 review: true
@@ -17,7 +17,7 @@ When debugging agent requests, it is easy to focus only on the local message lis
 
 While reading a provider compatibility branch in Pi, we noticed an easy-to-miss step: the message list still has to be adapted into request parameters. To understand the effect of an update, inspect the local events, the resolved state, and the request fields separately.
 
-The example below uses the Pi commit pinned by the links and the `supportsMidConvoSystemMessages=false` branch. It presents source-derived checks, not captured live traffic or a newly executed cache test.
+The example below uses the Pi commit pinned by the links and the `supportsMidConvoSystemMessages=false` branch. The final section records local execution of transcript collapsing and text rendering. The request-field mapping still comes from source inspection, not captured live traffic or a cache test.
 
 ## The local events gain just one update
 
@@ -116,3 +116,17 @@ This branch handles interface compatibility, so rewriting alone does not establi
 The example establishes only a content change. The text `Fixed` remains the same, but which token prefixes remain reusable, whether the backend hits its cache, and how cost or latency changes require corresponding runtime evidence. A system-prompt rewrite cannot simply be equated with invalidating the entire cache.
 
 An append in the log is only the starting point. Following the same update through each conversion stage establishes which representation of state is actually being compared.
+
+## Run the example locally
+
+[Download the complete example bundle](/examples/system-prompt-after-adapter.zip), extract it, and enter the `system-prompt-after-adapter` directory. The bundle includes the two unmodified source files from the pinned commit, a SHA256 manifest, and the original MIT license. No provider SDK installation is needed.
+
+The offline check ran on 2026-11-03 with **Node.js 24.14.0 on macOS arm64**. All 16 checks passed: 3 for source/license integrity and 13 for function behavior.
+
+```sh
+node system-prompt-after-adapter.mjs
+```
+
+The local event count changed from `2` to `3`, while the collapsed message count stayed at `2`. Text changed from `Fixed\n\nOld` to `Fixed\n\nNew`; a same-value patch kept the old text. Original inputs were not rewritten. See the [recorded output](/examples/cpu-verification-more.json).
+
+This actually executed `resolveTranscript` and `getSystemMessageText`, but **not `buildParams`, a provider call, or an HTTP request**. The table's request-field correspondence remains a source-inspection result from that version, not captured network traffic. Cache hits, token reuse, and latency were not measured. Node erased TypeScript type syntax; this is not a pass of the original project's type checker.

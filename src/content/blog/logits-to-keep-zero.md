@@ -7,7 +7,7 @@ translationKey: logits-to-keep-zero
 topic: model
 tags: [PyTorch, Transformers, Logits]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T06:52:26+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 1
 draft: false
 review: true
@@ -87,3 +87,16 @@ padding 也要在这一层考虑。源码中的切片没有根据 `attention_mas
 本文讨论的是 **`labels=None`、只读取 logits** 的调用。若同时传入 `labels` 让模型计算 loss，裁剪后的预测行与标签还需要按具体接口重新对齐，不能把空输出或部分输出直接配给完整标签。该版本在选行后才进入 loss 分支，这个顺序应当一并核对。[对应源码](https://github.com/huggingface/transformers/blob/ddb849abe009d1089e6c691bfc897f27211c663c/src/transformers/models/qwen3_5/modeling_qwen3_5.py#L1675-L1682)
 
 最后检查外层封装有没有把空列表转换成默认的整数 `0`。这个转换很小，也可能完全不报错，却会把“零个位置”重新变成“全部位置”。保留明确的参数类型和索引数量，往往比在结果出来后猜测工作量更直接。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/logits-to-keep-zero.py)。2026-11-03 在 macOS arm64 CPU 上，用 **Python 3.11.11、PyTorch 2.6.0、单线程** 运行，22 项检查通过。在 Python 3.11 虚拟环境中保存脚本后运行：
+
+```sh
+python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python logits-to-keep-zero.py
+```
+
+四种参数得到的 logits 形状依次为 `[2,6,10]`、`[2,2,10]`、`[2,0,10]`、`[2,2,10]`。脚本还比较了实际行内容，用非零权重与 Python 标量点积对照投影结果，并检查越界索引、空序列和原输入保护，见[实测记录](/examples/cpu-verification-more.json)。
+
+这里执行的是同一选行表达式和小张量投影，**没有加载 Transformers 或模型**。主干、cache、labels/loss、峰值显存和端到端速度都不在这次验证范围内。

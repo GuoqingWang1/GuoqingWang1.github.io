@@ -6,7 +6,7 @@ lang: en
 topic: model
 tags: [KV Cache, Transformers, 混合注意力]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 9
 draft: false
 review: true
@@ -103,3 +103,15 @@ To share prefix computation, use branching, copying, or restoration mechanisms e
 For example, if two variables refer to the same cache, appending content for A also changes the state that B will subsequently see. Safe copying must be supported by the specific cache type; generic `deepcopy` is not a rollback solution that every implementation supports. Validation should compare the reuse path with consuming the same prefix from a fresh state, checking the required states and outputs rather than only a length field.
 
 Before reusing a cache, establish one thing: **What history is the current model state guaranteed to correspond to?** Make state ownership and restoration semantics explicit, then decide how to save prefix computation.
+
+## Run the example locally
+
+[Download the complete script](/examples/hybrid-cache-crop-state.py). It requires only the Python standard library. On 2026-11-03, all 20 checks passed with **Python 3.11.11 on a macOS arm64 CPU**:
+
+```sh
+python hybrid-cache-crop-state.py
+```
+
+Both paths ended with the list `[1,2,4]`, but reuse after cropping left state `1234`, while rebuilding independently produced `124`. The script also checks that aliases of the same object share changes and that `crop(0)` clears the list without clearing the recurrent state. See the [recorded output](/examples/cpu-verification-more.json).
+
+This executes the article's **integer/list ToyCache logic**. It does not test a real KV cache, convolution state, tensor storage, or Transformers. The pinned implementation's real cache behavior remains supported by the source references above.

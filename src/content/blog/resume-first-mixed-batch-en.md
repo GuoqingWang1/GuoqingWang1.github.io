@@ -7,7 +7,7 @@ lang: en
 translationKey: resume-first-mixed-batch
 tags: [checkpoint, schema, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 4
 draft: false
 review: true
@@ -111,3 +111,15 @@ Keep several boundary cases as well: missing required fields, incompatible field
 The fix first passed a limited check mixing restored and fresh samples. It then completed a real mixed batch and new updates in the original training path. That showed that the interface repair had passed the point where restored state was actually consumed; it did not establish a guarantee about training quality.
 
 **The first mixed batch after a resume is a boundary worth testing separately.** Many failures do not appear in the save path or the fresh-data path alone. They become visible when the two meet.
+
+## Run the example locally
+
+[Download the complete script](/examples/resume-first-mixed-batch.py). The three code blocks above run in order; the download combines their definitions and uses only the standard library. On 2026-11-03, 22 checks passed with **Python 3.11.11 on a macOS arm64 CPU**:
+
+```sh
+python resume-first-mixed-batch.py
+```
+
+The valid mixed batch preserved `old-1 → new-1` order, rewards, and `trace`; the incorrectly cleaned cached member was rejected. Even two damaged members with matching field sets could not bypass the active schema. All 13 accepted or rejected input records matched independent snapshots. See the [recorded output](/examples/cpu-verification-more.json).
+
+This executes synthetic dictionaries only. It reads no checkpoint or training data and does not run the framework's restore entry point. Dtypes, tensor shapes, identifier uniqueness, feature-disabled migration, and training quality remain outside what this script establishes.

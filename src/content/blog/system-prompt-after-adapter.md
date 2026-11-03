@@ -7,7 +7,7 @@ translationKey: system-prompt-after-adapter
 topic: runtime
 tags: [Agent, 上下文, 推理接口]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 10
 draft: false
 review: true
@@ -17,7 +17,7 @@ review: true
 
 在读 Pi 的一个 provider 兼容分支时，我们看到一个容易遗漏的步骤：消息列表还要经过适配，才能成为请求参数。判断更新影响时，需要分别看本地事件、适配后的状态和请求字段。
 
-下面固定使用文中链接的 Pi commit，并讨论 `supportsMidConvoSystemMessages=false` 的分支。示例是源码推导的检查片段，不是线上抓包或新跑出的缓存测试。
+下面固定使用文中链接的 Pi commit，并讨论 `supportsMidConvoSystemMessages=false` 的分支。文末记录了事件折叠和文本渲染函数的本地实跑；请求字段映射仍来自源码核对，不是线上抓包或缓存测试。
 
 ## 本地事件只增加一条
 
@@ -116,3 +116,17 @@ assert.equal(getSystemMessageText(resolvedSame.messages[0]), oldText);
 本例只能确认内容变化。`Fixed` 这段文本仍然相同，但究竟哪些 token 前缀可复用、后端是否命中缓存，以及费用和延迟怎样变化，都需要对应的运行证据。一次 system 改写不能直接等同于“整个缓存失效”。
 
 日志里的追加只是起点。把同一次更新沿实际转换路径逐层对齐，才能知道自己比较的是哪一种状态。
+
+## 运行本文示例
+
+[下载完整示例包](/examples/system-prompt-after-adapter.zip)，解压后进入 `system-prompt-after-adapter` 目录。包内包含文中固定 commit 的两份未改写源码、SHA256 清单及原 MIT 许可；不需要安装 provider SDK。
+
+2026-11-03 使用 **Node.js 24.14.0、macOS arm64** 离线运行，16 项检查通过，其中 3 项核对源码／许可完整性，13 项核对函数行为：
+
+```sh
+node system-prompt-after-adapter.mjs
+```
+
+本地事件数从 `2` 变为 `3`，折叠后的消息数保持 `2`；文本由 `Fixed\n\nOld` 变为 `Fixed\n\nNew`，同值补丁则保留旧文本。原输入未被改写，见[实测记录](/examples/cpu-verification-more.json)。
+
+本次实际执行了 `resolveTranscript` 和 `getSystemMessageText`，**没有执行 `buildParams`、调用 provider 或发送 HTTP 请求**。表中请求字段的对应仍是同一版本的源码核对，不是网络抓包；缓存命中、token 复用和耗时也没有被测量。Node 只擦除了 TypeScript 类型语法，这不等于通过原项目的类型检查。

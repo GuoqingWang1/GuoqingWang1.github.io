@@ -7,7 +7,7 @@ translationKey: causal-logprob-row-alignment
 topic: model
 tags: [语言模型, LogProb, 张量对齐]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 2
 draft: false
 review: true
@@ -96,3 +96,16 @@ assert scores[keep].numel() == 2
 启用了 KV cache，也不意味着本次输出会自动带回前一块的 logits。可以在评分调度中把这个目标交给前一块最后一行处理，或保存那一行必要的预测结果；具体选择取决于已有输出接口。不能因为当前块已经拿到了目标 token，就直接用当前块第一行替代。
 
 检查这种代码时，我会明确列出三个量：目标 token 的全局位置、预测行的全局位置、预测行的块内位置。先让这三者逐项对应，再比较不同分块方式的分数。位置一致是必要条件；数值是否一致，还要另外保持权重、位置编码、mask 和计算精度等条件可比。
+
+## 运行本文示例
+
+[下载完整脚本](/examples/causal-logprob-row-alignment.py)。2026-11-03 在 macOS arm64 CPU 上，用 **Python 3.11.11、PyTorch 2.6.0、单线程** 完成 23 项检查。它把正文 helper 的输入 `assert` 换成显式异常，保留相同的 shift、mask 和 gather 计算逻辑。
+
+```sh
+python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python causal-logprob-row-alignment.py
+```
+
+非均匀合成 logits 的两个目标分数约为 `-0.07070314`、`-0.18161145`，与标量 log-softmax 参考在 `1e-6` 容差内一致；不 shift 和双重 shift 的分数都不同。空计分集合明确得到零个分数而不求均值，非法词表 ID 被拒绝；块首目标的预测行不会被当作当前块的 `-1` 行。
+
+完整结果见[实测记录](/examples/cpu-verification-more.json)。分块检查只是把**同一份合成 logits 切块后索引**，没有分别运行模型前向，也没有验证注意力 mask、位置编码或真实 cache 下的数值一致性。

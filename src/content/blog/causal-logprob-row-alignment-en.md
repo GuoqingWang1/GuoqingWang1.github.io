@@ -6,7 +6,7 @@ lang: en
 topic: model
 tags: [语言模型, LogProb, 张量对齐]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 2
 draft: false
 review: true
@@ -96,3 +96,16 @@ Although the second chunk contains both answer tokens, its own row `0` supplies 
 Enabling a KV cache does not automatically bring the previous chunk’s logits into the current output. The scoring schedule can assign this target to the previous chunk’s final row, or retain the prediction result needed from that row; the choice depends on the existing output interface. Having the target token in the current chunk does not justify substituting the current chunk’s first logit row.
 
 When checking this code, I write down three quantities explicitly: the target token’s global position, the prediction row’s global position, and the prediction row’s local position within its chunk. Match those one by one before comparing scores across chunking schemes. Position alignment is necessary; numerical agreement additionally requires comparable weights, position encoding, masks, and computation precision.
+
+## Run the example locally
+
+[Download the complete script](/examples/causal-logprob-row-alignment.py). On 2026-11-03, 23 checks passed on a macOS arm64 CPU with **Python 3.11.11, PyTorch 2.6.0, and one thread**. The script replaces the article helper's input `assert` statements with explicit errors while preserving its shift, mask, and gather computation.
+
+```sh
+python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python causal-logprob-row-alignment.py
+```
+
+The two selected scores from nonuniform synthetic logits were approximately `-0.07070314` and `-0.18161145`, agreeing with a scalar log-softmax reference within `1e-6`. Both missing the shift and shifting twice changed the scores. An empty scoring set explicitly produced zero selected scores without taking a mean; invalid vocabulary IDs were rejected; a chunk-start target did not silently use the current chunk's `-1` row.
+
+See the [recorded output](/examples/cpu-verification-more.json). The chunk check only **slices and indexes the same synthetic logits**. It does not run separate model forwards or establish numerical parity with real attention masks, position encodings, or caches.

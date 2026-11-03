@@ -7,7 +7,7 @@ lang: en
 translationKey: ray-arguments-before-bootstrap
 tags: [Ray, serialization, 训练恢复]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-01T07:53:34+08:00"
+updatedDate: "2026-11-03T19:29:09+08:00"
 order: 6
 draft: false
 review: true
@@ -121,3 +121,18 @@ Entry logs can mark these three stages instead of reporting only “restore fail
 Turning a large object into bytes does not remove serialization, transfer, or memory costs. This change addresses the ordering of dependency readiness and unpacking; it should not automatically be presented as a performance optimization.
 
 For a similar import failure, a useful diagnostic question is: **did it occur while restoring the arguments, inside the constructor, or during later use of the restored state?** Separating those three stages helps place the fix where it can take effect in time.
+
+## Run the example locally
+
+[Download the complete script](/examples/ray-arguments-before-bootstrap.py). The module, driver, and worker snippets above belong in different places and cannot simply be concatenated. The download generates a temporary synthetic module and trusted payload, checks unpacking order in isolated local Python child processes, and cleans up its temporary files.
+
+On 2026-11-03, all 17 checks passed with **Python 3.11.11, cloudpickle 3.1.1, and a macOS arm64 CPU**:
+
+```sh
+python -m pip install cloudpickle==3.1.1
+python ray-arguments-before-bootstrap.py
+```
+
+Before the module was made available, decoding failed with `ModuleNotFoundError` and the ordinary `Consumer` constructor was not called. Preparing the module first preserved `cursor=7` and member order `["a","b"]`, which that local consumer then read. Wrong types, invalid fields, and corrupt bytes were rejected too. See the [recorded output](/examples/cpu-verification-more.json).
+
+**No Ray runtime, Actor, or cluster was started.** This checks Python module-reference deserialization and subsequent field consumption, not Ray transport, `runtime_env`, or the original training restore chain. The script unpickles only trusted data it generates itself; do not change it to accept arbitrary external files.
