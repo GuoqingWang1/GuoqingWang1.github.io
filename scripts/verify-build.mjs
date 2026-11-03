@@ -11,6 +11,15 @@ const contributions = JSON.parse(await readFile('src/data/publication-contributi
 assert.deepEqual(Object.keys(contributions), publications.selected, 'Homepage contribution coverage/order differs from selected papers');
 const relatedPostKeys = JSON.parse(await readFile('src/data/related-posts.json', 'utf8'));
 const exampleAssets = JSON.parse(await readFile('src/data/example-assets.json', 'utf8'));
+const talkFigures = JSON.parse(await readFile('src/data/talk-figures.json', 'utf8'));
+for (const asset of talkFigures.assets) {
+  assert(/^\/figures\/agentic-rl-talk\/[a-z0-9-]+\.svg$/.test(asset.path), 'Invalid talk figure path');
+  const bytes = await readFile(path.join(root, asset.path.slice(1)));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, `Talk figure differs from reviewed asset: ${asset.path}`);
+  const svg = bytes.toString('utf8');
+  assert(svg.includes('<svg') && svg.includes('viewBox='), `Invalid SVG: ${asset.path}`);
+  assert(!/<script\b|\/Users\/|\/data\//i.test(svg), `Unexpected active or private content in figure: ${asset.path}`);
+}
 const shareImages = JSON.parse(await readFile('src/data/share-images.json', 'utf8'));
 const staticPages = [
   ['index.html', '/', 'en'],
@@ -292,6 +301,16 @@ for (const filename of output) {
     assert.equal(figure.lang, relative.startsWith('zh/') ? 'zh-CN' : 'en', `Wrong figure language: ${relative}`);
     assert(html.includes(`id="${figure['aria-labelledby']}"`), `Missing figure title: ${relative}`);
     assert(/<figcaption>[^<]+<\/figcaption>/.test(html), `Figure lacks a readable caption: ${relative}`);
+  }
+  const talk = tags(html, 'figure').filter(figure => figure['data-talk-figure']);
+  const isTalk = articleSlug === talkFigures.slug;
+  assert.deepEqual(talk.map(figure => figure['data-talk-figure']), isTalk ? talkFigures.figure_order : [], `Wrong talk figure sequence: ${relative}`);
+  if (isTalk) {
+    const locale = relative.startsWith('zh/') ? 'zh-CN' : 'en';
+    assert(talk.every(figure => figure.lang === locale && html.includes(`id="${figure['aria-labelledby']}"`)), `Talk figure language or title mismatch: ${relative}`);
+    const images = tags(html, 'img').filter(image => image.src?.startsWith('/figures/agentic-rl-talk/'));
+    assert.deepEqual(images.map(image => image.src), talkFigures.assets.filter(asset => asset.lang === locale).map(asset => asset.path), `Talk chart assets mismatch: ${relative}`);
+    assert(images.every(image => image.alt && image.loading === 'lazy'), `Talk chart needs accessible text and lazy loading: ${relative}`);
   }
   for (const match of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
     const value = decode(match[1]);

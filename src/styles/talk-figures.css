@@ -1,0 +1,98 @@
+/* The talk uses readable HTML diagrams and static, source-backed SVG charts. */
+.theme-e .article-body .talk-figure { margin: 30px 0; padding: 22px 0 0; border-top: 1px solid var(--line); color: var(--ink); font: 14px/1.65 var(--sans); break-inside: avoid; }
+.theme-e .article-body .talk-figure p { margin: 0; }
+.theme-e .article-body .talk-figure .tf-title { margin-bottom: 22px; font: 600 17px/1.5 var(--sans); text-wrap: balance; }
+.theme-e .article-body .talk-figure figcaption { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font: 13px/1.75 var(--sans); }
+.theme-e .article-body .talk-figure .tf-node { min-width: 0; padding: 15px 12px; border: 1px solid var(--line); background: var(--bg); text-align: center; }
+.theme-e .article-body .talk-figure .tf-node strong { display: block; font-size: 15px; font-weight: 600; }
+.theme-e .article-body .talk-figure .tf-node small { display: block; margin-top: 5px; color: var(--muted); font: 12px/1.65 var(--sans); }
+.theme-e .article-body .talk-figure .tf-emphasis { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.theme-e .article-body .talk-figure .tf-emphasis strong { font-size: 18px; }
+.theme-e .article-body .talk-figure .tf-emphasis small { color: #dedede; }
+.theme-e .article-body .talk-figure .tf-soft { background: var(--surface); }
+.theme-e .article-body .talk-figure .tf-edge { display: flex; justify-content: center; align-items: center; font-size: 22px; color: #707070; }
+.theme-e .article-body .talk-figure .tf-edge::before { content: '→'; }
+.theme-e .article-body .talk-figure .tf-stage-label { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+.theme-e .article-body .talk-figure .tf-agent-loop { display: grid; grid-template-columns: minmax(0,1fr) 26px minmax(0,1.15fr) 26px minmax(0,1fr); grid-template-rows: auto 29px auto 49px; align-items: stretch; }
+.theme-e .article-body .talk-figure .tf-state { grid-column: 1; grid-row: 3; }
+.theme-e .article-body .talk-figure .tf-state-edge { grid-column: 2; grid-row: 3; }
+.theme-e .article-body .talk-figure .tf-agent { grid-column: 3; grid-row: 3; }
+.theme-e .article-body .talk-figure .tf-tool-edge { grid-column: 4; grid-row: 3; }
+.theme-e .article-body .talk-figure .tf-tools { grid-column: 5; grid-row: 3; }
+.theme-e .article-body .talk-figure .tf-answer { grid-column: 3; grid-row: 1; padding: 10px 12px; }
+.theme-e .article-body .talk-figure .tf-answer small { margin: 0 0 2px; }
+.theme-e .article-body .talk-figure .tf-answer-edge { grid-column: 3; grid-row: 2; display: flex; justify-content: center; align-items: center; color: #707070; font-size: 22px; }
+.theme-e .article-body .talk-figure .tf-answer-edge::before { content: '↑'; }
+.theme-e .article-body .talk-figure .tf-return { grid-column: 1 / -1; grid-row: 4; position: relative; margin-inline: calc((100% - 52px) / 6.3); border: 1px solid #a7a7a7; border-top: 0; display: flex; justify-content: center; align-items: flex-end; }
+.theme-e .article-body .talk-figure .tf-return::before { content: '↑'; position: absolute; top: -14px; left: -6px; font-size: 20px; color: #707070; background: var(--bg); line-height: 1; }
+.theme-e .article-body .talk-figure .tf-return span { position: relative; top: 10px; max-width: 88%; padding: 0 9px; background: var(--bg); color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }
+.theme-e .article-body .talk-figure .tf-training { margin-top: 32px; padding-top: 19px; border-top: 1px dashed var(--line); }
+.theme-e .article-body .talk-figure .tf-linear { display: grid; grid-template-columns: minmax(0,1fr) 23px minmax(0,1fr) 23px minmax(0,1fr); align-items: stretch; }
+.theme-e .article-body .talk-figure .tf-linear-four { grid-template-columns: minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr); }
+.theme-e .article-body .talk-figure .tf-linear .tf-node { padding: 12px 9px; }
+.theme-e .article-body .talk-figure .tf-linear .tf-node strong { font-size: 14px; }
+.theme-e .article-body .talk-figure .tf-linear .tf-node small { font-size: 12px; }
+.theme-e .article-body .talk-figure .tf-sources { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 15px; }
+.theme-e .article-body .talk-figure .tf-join { margin: 0 auto; width: 66%; height: 27px; border: 1px solid #a7a7a7; border-top: 0; position: relative; }
+.theme-e .article-body .talk-figure .tf-join::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid #a7a7a7; }
+.theme-e .article-body .talk-figure .tf-join::after { content: '↓'; position: absolute; left: calc(50% - 7px); top: 18px; background: var(--bg); color: #707070; font-size: 21px; line-height: 1; }
+.theme-e .article-body .talk-figure .tf-merged { width: 66%; margin: 21px auto 16px; }
+.theme-e .article-body .talk-figure .tf-next { text-align: center; color: #707070; font-size: 20px; line-height: 1.1; margin: 7px 0 13px; }
+.theme-e .article-body .talk-figure .tf-to-first { position: relative; height: 28px; margin-bottom: 12px; }
+.theme-e .article-body .talk-figure .tf-to-first::before { content: ''; position: absolute; top: 0; left: calc((100% - 46px) / 6); right: 50%; height: 16px; border-right: 1px solid #a7a7a7; border-bottom: 1px solid #a7a7a7; }
+.theme-e .article-body .talk-figure .tf-to-first::after { content: '↓'; position: absolute; left: calc((100% - 46px) / 6 - 7px); top: 10px; color: #707070; font-size: 21px; background: var(--bg); line-height: 1; }
+.theme-e .article-body .talk-figure .tf-split { position: relative; width: 66%; height: 25px; margin: 0 auto 15px; border: 1px solid #a7a7a7; border-bottom: 0; }
+.theme-e .article-body .talk-figure .tf-split::before { content: ''; position: absolute; top: -16px; bottom: 0; left: 50%; border-left: 1px solid #a7a7a7; }
+.theme-e .article-body .talk-figure .tf-split span { position: absolute; bottom: -9px; font-size: 21px; color: #707070; line-height: 1; background: var(--bg); }
+.theme-e .article-body .talk-figure .tf-split span:first-child { left: -7px; }
+.theme-e .article-body .talk-figure .tf-split span:nth-child(2) { left: calc(50% - 7px); }
+.theme-e .article-body .talk-figure .tf-split span:last-child { right: -7px; }
+.theme-e .article-body .talk-figure .tf-runtime { display: grid; grid-template-columns: minmax(0,1fr) 26px minmax(0,1fr); align-items: stretch; }
+.theme-e .article-body .talk-figure .tf-side-services { display: grid; gap: 9px; }
+.theme-e .article-body .talk-figure .tf-bidirectional::before { content: '↔'; }
+.theme-e .article-body .talk-figure .tf-system-input { width: calc((100% - 26px) / 2); margin-bottom: 12px; }
+.theme-e .article-body .talk-figure .tf-runtime > .tf-emphasis { display: flex; flex-direction: column; justify-content: center; }
+.theme-e .article-body .talk-figure .tf-runtime-lead { width: calc((100% - 26px) / 2); text-align: center; color: #707070; font-size: 20px; line-height: 1; margin: -5px 0 9px; }
+.theme-e .article-body .talk-figure .tf-runtime-handoff { width: calc((100% - 26px) / 2); margin-top: 10px; text-align: center; color: var(--muted); font-size: 12px; }
+.theme-e .article-body .talk-figure[data-talk-figure="training-system"] .tf-training { margin-top: 15px; }
+.theme-e .article-body .talk-figure .tf-feedback-note { margin-top: 12px; text-align: center; font-size: 12px; color: var(--muted); }
+.theme-e .article-body .talk-figure .tf-save { margin-top: 18px; padding: 12px 15px; border-left: 2px solid var(--line); font-size: 13px; }
+.theme-e .article-body .talk-figure .tf-save strong { margin-right: 8px; font-weight: 600; }
+.theme-e .article-body .talk-figure .tf-future { border-style: dashed; }
+.theme-e .article-body .talk-figure .tf-caption-link { white-space: nowrap; margin-left: 7px; }
+.theme-e .article-body .talk-figure .talk-plot-link { display: block; border: 0; text-decoration: none; }
+.theme-e .article-body .talk-figure .talk-plot-link img { display: block; width: 100%; height: auto; margin: 0; background: #fff; }
+@media (max-width: 600px) {
+  .theme-e .article-body .talk-figure .tf-agent-loop { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: auto 18px auto 18px auto auto; gap: 10px; }
+  .theme-e .article-body .talk-figure .tf-state { grid-column: 1 / -1; grid-row: 1; }
+  .theme-e .article-body .talk-figure .tf-state-edge { grid-column: 1 / -1; grid-row: 2; }
+  .theme-e .article-body .talk-figure .tf-agent { grid-column: 1 / -1; grid-row: 3; }
+  .theme-e .article-body .talk-figure .tf-tool-edge { grid-column: 1; grid-row: 4; }
+  .theme-e .article-body .talk-figure .tf-tools { grid-column: 1; grid-row: 5; }
+  .theme-e .article-body .talk-figure .tf-answer { grid-column: 2; grid-row: 5; margin: 0; padding: 15px 12px; }
+  .theme-e .article-body .talk-figure .tf-answer-edge { display: flex; grid-column: 2; grid-row: 4; font-size: 18px; line-height: 1; }
+  .theme-e .article-body .talk-figure .tf-answer-edge::before { content: '↓'; }
+  .theme-e .article-body .talk-figure .tf-return { grid-column: 1 / -1; grid-row: 6; margin: 0; border: 0; padding: 2px 0 12px; }
+  .theme-e .article-body .talk-figure .tf-return::before { display: none; }
+  .theme-e .article-body .talk-figure .tf-return span { top: 0; max-width: 100%; font-size: 13px; }
+  .theme-e .article-body .talk-figure .tf-return span::before { content:'↺ '; color: var(--ink); }
+  .theme-e .article-body .talk-figure .tf-agent-loop .tf-edge { font-size: 18px; line-height: 1; }
+  .theme-e .article-body .talk-figure .tf-agent-loop .tf-edge::before { content:'↓'; }
+  .theme-e .article-body .talk-figure .tf-linear { grid-template-columns: 1fr; gap: 6px; }
+  .theme-e .article-body .talk-figure .tf-linear .tf-edge { font-size: 18px; line-height: 1; }
+  .theme-e .article-body .talk-figure .tf-linear .tf-edge::before { content:'↓'; }
+  .theme-e .article-body .talk-figure .tf-sources { grid-template-columns: 1fr; gap: 8px; }
+  .theme-e .article-body .talk-figure .tf-join { width: 1px; border-left: 0; border-bottom: 0; height: 17px; }
+  .theme-e .article-body .talk-figure .tf-join::after { top: 10px; }
+  .theme-e .article-body .talk-figure .tf-to-first::before { left: 50%; right: auto; width: 0; }
+  .theme-e .article-body .talk-figure .tf-to-first::after { left: calc(50% - 7px); }
+  .theme-e .article-body .talk-figure .tf-split { width: 1px; border: 0; height: 15px; }
+  .theme-e .article-body .talk-figure .tf-split span:first-child, .theme-e .article-body .talk-figure .tf-split span:last-child { display: none; }
+  .theme-e .article-body .talk-figure .tf-merged { width: 100%; }
+  .theme-e .article-body .talk-figure .tf-runtime { grid-template-columns: 1fr; gap: 8px; }
+  .theme-e .article-body .talk-figure .tf-system-input { width: 100%; }
+  .theme-e .article-body .talk-figure .tf-runtime-lead, .theme-e .article-body .talk-figure .tf-runtime-handoff { width: 100%; }
+  .theme-e .article-body .talk-figure .tf-bidirectional::before { content:'↕'; }
+  .theme-e .article-body .talk-figure .tf-training { margin-top: 24px; }
+}
+@media print { .theme-e .article-body .talk-figure { break-inside: avoid; } }

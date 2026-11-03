@@ -7,7 +7,7 @@ translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-03T17:21:13.321Z"
+updatedDate: "2026-11-04T02:02:30+08:00"
 draft: false
 review: true
 ---
@@ -32,12 +32,11 @@ Work toward this goal includes rewards, credit assignment, and update rules, as 
 
 The agent first needs to find sources and then check what each date means. An announcement date, an official release date, and a retail availability date may differ. Finding dates is therefore not enough: the agent must establish that they answer the same question.
 
-| Task stage | Action |
-| --- | --- |
-| Search | Locate official sources |
-| Read | Obtain release dates and their context |
-| Verify | Establish a consistent basis for comparison |
-| Answer | State the conclusion and its evidence |
+<figure class="talk-figure " data-talk-figure="search-agent-loop" lang="en" aria-labelledby="talk-search-agent-loop-title">
+<p class="tf-title" id="talk-search-agent-loop-title">Search Agent: actions, observations, and answers</p>
+<div class="tf-agent-loop"><div class="tf-node tf-state"><strong>Task &amp; current context</strong><small>Question, collected material, action history</small></div><span class="tf-edge tf-state-edge" aria-hidden="true"></span><div class="tf-node tf-agent tf-emphasis"><strong>Search Agent</strong><small>Choose the next action, or finish the task</small></div><span class="tf-edge tf-tool-edge" aria-hidden="true"></span><div class="tf-node tf-tools tf-soft"><strong>Tools</strong><small>Search / Visit, selected as needed</small></div><div class="tf-return"><span>Return observations to context, then decide again</span></div><div class="tf-node tf-answer"><strong>Answer &amp; support</strong><small>When the Agent chooses to finish</small></div><span class="tf-answer-edge" aria-hidden="true"></span></div><div class="tf-training"><p class="tf-stage-label">Training, separate from task execution</p><div class="tf-linear tf-linear-four"><div class="tf-node "><strong>Trajectories &amp; versions</strong></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Training signals</strong><small>Outcome / process / cost, as configured</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Policy update</strong></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Future rollouts</strong></div></div></div>
+<figcaption>Figure 1 · Tool use can repeat within a task, and observations still require verification. The lower path describes training, not a model update after every tool call.</figcaption>
+</figure>
 
 Training must retain complete trajectories and their corresponding policy versions, then construct rewards and advantages according to the experimental recipe. Supervision may come from final outcomes, process evaluation, or cost signals; different methods enable and combine different signals. Weight updates occur during training, and the updated policy is used for subsequent sampling.
 
@@ -121,6 +120,12 @@ Subsequent internal research includes additional changes to credit, cost, and up
 
 A score affects learning only after passing through credit assignment and update rules.
 
+<figure class="talk-figure " data-talk-figure="credit-update-flow" lang="en" aria-labelledby="talk-credit-update-flow-title">
+<p class="tf-title" id="talk-credit-update-flow-title">From scores to actual updates</p>
+<div class="tf-sources"><div class="tf-node tf-soft"><strong>Process score</strong><small>For example, information gain</small></div><div class="tf-node tf-soft"><strong>Outcome signal</strong><small>Task quality</small></div><div class="tf-node tf-soft"><strong>Cost signal</strong><small>Interaction and generation</small></div></div><div class="tf-join" aria-hidden="true"></div><div class="tf-merged"><div class="tf-node tf-emphasis"><strong>Credit &amp; advantages</strong><small>Constructed and enabled by the recipe</small></div></div><div class="tf-to-first" aria-hidden="true"></div><div class="tf-linear"><div class="tf-node "><strong>Update rule</strong><small>ratio / clip / reduction</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Parameter update</strong><small>Actual effects require validation</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Subsequent behavior</strong><small>Checked through task evaluation</small></div></div>
+<figcaption>Figure 2 · A mechanism overview. Components are enabled by configuration, not presented as an established best combination. Scores, advantages, and task gains require separate validation.</figcaption>
+</figure>
+
 1. **Raw score difference**: information change.
 2. **Gating and accumulation**: how credit is allocated to actions.
 3. **Total advantage**: quality, IG, and cost.
@@ -175,6 +180,12 @@ Differences in exposure and shared-tool conditions limit fair comparison. Passin
 ### 3.1 Models, tools, judging, and updates form a stateful loop
 
 Every interface needs explicit fields, versions, and lifecycle boundaries.
+
+<figure class="talk-figure " data-talk-figure="training-system" lang="en" aria-labelledby="talk-training-system-title">
+<p class="tf-title" id="talk-training-system-title">Components and state boundaries of the training system</p>
+<p class="tf-stage-label">Sampling and environment interaction</p><div class="tf-system-input"><div class="tf-node "><strong>Data &amp; runtime state</strong><small>Tasks, cursors, and pending state</small></div></div><p class="tf-runtime-lead" aria-hidden="true">↓</p><div class="tf-runtime"><div class="tf-node tf-emphasis"><strong>Rollout</strong><small>Generation, actions, and observations</small></div><span class="tf-edge tf-bidirectional" aria-hidden="true"></span><div class="tf-side-services"><div class="tf-node "><strong>Tools</strong><small>Search / Visit</small></div><div class="tf-node "><strong>Judge</strong><small>Called by the applicable scoring path</small></div></div></div><p class="tf-runtime-handoff">↓ Deliver trajectories and training signals</p><div class="tf-training"><p class="tf-stage-label">Learning and policy synchronization</p><div class="tf-linear"><div class="tf-node "><strong>Trajectories &amp; signals</strong><small>Rewards, credit, and advantages</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Actor update</strong><small>Actual parameter updates</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Policy sync</strong><small>New versions for subsequent rollouts</small></div></div></div><p class="tf-feedback-note">↺ Published policies feed subsequent rollouts</p><p class="tf-save"><strong>Save & restore</strong>Parameters, optimizer, cursors, and pending state reconnect at the corresponding consumer boundaries.</p>
+<figcaption>Figure 3 · Logical relationships, not a fixed serial tool-and-judge pipeline. Call placement and restoration capabilities remain specific to the validated implementation.</figcaption>
+</figure>
 
 The execution chain includes task state, model generation and tools, judging and rewards, credit and advantages, Actor updates, and weight publication. New policy versions are used for subsequent sampling, while saving and recovery span the lifecycle. Object fields, numerical semantics, policy versions, and time boundaries must all correspond to the actual consumers.
 
@@ -326,6 +337,12 @@ All of the same 512 questions completed, with full-Eval wall time decreasing fro
 | Original batch256 | 4505.21 s | 512/512 |
 | Continuous active256 | 4126.03 s | 512/512 |
 
+<figure class="talk-figure" data-talk-figure="eval-scheduling" lang="en" aria-labelledby="talk-eval-scheduling-title">
+<p class="tf-title" id="talk-eval-scheduling-title">Scheduling observations for a complete Eval</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Scheduling observations for a complete Eval"><img src="/figures/agentic-rl-talk/eval-scheduling-en.svg" alt="Two complete Evals on the same 512 questions and model, with a zero-based wall-time axis." loading="lazy" decoding="async" width="768" height="307.2"></a>
+<figcaption>Figure 4 · Shared tools, caching, and stochastic outputs limit precise causal attribution; individual-request latency also increased. <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
+
 Both groups completed generation and scoring for all 512 questions.
 
 The observed reduction was 8.42%. Stochastic outputs, shared tools, and caching limit precise causal attribution; individual-request latency also increased.
@@ -399,6 +416,24 @@ The nodes are 0/8/16/24/32/40/48/55. The fixed cost-scale scheme made 61 physica
 
 None of the three specific configurations simultaneously met the original requirements for quality preservation, fewer rounds, and the length constraint.
 
+<figure class="talk-figure" data-talk-figure="training-a009" lang="en" aria-labelledby="talk-training-a009-title">
+<p class="tf-title" id="talk-training-a009-title">Complete curves for the original combination</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the original combination"><img src="/figures/agentic-rl-talk/training-a009-en.svg" alt="Original combination: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="600"></a>
+<figcaption>Figure 5 · Gray dashed lines mark this run’s own initial reference. None of the three specific configurations met the original joint requirements; this is not a fair cross-run ranking. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
+
+<figure class="talk-figure" data-talk-figure="training-cap2" lang="en" aria-labelledby="talk-training-cap2-title">
+<p class="tf-title" id="talk-training-cap2-title">Complete curves for the update weight cap</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the update weight cap"><img src="/figures/agentic-rl-talk/training-cap2-en.svg" alt="Update weight cap: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="600"></a>
+<figcaption>Figure 6 · Metric scales match the other two figures; the initial reference belongs to this run. Lines connect recorded observations without smoothing or new statistics. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
+
+<figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="en" aria-labelledby="talk-training-fixed-cost-title">
+<p class="tf-title" id="talk-training-fixed-cost-title">Complete curves for the fixed cost scale</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the fixed cost scale"><img src="/figures/agentic-rl-talk/training-fixed-cost-en.svg" alt="Fixed cost scale: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="600"></a>
+<figcaption>Figure 7 · The x-axis counts updates on the model path. Total-token inputs retain their units, with ticks displayed in millions; full values remain in Appendix B11. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+</figure>
+
 | Updates on the model path | Original combination: correct | Weight cap: correct | Fixed cost scale: correct |
 | --- | --- | --- | --- |
 | 0 | 120 | 115 | 106 |
@@ -463,6 +498,12 @@ The specific modules led individually, completed jointly, or supported as a core
 ### 5.3 The next stage focuses on questions the evidence can distinguish
 
 Further investment should depend on whether new evidence can change a research choice.
+
+<figure class="talk-figure " data-talk-figure="next-questions" lang="en" aria-labelledby="talk-next-questions-title">
+<p class="tf-title" id="talk-next-questions-title">Existing assets and next research questions</p>
+<p class="tf-stage-label">Existing reusable assets</p><div class="tf-sources"><div class="tf-node tf-soft"><strong>Method implementations</strong><small>Training and scoring paths</small></div><div class="tf-node tf-soft"><strong>Runtime infrastructure</strong><small>Tools, recovery, and observability</small></div><div class="tf-node tf-soft"><strong>Data &amp; evidence</strong><small>Versions, controls, and curves</small></div></div><div class="tf-join" aria-hidden="true"></div><div class="tf-merged"><div class="tf-node tf-emphasis"><strong>Support the next research decision</strong></div></div><div class="tf-split" aria-hidden="true"><span>↓</span><span>↓</span><span>↓</span></div><div class="tf-sources" role="group" aria-label="Next research questions"><div class="tf-node tf-future"><strong>Quality baseline</strong><small>An interpretable learning reference</small></div><div class="tf-node tf-future"><strong>Process &amp; cost effects</strong><small>Conditions for a useful increment</small></div><div class="tf-node tf-future"><strong>Iteration efficiency</strong><small>Reliable decisions sooner</small></div></div>
+<figcaption>Figure 8 · Proposed research directions, not a claim that these studies have started or produced gains.</figcaption>
+</figure>
 
 #### Quality and learning signals
 

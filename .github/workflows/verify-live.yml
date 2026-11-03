@@ -39,6 +39,8 @@ jobs:
               related_post_keys = json.load(source)
           with open('src/data/example-assets.json') as source:
               example_assets = json.load(source)
+          with open('src/data/talk-figures.json') as source:
+              talk_figures = json.load(source)
           with open('src/data/share-images.json') as source:
               share_images = json.load(source)
           assert base.startswith('https://')
@@ -75,6 +77,8 @@ jobs:
                   if tag == 'article' and 'publication' in a.get('class', '').split(): self.paper_languages.append(a.get('lang'))
                   if tag == 'html': self.lang = a.get('lang')
                   if tag == 'script' and a.get('src'): self.assets.append(a['src'])
+                  if tag == 'img' and a.get('src', '').startswith('/figures/agentic-rl-talk/'):
+                      self.assets.append(a['src'])
                   if tag == 'header' and 'site-header' in a.get('class', '').split():
                       self.in_header = True; self.header_lang = a.get('lang')
                   if tag == 'nav' and self.in_header and a.get('id') == 'main-navigation': self.in_navigation = True
@@ -276,6 +280,11 @@ jobs:
           for asset in sorted(assets):
               url = urljoin(base, asset); assert urlparse(url).hostname == host
               results.append(fetch(url))
+          by_asset_url = {result['url']: result for result in results}
+          for asset in talk_figures['assets']:
+              result = by_asset_url[urljoin(base, asset['path'])]
+              assert result['sha256'] == asset['sha256'], 'Talk SVG differs from reviewed asset: '+asset['path']
+              assert result['final_url'] == result['url'] and not result['redirects']
           assert set(share_images) == {'en', 'zh-CN'}
           image_urls = {}
           for lang, image in share_images.items():

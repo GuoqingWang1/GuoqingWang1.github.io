@@ -7,7 +7,7 @@ translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-03T17:21:13.321Z"
+updatedDate: "2026-11-04T02:02:30+08:00"
 draft: false
 review: true
 ---
@@ -32,12 +32,11 @@ review: true
 
 Agent 需要先查找材料，再核对日期口径。预告时间、正式发布时间和上市销售时间可能不同，检索到日期以后还要判断它是否回答了同一个问题。
 
-| 任务阶段 | 行为 |
-| --- | --- |
-| 搜索 | 定位官方来源 |
-| 读取 | 获取发布日期与上下文 |
-| 核对 | 统一比较口径 |
-| 回答 | 说明结论与依据 |
+<figure class="talk-figure " data-talk-figure="search-agent-loop" lang="zh-CN" aria-labelledby="talk-search-agent-loop-title">
+<p class="tf-title" id="talk-search-agent-loop-title">Search Agent：行动、观察与回答</p>
+<div class="tf-agent-loop"><div class="tf-node tf-state"><strong>任务与当前上下文</strong><small>问题、已有材料、行动历史</small></div><span class="tf-edge tf-state-edge" aria-hidden="true"></span><div class="tf-node tf-agent tf-emphasis"><strong>Search Agent</strong><small>选择下一步行动，或结束任务</small></div><span class="tf-edge tf-tool-edge" aria-hidden="true"></span><div class="tf-node tf-tools tf-soft"><strong>工具</strong><small>Search / Visit，按需选择</small></div><div class="tf-return"><span>工具观察回填到上下文，再次判断</span></div><div class="tf-node tf-answer"><strong>回答与依据</strong><small>Agent 选择结束时</small></div><span class="tf-answer-edge" aria-hidden="true"></span></div><div class="tf-training"><p class="tf-stage-label">训练阶段，与任务执行分开</p><div class="tf-linear tf-linear-four"><div class="tf-node "><strong>轨迹与版本</strong></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>训练信号</strong><small>结果／过程／成本，按配方启用</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>策略更新</strong></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>后续采样</strong></div></div></div>
+<figcaption>图1 · 任务内可以多轮调用工具；工具观察仍需核查。下方描述训练阶段，不表示每次工具调用都会更新模型。</figcaption>
+</figure>
 
 训练需要保留完整轨迹和对应的策略版本，再按实验配方构造奖励与优势。监督可以来自最终结果、过程评价或成本信号；不同方法启用的信号与组合不同。权重更新发生在训练阶段，更新后的策略用于后续采样。
 
@@ -121,6 +120,12 @@ Agent 需要先查找材料，再核对日期口径。预告时间、正式发�
 
 一个分数要经过信用分配与更新规则，才影响学习。
 
+<figure class="talk-figure " data-talk-figure="credit-update-flow" lang="zh-CN" aria-labelledby="talk-credit-update-flow-title">
+<p class="tf-title" id="talk-credit-update-flow-title">从评分到实际更新的几个层次</p>
+<div class="tf-sources"><div class="tf-node tf-soft"><strong>过程评分</strong><small>例如信息增益</small></div><div class="tf-node tf-soft"><strong>结果信号</strong><small>任务质量</small></div><div class="tf-node tf-soft"><strong>成本信号</strong><small>交互与生成</small></div></div><div class="tf-join" aria-hidden="true"></div><div class="tf-merged"><div class="tf-node tf-emphasis"><strong>信用与优势</strong><small>按配方构造与启用</small></div></div><div class="tf-to-first" aria-hidden="true"></div><div class="tf-linear"><div class="tf-node "><strong>更新规则</strong><small>ratio / clip / reduction</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>参数更新</strong><small>实际作用仍需验证</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>后续行为</strong><small>通过任务评测检查</small></div></div>
+<figcaption>图2 · 机制关系示意。各项按配置启用，不代表这些信号已形成一套优选组合；评分、优势与任务收益分别验证。</figcaption>
+</figure>
+
 1. **原始评分差**：信息变化。
 2. **门控与累计**：动作如何分摊。
 3. **总优势**：质量、IG、成本。
@@ -177,6 +182,12 @@ Agent 需要先查找材料，再核对日期口径。预告时间、正式发�
 ### 3.1 模型、工具、评分与更新接成有状态闭环
 
 每一段接口都需要明确字段、版本和生命周期。
+
+<figure class="talk-figure " data-talk-figure="training-system" lang="zh-CN" aria-labelledby="talk-training-system-title">
+<p class="tf-title" id="talk-training-system-title">训练系统的组件与状态边界</p>
+<p class="tf-stage-label">采样与环境交互</p><div class="tf-system-input"><div class="tf-node "><strong>数据与运行状态</strong><small>任务、游标与待消费状态</small></div></div><p class="tf-runtime-lead" aria-hidden="true">↓</p><div class="tf-runtime"><div class="tf-node tf-emphasis"><strong>Rollout</strong><small>生成、行动与观察回填</small></div><span class="tf-edge tf-bidirectional" aria-hidden="true"></span><div class="tf-side-services"><div class="tf-node "><strong>Tools</strong><small>Search / Visit</small></div><div class="tf-node "><strong>Judge</strong><small>按实际评分路径调用</small></div></div></div><p class="tf-runtime-handoff">↓ 交付轨迹与训练信号</p><div class="tf-training"><p class="tf-stage-label">学习与策略同步</p><div class="tf-linear"><div class="tf-node "><strong>轨迹与训练信号</strong><small>奖励、信用与优势</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Actor 更新</strong><small>实际参数更新</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>权重发布</strong><small>新版本用于后续 Rollout</small></div></div></div><p class="tf-feedback-note">↺ 发布的策略用于后续 Rollout</p><p class="tf-save"><strong>保存与恢复</strong>参数、优化器、数据游标与待消费状态，在对应消费边界衔接。</p>
+<figcaption>图3 · 逻辑关系示意，工具与评分不是固定串行流水线。不同实现的调用位置和恢复能力仍以实际验收为准。</figcaption>
+</figure>
 
 执行链包含任务状态、模型生成与工具、评分与奖励、信用与优势、Actor 更新、权重发布。新的策略版本供后续采样使用，保存和恢复贯穿生命周期。对象字段、数值语义、策略版本和时间边界都需要对应实际消费者。
 
@@ -336,6 +347,12 @@ GRPO、[IGPO](https://arxiv.org/abs/2510.14967)各完成384条轨迹、三次Act
 | 原batch256 | 4505.21 s | 512/512 |
 | 持续active256 | 4126.03 s | 512/512 |
 
+<figure class="talk-figure" data-talk-figure="eval-scheduling" lang="zh-CN" aria-labelledby="talk-eval-scheduling-title">
+<p class="tf-title" id="talk-eval-scheduling-title">完整 Eval 的调度观测</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：完整 Eval 的调度观测"><img src="/figures/agentic-rl-talk/eval-scheduling-zh.svg" alt="同512题、同模型的两次完整Eval，零起点比较墙钟时间。" loading="lazy" decoding="async" width="768" height="307.2"></a>
+<figcaption>图4 · 共享工具、缓存与随机输出限制精确因果归因；单请求延迟也有所上升。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
 两组均完整完成512题生成与评分。
 
 本次观测下降8.42%；随机输出、共享工具与缓存限制精确因果归因，单请求延迟也有所上升。
@@ -414,6 +431,24 @@ sequence-ratio 的同一策略在128与嵌套246开发面板上接受检查。
 
 三条具体配置均未同时满足原定的质量保持、轮次降低与长度约束。
 
+<figure class="talk-figure" data-talk-figure="training-a009" lang="zh-CN" aria-labelledby="talk-training-a009-title">
+<p class="tf-title" id="talk-training-a009-title">原始组合方案的完整训练曲线</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：原始组合方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-a009-zh.svg" alt="原始组合方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="600"></a>
+<figcaption>图5 · 灰虚线为该运行自身的初始参照。三条具体配置均未达到原联合要求，不作跨运行公平排名。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
+<figure class="talk-figure" data-talk-figure="training-cap2" lang="zh-CN" aria-labelledby="talk-training-cap2-title">
+<p class="tf-title" id="talk-training-cap2-title">更新权重上限方案的完整训练曲线</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：更新权重上限方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-cap2-zh.svg" alt="更新权重上限方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="600"></a>
+<figcaption>图6 · 各指标坐标尺度与另外两图一致，初始参照属于该运行。折线仅连接已有观测，没有平滑或新增统计。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
+<figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="zh-CN" aria-labelledby="talk-training-fixed-cost-title">
+<p class="tf-title" id="talk-training-fixed-cost-title">固定尺度成本方案的完整训练曲线</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：固定尺度成本方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" alt="固定尺度成本方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="600"></a>
+<figcaption>图7 · 横轴为模型路径更新次数。总token保持原单位，只把刻度显示为百万；完整数值仍保留在附录B11。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
 
 | 模型路径更新次数 | 原始组合正确数 | 权重上限正确数 | 固定成本正确数 |
 | --- | --- | --- | --- |
@@ -481,6 +516,12 @@ sequence-ratio 的同一策略在128与嵌套246开发面板上接受检查。
 ### 5.3 下一阶段聚焦可判别的问题
 
 继续投入的依据，是新证据能否改变研究选择。
+
+<figure class="talk-figure " data-talk-figure="next-questions" lang="zh-CN" aria-labelledby="talk-next-questions-title">
+<p class="tf-title" id="talk-next-questions-title">已有资产与后续研究问题</p>
+<p class="tf-stage-label">已有可复用资产</p><div class="tf-sources"><div class="tf-node tf-soft"><strong>方法实现</strong><small>训练与评分路径</small></div><div class="tf-node tf-soft"><strong>运行基建</strong><small>工具、恢复与观测</small></div><div class="tf-node tf-soft"><strong>数据与证据</strong><small>版本、对照与曲线</small></div></div><div class="tf-join" aria-hidden="true"></div><div class="tf-merged"><div class="tf-node tf-emphasis"><strong>支撑下一轮判断</strong></div></div><div class="tf-split" aria-hidden="true"><span>↓</span><span>↓</span><span>↓</span></div><div class="tf-sources" role="group" aria-label="后续研究问题"><div class="tf-node tf-future"><strong>质量基线</strong><small>建立可解释的质量学习参照</small></div><div class="tf-node tf-future"><strong>过程与成本效应</strong><small>识别有效增量的适用条件</small></div><div class="tf-node tf-future"><strong>迭代效率</strong><small>更快取得可信的研究结论</small></div></div>
+<figcaption>图8 · 研究方向示意，不表示这些方案已启动或已获得效果结论。</figcaption>
+</figure>
 
 #### 质量与学习信号
 

@@ -1,0 +1,63 @@
+{
+  "slug": "agentic-rl-research-and-systems",
+  "figure_order": [
+    "search-agent-loop",
+    "credit-update-flow",
+    "training-system",
+    "eval-scheduling",
+    "training-a009",
+    "training-cap2",
+    "training-fixed-cost",
+    "next-questions"
+  ],
+  "assets": [
+    {
+      "id": "eval-scheduling",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/eval-scheduling-zh.svg",
+      "sha256": "3607be5040890c0be064f3ad1c96c027ddcf6d04c550e61fdbb5c9a363a2c796"
+    },
+    {
+      "id": "training-a009",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/training-a009-zh.svg",
+      "sha256": "ca9c7108b5333af8127f30e354bf3666216834346f14d628d32c78d6f67255ad"
+    },
+    {
+      "id": "training-cap2",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/training-cap2-zh.svg",
+      "sha256": "bf73a3ea7d8f920d25b7a18fb9a13f7adcf6bd19bcb3d59e2d153cc8aaf54511"
+    },
+    {
+      "id": "training-fixed-cost",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/training-fixed-cost-zh.svg",
+      "sha256": "dc008e1a5d729cf76802ea7dbdb3e89b4e904331d89640530dad9ab136000c7a"
+    },
+    {
+      "id": "eval-scheduling",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/eval-scheduling-en.svg",
+      "sha256": "6af522281ab0f5d29235c26f90d2845fa641042cfb7848c40adacceeb365b49e"
+    },
+    {
+      "id": "training-a009",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/training-a009-en.svg",
+      "sha256": "160344f928d6065fa80e75409750a1ed3eff859d76f47264b4905595a7155a11"
+    },
+    {
+      "id": "training-cap2",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/training-cap2-en.svg",
+      "sha256": "b8b207ab68b190f7df5207ca60bd44eb9768d53a69adb6a212ce04277e954079"
+    },
+    {
+      "id": "training-fixed-cost",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/training-fixed-cost-en.svg",
+      "sha256": "b7841934e894fff664ea3ee54c146ed12dc71bb1e3793adeae881db9d1f2986f"
+    }
+  ]
+}
