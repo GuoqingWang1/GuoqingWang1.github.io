@@ -33,6 +33,8 @@ jobs:
               expected_news = json.load(source)
           with open('src/data/publications.json') as source:
               expected_publications = json.load(source)
+          with open('src/data/publication-contributions.json') as source:
+              expected_contributions = json.load(source)
           with open('src/data/related-posts.json') as source:
               related_post_keys = json.load(source)
           with open('src/data/example-assets.json') as source:
@@ -252,10 +254,16 @@ jobs:
               entries = []
               for match in re.finditer(r'<article\b([^>]*)>[\s\S]*?</article>', body.decode()):
                   classes = re.search(r'\bclass="([^"]*)"', match[1])
-                  if classes and 'publication' in classes[1].split(): entries.append(match[0])
+                  if classes and 'publication' in classes[1].split():
+                      entries.append(re.sub(r'<p\b[^>]*class="pub-contribution"[^>]*>[\s\S]*?</p>', '', match[0]))
               return entries
           for en_path, zh_path in translation_pairs[:2]:
               assert paper_markup(by_path[en_path]['body']) == paper_markup(by_path[zh_path]['body']), 'Publication records/order differ across languages: '+en_path
+          for home, lang in [('', 'en'), ('zh/', 'zh-CN')]:
+              body = by_path[home]['body'].decode()
+              summaries = re.findall(r'<p\b[^>]*class="pub-contribution"[^>]*lang="'+lang+r'"[^>]*>([^<]+)</p>', body)
+              assert summaries == [expected_contributions[key][lang] for key in expected_publications['selected']], 'Wrong localized homepage contributions: '+home
+              assert 'pub-contribution' not in by_path[home+'publications/']['body'].decode(), 'Homepage summaries leaked into Publications'
           for path, target in [('en/', ''), ('en/publications/', 'publications/'), ('en/blog/', 'blog/')]:
               parser = Page(); parser.feed(by_path[path]['body'].decode())
               assert parser.canonical == base+target and parser.refresh == '0;url=/'+target, path

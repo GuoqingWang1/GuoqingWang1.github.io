@@ -7,7 +7,7 @@ translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T19:47:20+08:00"
+updatedDate: "2026-11-03T20:38:15+08:00"
 order: 3
 draft: false
 review: true
@@ -36,6 +36,24 @@ Monitoring records should identify the object as well. A bare `cancelled=true` d
 ## Use synchronization points to order A and B
 
 The following independent example uses only the standard library. The pool has one worker, which A keeps occupied using an event, so B can only queue. `result_channel` is a manually created result channel for the test. A callback transfers B's successful result into it; it does not represent B's execution state.
+
+<figure class="note-diagram cancellation-paths-diagram" data-diagram="cancellation-paths" lang="en" aria-labelledby="cancellation-paths-title">
+<p class="diagram-title" id="cancellation-paths-title">Cancelling the result channel does not automatically cancel queued work</p>
+<div class="diagram-origin">A holds the only worker; B is queued<span>A synchronized, single-worker thread pool</span></div>
+<p class="diagram-bridge">Both paths cancel the result channel first<br><code>result_channel.cancel()</code></p>
+<div class="diagram-paths"><div class="diagram-path"><p class="diagram-path-label">Cancel only the result channel</p>
+<ol class="diagram-steps">
+<li>Leave B queued<span class="diagram-step-detail">Do not cancel B’s work Future</span></li>
+<li>Release A; wait for it to finish</li>
+<li><span class="diagram-outcome">B is called</span><span class="diagram-step-detail">The cancelled result channel discards its late result</span></li>
+</ol></div><div class="diagram-path"><p class="diagram-path-label">Also cancel the pending work</p>
+<ol class="diagram-steps">
+<li>Cancel B while it is pending<span class="diagram-step-detail"><code>fb.cancel() == True</code></span></li>
+<li>Release A; wait for it to finish</li>
+<li><span class="diagram-outcome">B is never called</span><span class="diagram-step-detail">Its work Future is cancelled and done</span></li>
+</ol></div></div>
+<figcaption>Ordering only, not elapsed time. Successfully cancelling pending B prevents that invocation; running A still has to finish.</figcaption>
+</figure>
 
 ```python
 from concurrent.futures import Future, ThreadPoolExecutor

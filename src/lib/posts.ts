@@ -35,6 +35,7 @@ export async function relatedPosts(post: CollectionEntry<'blog'>) {
   return keys.filter(key => key !== postKey(post)).map(key => available.get(key)).filter((candidate): candidate is CollectionEntry<'blog'> => Boolean(candidate));
 }
 export function readingMinutes(body = '') {
+  body = body.replace(/<\/?[a-z][^>]*>/gi, ' ');
   const cjk = (body.match(/[\u3400-\u9fff]/g) || []).length;
   const words = (body.replace(/[\u3400-\u9fff]/g, ' ').match(/[a-zA-Z0-9]+/g) || []).length;
   return Math.max(1, Math.ceil(cjk / 350 + words / 220));

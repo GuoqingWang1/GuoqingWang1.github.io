@@ -1,0 +1,107 @@
+/* Static, text-based figures reflow without JavaScript or external assets. */
+.theme-e .article-body .note-diagram {
+  margin: 30px 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--line);
+  font: 14px/1.6 var(--sans);
+  color: var(--ink);
+  break-inside: avoid;
+}
+.theme-e .article-body .note-diagram p { margin: 0; }
+.theme-e .article-body .note-diagram .diagram-title {
+  margin-bottom: 20px;
+  font: 500 17px/1.45 var(--serif);
+  text-wrap: balance;
+}
+.theme-e .article-body .note-diagram code {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: .94em;
+  white-space: normal;
+}
+.theme-e .article-body .note-diagram figcaption {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font: 12px/1.7 var(--sans);
+  color: var(--muted);
+}
+.theme-e .article-body .note-diagram .alignment-grid {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  overflow: visible;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.theme-e .article-body .alignment-grid th,
+.theme-e .article-body .alignment-grid td {
+  padding: 11px 4px;
+  border: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+.theme-e .article-body .alignment-grid th:first-child {
+  width: 84px;
+  padding-left: 0;
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.theme-e .article-body .alignment-grid thead th { color: var(--muted); font: 12px/1.5 var(--mono); }
+.theme-e .article-body .alignment-grid .score-row { background: var(--surface); color: var(--ink); }
+.theme-e .article-body .alignment-grid .target-token { font-weight: 700; border-bottom: 2px solid var(--ink); }
+.theme-e .article-body .alignment-grid .alignment-arrows td { padding-block: 0; color: var(--muted); font-size: 20px; }
+.theme-e .article-body .note-diagram .diagram-key { margin-top: 17px; font-size: 13px; }
+.theme-e .article-body .note-diagram .diagram-origin {
+  padding: 13px 17px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: center;
+}
+.theme-e .article-body .note-diagram .diagram-origin > span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.theme-e .article-body .note-diagram .diagram-bridge {
+  position: relative;
+  padding: 18px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+.theme-e .article-body .note-diagram .diagram-bridge::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 13px;
+  border-left: 1px solid #a3a3a3;
+}
+.theme-e .article-body .note-diagram .diagram-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; margin-top: 24px; }
+.theme-e .article-body .note-diagram .diagram-path-label { margin: 0 0 13px; font-size: 13px; font-weight: 600; }
+.theme-e .article-body .note-diagram .diagram-steps { padding: 0; margin: 0; list-style: none; }
+.theme-e .article-body .note-diagram .diagram-steps li { position: relative; padding: 0 0 22px 20px; margin: 0; border-left: 1px solid var(--line); }
+.theme-e .article-body .note-diagram .diagram-steps li::before { content: ''; position: absolute; top: 6px; left: -3px; width: 5px; height: 5px; border-radius: 50%; background: var(--ink); }
+.theme-e .article-body .note-diagram .diagram-steps li:last-child { padding-bottom: 0; border-left-color: transparent; }
+.theme-e .article-body .note-diagram .diagram-step-detail { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+.theme-e .article-body .note-diagram .diagram-outcome { font-weight: 600; }
+.theme-e .article-body .note-diagram .cache-values { display: grid; gap: 3px; margin: 8px 0 0; padding: 11px 12px; border: 1px solid var(--line); font-family: var(--mono); font-size: 13px; }
+.theme-e .article-body .note-diagram .cache-values div { display: flex; align-items: baseline; gap: 12px; }
+.theme-e .article-body .note-diagram .cache-values dt { color: var(--muted); font-size: 11px; min-width: 34px; }
+.theme-e .article-body .note-diagram .cache-values dd { margin: 0; }
+.theme-e .article-body .note-diagram .cache-state { font-weight: 600; }
+.theme-e .article-body .note-diagram .cache-result { background: var(--surface); }
+.theme-e .article-body .cache-state-diagram .diagram-step-action { display: block; min-height: 44px; }
+@media (max-width: 520px) {
+  .theme-e .article-body .note-diagram { font-size: 13px; padding-top: 18px; }
+  .theme-e .article-body .note-diagram .diagram-title { font-size: 16px; }
+  .theme-e .article-body .note-diagram .diagram-paths { grid-template-columns: 1fr; gap: 24px; }
+  .theme-e .article-body .note-diagram .diagram-path + .diagram-path { padding-top: 20px; border-top: 1px solid var(--line); }
+  .theme-e .article-body .cache-state-diagram .diagram-step-action { min-height: 0; }
+  .theme-e .article-body .alignment-grid th:first-child { width: 60px; font-size: 11px; }
+  .theme-e .article-body .alignment-grid th, .theme-e .article-body .alignment-grid td { padding-inline: 2px; font-size: 13px; }
+}
+@media print {
+  .theme-e .article-body .note-diagram { break-inside: avoid; }
+  .theme-e .article-body .note-diagram .diagram-paths { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -6,7 +6,7 @@ lang: en
 topic: model
 tags: [KV Cache, Transformers, 混合注意力]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T19:29:09+08:00"
+updatedDate: "2026-11-03T20:38:15+08:00"
 order: 9
 draft: false
 review: true
@@ -71,17 +71,25 @@ assert reused.slots == fresh.slots == [1, 2, 4]
 assert (reused.state, fresh.state) == (1234, 124)
 ```
 
-Expanding the definition step by step gives these expected relationships:
+The two paths make the state divergence visible:
 
-| Stage | Inputs in the list | Recurrent state |
-|---|---|---:|
-| Process only the prefix | `[1,2]` | 12 |
-| Append A | `[1,2,3]` | 123 |
-| Crop to the prefix length | `[1,2]` | 123 |
-| Append B after cropping | `[1,2,4]` | 1234 |
-| Process the prefix and B from a fresh state | `[1,2,4]` | 124 |
+<figure class="note-diagram cache-state-diagram" data-diagram="cache-state" lang="en" aria-labelledby="cache-state-title">
+<p class="diagram-title" id="cache-state-title">Restoring length does not restore accumulated state</p>
+<div class="diagram-origin">After prefix [1,2] and continuation A=3<span><code>slots = [1,2,3] · state = 123</code></span></div>
+<div class="diagram-paths"><div class="diagram-path"><p class="diagram-path-label">Reuse after cropping</p>
+<ol class="diagram-steps">
+<li><span class="diagram-step-action"><code>crop(2)</code><span class="diagram-step-detail">Shorten slots; state stays unchanged</span></span><dl class="cache-values"><div><dt>slots</dt><dd><code>[1,2]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>123</code></dd></div></dl></li>
+<li>Then append B=4<dl class="cache-values cache-result"><div><dt>slots</dt><dd><code>[1,2,4]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>1234</code></dd></div></dl></li>
+</ol></div><div class="diagram-path"><p class="diagram-path-label">Rebuild independently</p>
+<ol class="diagram-steps">
+<li><span class="diagram-step-action">Create a new cache and replay the prefix</span><dl class="cache-values"><div><dt>slots</dt><dd><code>[1,2]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>12</code></dd></div></dl></li>
+<li>Then append B=4<dl class="cache-values cache-result"><div><dt>slots</dt><dd><code>[1,2,4]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>124</code></dd></div></dl></li>
+</ol></div></div>
+<p class="diagram-key">Same final slots, different state: <strong><code>1234 ≠ 124</code></strong></p>
+<figcaption>This is ToyCache’s integer recurrence, state = 10 × state + value. The slots are not real KV tensors, and the numbers are not model scores.</figcaption>
+</figure>
 
-The last two rows even have identical list contents, yet their recurrent states differ. Checking only length—or even the contents of the croppable part—would miss this difference. These numbers come from the toy’s integer recurrence, not model scores; they illustrate why the complete state matters.
+The two paths end with identical list contents, yet their recurrent states differ. Checking only length—or even the contents of the croppable part—would miss this difference. These numbers come from the toy’s integer recurrence, not model scores; they illustrate why the complete state matters.
 
 In this toy, the prefix state `12` is easy to write down, but `crop` did not restore it. A real model needs the valid state corresponding to the prefix, not an inversion of this invented formula. Choosing `reset` also requires consuming the prefix again rather than clearing state and proceeding directly with B.
 

@@ -7,7 +7,7 @@ translationKey: causal-logprob-row-alignment
 topic: model
 tags: [语言模型, LogProb, 张量对齐]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T19:29:09+08:00"
+updatedDate: "2026-11-03T20:38:15+08:00"
 order: 2
 draft: false
 review: true
@@ -23,11 +23,18 @@ review: true
 
 用一个带起始 token 的短序列表示：
 
-```text
-输入位置       0      1      2      3      4
-输入 token    BOS     P0     P1     A0     A1
-该行预测目标   P0     P1     A0     A1     后续 token
-```
+<figure class="note-diagram logprob-alignment-diagram" data-diagram="logprob-alignment" lang="zh-CN" aria-labelledby="logprob-alignment-title">
+<p class="diagram-title" id="logprob-alignment-title">预测行比目标位置早一步</p>
+<table class="alignment-grid">
+<thead><tr><th scope="col">Logits 行</th><th scope="col" class="context-row">0</th><th scope="col" class="context-row">1</th><th scope="col" class="score-row">2</th><th scope="col" class="score-row">3</th><th scope="col" class="context-row">4</th></tr></thead>
+<tbody>
+<tr><th scope="row">输入 token</th><td class="context-row"><code>BOS</code></td><td class="context-row"><code>P0</code></td><td class="score-row"><code>P1</code></td><td class="score-row"><code>A0</code></td><td class="context-row"><code>A1</code></td></tr>
+<tr class="alignment-arrows" aria-hidden="true"><td></td><td class="context-row">↓</td><td class="context-row">↓</td><td class="score-row">↓</td><td class="score-row">↓</td><td class="context-row">↓</td></tr>
+<tr><th scope="row">该行预测目标</th><td class="context-row"><code>P0</code></td><td class="context-row"><code>P1</code></td><td class="score-row target-token"><code>A0</code></td><td class="score-row target-token"><code>A1</code></td><td class="context-row"><code>…</code></td></tr>
+</tbody></table>
+<p class="diagram-key">答案 <code>A0, A1</code> <span aria-hidden="true">→</span> 读取 logits 第 <strong>2, 3</strong> 行</p>
+<figcaption>灰色列是答案评分使用的两行。箭头表示 next-token 对齐，不表示模型已经生成了下方的 token。</figcaption>
+</figure>
 
 如果只给答案 `A0、A1` 打分，就应取第 `2、3` 行 logits。取第 `3、4` 行后再 gather `A0、A1`，虽然也能得到两个数，但条件上下文已经不同：模型在产生对应隐藏状态时已经看过目标 token。
 

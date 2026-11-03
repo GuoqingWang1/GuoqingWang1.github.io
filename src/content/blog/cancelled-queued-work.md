@@ -7,7 +7,7 @@ translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T19:47:20+08:00"
+updatedDate: "2026-11-03T20:38:15+08:00"
 order: 3
 draft: false
 review: true
@@ -36,6 +36,24 @@ review: true
 ## 用同步点固定 A 和 B 的先后关系
 
 下面是一个只用标准库的独立示例。线程池只有一个 worker，A 用事件保持占用，B 因而只能排队。`result_channel` 是测试中手工创建的结果通道，回调负责把 B 的成功结果搬过去；它并不代表 B 的执行状态。
+
+<figure class="note-diagram cancellation-paths-diagram" data-diagram="cancellation-paths" lang="zh-CN" aria-labelledby="cancellation-paths-title">
+<p class="diagram-title" id="cancellation-paths-title">取消结果通道，不会自动取消排队工作</p>
+<div class="diagram-origin">A 占用唯一 worker；B 已入队<span>受同步点控制的单 worker 线程池</span></div>
+<p class="diagram-bridge">两条路径都先取消结果通道<br><code>result_channel.cancel()</code></p>
+<div class="diagram-paths"><div class="diagram-path"><p class="diagram-path-label">只取消结果通道</p>
+<ol class="diagram-steps">
+<li>B 保持排队<span class="diagram-step-detail">不取消 B 的工作 Future</span></li>
+<li>放行 A，等待它退出</li>
+<li><span class="diagram-outcome">B 被调用</span><span class="diagram-step-detail">结果通道已取消，迟到结果被丢弃</span></li>
+</ol></div><div class="diagram-path"><p class="diagram-path-label">同时取消排队工作</p>
+<ol class="diagram-steps">
+<li>取消排队中的 B<span class="diagram-step-detail"><code>fb.cancel() == True</code></span></li>
+<li>放行 A，等待它退出</li>
+<li><span class="diagram-outcome">B 从未被调用</span><span class="diagram-step-detail">工作 Future 已取消并进入终态</span></li>
+</ol></div></div>
+<figcaption>时序示意，不代表耗时比例。成功取消尚未开始的 B，才能阻止这次调用；运行中的 A 仍须正常收尾。</figcaption>
+</figure>
 
 ```python
 from concurrent.futures import Future, ThreadPoolExecutor

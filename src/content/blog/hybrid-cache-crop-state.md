@@ -7,7 +7,7 @@ translationKey: hybrid-cache-crop-state
 topic: model
 tags: [KV Cache, Transformers, 混合注意力]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T19:29:09+08:00"
+updatedDate: "2026-11-03T20:38:15+08:00"
 order: 9
 draft: false
 review: true
@@ -71,17 +71,25 @@ assert reused.slots == fresh.slots == [1, 2, 4]
 assert (reused.state, fresh.state) == (1234, 124)
 ```
 
-按定义逐步展开，得到下面的预期关系：
+把两条路径画在一起，可以直接看到状态的分歧：
 
-| 路径阶段 | 列表中的输入 | 递推状态 |
-|---|---|---:|
-| 只处理前缀 | `[1,2]` | 12 |
-| 追加 A | `[1,2,3]` | 123 |
-| 裁回前缀长度 | `[1,2]` | 123 |
-| 裁剪后追加 B | `[1,2,4]` | 1234 |
-| 从新状态处理前缀与 B | `[1,2,4]` | 124 |
+<figure class="note-diagram cache-state-diagram" data-diagram="cache-state" lang="zh-CN" aria-labelledby="cache-state-title">
+<p class="diagram-title" id="cache-state-title">长度恢复了，累积状态没有恢复</p>
+<div class="diagram-origin">已处理前缀 [1,2] 和续写 A=3<span><code>slots = [1,2,3] · state = 123</code></span></div>
+<div class="diagram-paths"><div class="diagram-path"><p class="diagram-path-label">裁剪后复用</p>
+<ol class="diagram-steps">
+<li><span class="diagram-step-action"><code>crop(2)</code><span class="diagram-step-detail">裁短 slots，state 保持不变</span></span><dl class="cache-values"><div><dt>slots</dt><dd><code>[1,2]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>123</code></dd></div></dl></li>
+<li>再追加 B=4<dl class="cache-values cache-result"><div><dt>slots</dt><dd><code>[1,2,4]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>1234</code></dd></div></dl></li>
+</ol></div><div class="diagram-path"><p class="diagram-path-label">独立重建</p>
+<ol class="diagram-steps">
+<li><span class="diagram-step-action">新建 cache 并重读前缀</span><dl class="cache-values"><div><dt>slots</dt><dd><code>[1,2]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>12</code></dd></div></dl></li>
+<li>再追加 B=4<dl class="cache-values cache-result"><div><dt>slots</dt><dd><code>[1,2,4]</code></dd></div><div><dt>state</dt><dd class="cache-state"><code>124</code></dd></div></dl></li>
+</ol></div></div>
+<p class="diagram-key">最终 slots 相同，state 不同：<strong><code>1234 ≠ 124</code></strong></p>
+<figcaption>图中是 ToyCache 的整数递推 state = 10 × state + value；slots 不是实际 KV，数字也不是模型分数。</figcaption>
+</figure>
 
-最后两行连列表内容都相同，递推状态却不同。如果只检查长度，甚至只检查可裁剪那部分的内容，就会漏掉这一区别。表中的数值来自 toy 的整数递推，不是模型分数；它说明的是检查完整状态的必要性。
+两条路径最后的列表内容相同，递推状态却不同。如果只检查长度，甚至只检查可裁剪那部分的内容，就会漏掉这一区别。图中的数值来自 toy 的整数递推，不是模型分数；它说明的是检查完整状态的必要性。
 
 在这个 toy 中，前缀状态 `12` 很容易写出来，但 `crop` 没有恢复它。真实模型需要的是对应前缀的有效状态，而不是按这个虚构公式反算。若选择 `reset`，也要重新消费前缀，不能清空之后直接接上 B。
 

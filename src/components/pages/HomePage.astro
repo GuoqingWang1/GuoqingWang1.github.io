@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Publication from '../Publication.astro';
 import NewsItem from '../NewsItem.astro';
 import publications from '../../data/publications.json';
+import contributions from '../../data/publication-contributions.json';
 import news from '../../data/news.json';
 import { copy, localizedPath, type Locale } from '../../lib/i18n';
 interface Props { lang: Locale }
@@ -34,7 +35,7 @@ const localizedNews = news.map(item => lang === 'zh-CN' ? { ...item, ...item.zh 
       <a class="more-link" href={localizedPath('/publications/',lang)}>{t.allPublications}<span aria-hidden="true"> →</span></a>
     </div>
     <div class="publication-list">
-      {selected.map(paper => <Publication paper={paper} lang="en" compact showAuthors showAuthorship headingLevel={3} />)}
+      {selected.map(paper => <Publication paper={paper} lang="en" compact showAuthors showAuthorship headingLevel={3} contribution={contributions[paper.id as keyof typeof contributions][lang]} contributionLang={lang} />)}
     </div>
   </section>
   </div>

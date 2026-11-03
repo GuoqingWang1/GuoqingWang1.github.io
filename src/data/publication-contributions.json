@@ -1,0 +1,26 @@
+{
+  "igpo": {
+    "en": "Combines turn-level rewards from changes in the policy’s correct-answer probability with outcome supervision, providing dense learning signals for multi-turn search agents.",
+    "zh-CN": "将策略模型对正确答案的概率变化转化为轮级奖励，并结合最终结果监督，为多轮搜索智能体提供更密集的学习信号。"
+  },
+  "dr-venus": {
+    "en": "Trains a 4B deep research agent by curating open data, resampling long trajectories, and combining supervised fine-tuning with information-gain reinforcement learning.",
+    "zh-CN": "通过清洗公开数据、重采样长轨迹，并结合监督微调与信息增益强化学习，训练四十亿参数的深度研究智能体。"
+  },
+  "mempro": {
+    "en": "Treats memory construction and retrieval as an evolvable program, using failure analysis, code editing, and debugging to refine the entire pipeline.",
+    "zh-CN": "将记忆构建与检索流程视为可演化程序，通过失败分析、代码修改和调试，逐步改进整套记忆系统的实现。"
+  },
+  "evinoterag": {
+    "en": "Trains RAG models to summarize retrieved content as evidence notes, using an entailment-based reward to encourage sufficient support for correct answers.",
+    "zh-CN": "训练检索增强模型将检索内容整理为精简证据笔记，并以逻辑蕴含奖励促进笔记保留足以推导正确答案的信息。"
+  },
+  "webfilter": {
+    "en": "Uses reinforcement learning to teach RAG models to formulate source-restricted queries, combining retrieval filtering with rewards for search behavior and answer outcomes.",
+    "zh-CN": "通过强化学习训练检索增强模型生成限定来源的搜索查询，并结合检索过滤、搜索行为奖励和回答结果奖励。"
+  },
+  "dmc": {
+    "en": "Uses confidence-based failure prediction to quantify metacognitive ability while separating it from the language model’s underlying task performance.",
+    "zh-CN": "基于置信度预测回答是否出错，并将元认知测量与任务表现解耦，量化语言模型判断自身回答正确性的能力。"
+  }
+}

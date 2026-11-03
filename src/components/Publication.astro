@@ -8,9 +8,11 @@ interface Props {
   showAuthors?: boolean;
   headingLevel?: 2 | 3;
   showAuthorship?: boolean;
+  contribution?: string;
+  contributionLang?: Locale;
   paper: { id: string; title: string; url: string; venue: string; year: number; type: string; authors: string[]; code?: string; authorship?: string; distinction?: string; teamCredit?: string; pdfMirror?: string }
 }
-const { paper, lang = 'en', compact = false, showAuthors = !compact, headingLevel = 2, showAuthorship = false } = Astro.props;
+const { paper, lang = 'en', compact = false, showAuthors = !compact, headingLevel = 2, showAuthorship = false, contribution, contributionLang = lang } = Astro.props;
 const t = copy[lang];
 const Title = headingLevel === 3 ? 'h3' : 'h2';
 const authorship = paper.authorship === 'co-first' ? t.coFirstAuthor : paper.authorship === 'core-contributor' ? t.coreContributor : null;
@@ -26,5 +28,6 @@ const authors = paper.teamCredit ? paper.authors.filter(author => author !== 'Ve
         {paper.pdfMirror && <a class="code-link" href={paper.pdfMirror} target="_blank" rel="noopener noreferrer" aria-label={`PDF mirror for ${paper.title}`} title="PDF mirror on GitHub (third-party)">PDF</a>}
       </span>
     </div>
+    {contribution && <p class="pub-contribution" lang={contributionLang}>{contribution}</p>}
     {showAuthors && <p class="pub-authors" lang="en">{paper.teamCredit && <><span class="pub-team">{paper.teamCredit}</span>; </>}{authors.map((author, index) => <>{author === profile.name ? <><strong>{author}</strong>{showAuthorship && authorship && <span class="pub-authorship"> ({authorship})</span>}</> : author}{index < authors.length - 1 ? ', ' : ''}</>)}</p>}
 </article>

@@ -7,6 +7,8 @@ const root = path.resolve('dist');
 const origin = new URL(process.env.SITE_URL || 'https://guoqingwang1.github.io').origin;
 const news = JSON.parse(await readFile('src/data/news.json', 'utf8'));
 const publications = JSON.parse(await readFile('src/data/publications.json', 'utf8'));
+const contributions = JSON.parse(await readFile('src/data/publication-contributions.json', 'utf8'));
+assert.deepEqual(Object.keys(contributions), publications.selected, 'Homepage contribution coverage/order differs from selected papers');
 const relatedPostKeys = JSON.parse(await readFile('src/data/related-posts.json', 'utf8'));
 const exampleAssets = JSON.parse(await readFile('src/data/example-assets.json', 'utf8'));
 const shareImages = JSON.parse(await readFile('src/data/share-images.json', 'utf8'));
@@ -270,7 +272,26 @@ for (const filename of output) {
     assert(papers.every(paper => paper.lang === 'en'), `Publication records must remain marked as English: ${relative}`);
     assert.equal(new Set(papers.map(paper => paper.id)).size, papers.length, `Duplicate paper entries: ${relative}`);
     if (isHome) assert.deepEqual(papers.map(paper => paper.id), publications.selected, `Selected paper order differs from the curated list: ${relative}`);
-    renderedPapers.set(relative, papers.map(paper => paper.markup));
+    const locale = relative.startsWith('zh/') ? 'zh-CN' : 'en';
+    for (const paper of papers) {
+      const summaries = [...paper.markup.matchAll(/<p\b[^>]*class="pub-contribution"[^>]*>([\s\S]*?)<\/p>/g)];
+      assert.equal(summaries.length, isHome ? 1 : 0, `Unexpected contribution count: ${relative}#${paper.id}`);
+      if (isHome) {
+        assert.equal(tags(summaries[0][0], 'p')[0].lang, locale, `Wrong contribution language: ${relative}#${paper.id}`);
+        assert.equal(decode(summaries[0][1]), contributions[paper.id][locale], `Wrong contribution text: ${relative}#${paper.id}`);
+      }
+    }
+    renderedPapers.set(relative, papers.map(paper => paper.markup.replace(/<p\b[^>]*class="pub-contribution"[^>]*>[\s\S]*?<\/p>/g, '')));
+  }
+  const diagramBySlug = { 'causal-logprob-row-alignment': 'logprob-alignment', 'cancelled-queued-work': 'cancellation-paths', 'hybrid-cache-crop-state': 'cache-state' };
+  const articleSlug = relative.match(/^(?:zh\/)?blog\/([^/]+)\/index\.html$/)?.[1];
+  const diagrams = tags(html, 'figure').filter(figure => hasClass(figure, 'note-diagram'));
+  assert.equal(diagrams.length, articleSlug && diagramBySlug[articleSlug] ? 1 : 0, `Wrong explanatory figure coverage: ${relative}`);
+  for (const figure of diagrams) {
+    assert.equal(figure['data-diagram'], diagramBySlug[articleSlug], `Wrong figure for article: ${relative}`);
+    assert.equal(figure.lang, relative.startsWith('zh/') ? 'zh-CN' : 'en', `Wrong figure language: ${relative}`);
+    assert(html.includes(`id="${figure['aria-labelledby']}"`), `Missing figure title: ${relative}`);
+    assert(/<figcaption>[^<]+<\/figcaption>/.test(html), `Figure lacks a readable caption: ${relative}`);
   }
   for (const match of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
     const value = decode(match[1]);

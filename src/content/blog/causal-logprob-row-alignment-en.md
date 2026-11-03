@@ -6,7 +6,7 @@ lang: en
 topic: model
 tags: [语言模型, LogProb, 张量对齐]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T19:29:09+08:00"
+updatedDate: "2026-11-03T20:38:15+08:00"
 order: 2
 draft: false
 review: true
@@ -23,11 +23,18 @@ For a complete input `x[0], x[1], ...`, hidden-state row `j` has already consume
 
 Consider a short sequence with a beginning-of-sequence token:
 
-```text
-Input position       0      1      2      3      4
-Input token         BOS     P0     P1     A0     A1
-Target of this row   P0     P1     A0     A1     Next token
-```
+<figure class="note-diagram logprob-alignment-diagram" data-diagram="logprob-alignment" lang="en" aria-labelledby="logprob-alignment-title">
+<p class="diagram-title" id="logprob-alignment-title">The prediction row comes one position earlier</p>
+<table class="alignment-grid">
+<thead><tr><th scope="col">Logits row</th><th scope="col" class="context-row">0</th><th scope="col" class="context-row">1</th><th scope="col" class="score-row">2</th><th scope="col" class="score-row">3</th><th scope="col" class="context-row">4</th></tr></thead>
+<tbody>
+<tr><th scope="row">Input token</th><td class="context-row"><code>BOS</code></td><td class="context-row"><code>P0</code></td><td class="score-row"><code>P1</code></td><td class="score-row"><code>A0</code></td><td class="context-row"><code>A1</code></td></tr>
+<tr class="alignment-arrows" aria-hidden="true"><td></td><td class="context-row">↓</td><td class="context-row">↓</td><td class="score-row">↓</td><td class="score-row">↓</td><td class="context-row">↓</td></tr>
+<tr><th scope="row">Next-token target</th><td class="context-row"><code>P0</code></td><td class="context-row"><code>P1</code></td><td class="score-row target-token"><code>A0</code></td><td class="score-row target-token"><code>A1</code></td><td class="context-row"><code>…</code></td></tr>
+</tbody></table>
+<p class="diagram-key">Answer <code>A0, A1</code> <span aria-hidden="true">→</span> read logits rows <strong>2, 3</strong></p>
+<figcaption>Shaded columns are the two rows used to score the answer. Arrows show next-token alignment, not tokens the model has generated.</figcaption>
+</figure>
 
 To score only the answer tokens `A0, A1`, select logit rows `2, 3`. Selecting rows `3, 4` and gathering the entries for `A0, A1` still produces two numbers, but their conditioning contexts differ: the model has already seen the target token when it produces the corresponding hidden state.
 
