@@ -7,7 +7,7 @@ translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T18:45:02+08:00"
+updatedDate: "2026-11-03T19:47:20+08:00"
 order: 3
 draft: false
 review: true
@@ -77,6 +77,7 @@ def case(cancel_work):
         finally:
             release_a.set()
 
+    fa.result()  # Propagate A's exception; done() does not mean it succeeded
     assert fa.done() and fb.done()
     return b_called.is_set()
 
@@ -90,7 +91,7 @@ assert cancel_pending is False  # Cancelling the pending work prevents B from ru
 
 Keep operations separate from assertions: call `cancel()` or `case()` first, then check the return value. [Python's `-O` removes `assert` statements](https://docs.python.org/3/reference/simple_stmts.html#the-assert-statement), so `assert fb.cancel()` also removes the cancellation itself. The complete script linked at the end uses explicit checks, so both cases run and are verified with or without `-O`.
 
-Leaving the pool's `with` block waits for the work to finish, so the observation window is closed when `b_called` is checked at the end. The two assertions express the distinction: cancelling the result channel merely discards the late result; cancelling B's work Future prevents that queued invocation. The example covers successful functions and cancellation, omitting the exception forwarding and retry logic of a production dispatcher.
+Leaving the pool's `with` block waits for the work to finish, so the observation window is closed when `b_called` is checked at the end. `fa.result()` retrieves A's result and propagates any exception raised in its thread; `done()` alone also reports completion after a timeout failure. The two assertions express the distinction: cancelling the result channel merely discards the late result; cancelling B's work Future prevents that queued invocation. The example omits the full exception-forwarding and retry logic of a production dispatcher.
 
 The `done()` check is safe here because both paths cancel the result channel first. If B is left queued, it can finish only after A is released. If B is cancelled while pending, `fb.cancel()` can invoke its [completion callback](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.add_done_callback) immediately, without waiting for A to finish. In both paths, the result channel is already done when the callback runs. In production, cancellation and result delivery may happen concurrently. Checking a state and then writing a result is not one atomic operation; they need coordination according to the event-loop or locking contract of the result object. [`set_result()`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.set_result) raises `InvalidStateError` on a Future that is already done, so this controlled example's callback is not a general solution to that race.
 

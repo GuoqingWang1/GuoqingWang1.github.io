@@ -7,7 +7,7 @@ translationKey: numpy-string-dtype-width
 topic: training
 tags: [NumPy, 数据类型, 合批]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T18:45:02+08:00"
+updatedDate: "2026-11-03T19:47:20+08:00"
 order: 5
 draft: false
 review: true
@@ -38,7 +38,7 @@ assert merged.tolist() == ["ok", "retry"]
 
 On a typical little-endian system, the two dtypes display as `<U2` and `<U5`. `U` denotes a fixed-width Unicode string, the number gives its capacity in Unicode code points, and the prefix describes byte order. They have the same kind but different capacities. [NumPy's string documentation](https://numpy.org/doc/stable/user/basics.strings.html#fixed-width-data-types) explains this representation.
 
-The type rules imply the following contents. The table omits byte-order prefixes; it is not a new execution log.
+The three arrays have the following contents and capacities; byte-order prefixes are omitted.
 
 | Object | Contents | dtype | Capacity per element |
 |---|---|---|---:|

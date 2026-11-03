@@ -7,7 +7,7 @@ translationKey: cancelled-queued-work
 topic: runtime
 tags: [asyncio, 并发, 取消]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T18:45:02+08:00"
+updatedDate: "2026-11-03T19:47:20+08:00"
 order: 3
 draft: false
 review: true
@@ -77,6 +77,7 @@ def case(cancel_work):
         finally:
             release_a.set()
 
+    fa.result()  # 传播 A 的异常；done() 本身不表示执行成功
     assert fa.done() and fb.done()
     return b_called.is_set()
 
@@ -90,7 +91,7 @@ assert cancel_pending is False  # 取消尚未开始的工作，B 不执行
 
 这里把操作与断言分开：先调用 `cancel()` 或 `case()`，再检查返回值。[Python 的 `-O` 会移除 `assert` 语句](https://docs.python.org/3/reference/simple_stmts.html#the-assert-statement)，所以 `assert fb.cancel()` 会连取消操作也一起删除。文末的完整脚本使用显式检查，普通运行和 `-O` 下都会执行并核验这两种情况。
 
-退出线程池的 `with` 块会等待工作收尾，所以末尾检查 `b_called` 时，观察窗口已经闭合。两条断言表达的区别是：取消结果通道只让迟到结果被丢弃；取消 B 的工作 Future 才阻止了这次排队调用。示例只覆盖成功函数与取消关系，省略了生产调度器的异常转发和重试逻辑。
+退出线程池的 `with` 块会等待工作收尾，所以末尾检查 `b_called` 时，观察窗口已经闭合。`fa.result()` 取回 A 的结果，并传播它在线程内抛出的异常；只看 `done()` 会把超时结束也当成已完成。两条断言表达的区别是：取消结果通道只让迟到结果被丢弃；取消 B 的工作 Future 才阻止了这次排队调用。示例省略了生产调度器完整的异常转发和重试逻辑。
 
 这里的 `done()` 检查之所以安全，是因为两条路径都先取消了结果通道。未取消 B 时，它只能在 A 放行后完成；取消排队中的 B 时，`fb.cancel()` 就可能立即触发[完成回调](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.add_done_callback)，不必等 A 结束。两种情况下，回调看到的结果通道都已经终止。生产系统中，取消和结果写入可能并发；检查状态再写入并不是一个原子动作，需要按结果对象所属的事件循环或锁约定协调。[`set_result()`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future.set_result) 对已经结束的 Future 会抛出 `InvalidStateError`，不能把这个受控例子的回调当作通用竞态保护。
 

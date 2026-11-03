@@ -7,7 +7,7 @@ translationKey: numpy-string-dtype-width
 topic: training
 tags: [NumPy, 数据类型, 合批]
 pubDate: "2026-11-01T06:32:29+08:00"
-updatedDate: "2026-11-03T18:45:02+08:00"
+updatedDate: "2026-11-03T19:47:20+08:00"
 order: 5
 draft: false
 review: true
@@ -38,7 +38,7 @@ assert merged.tolist() == ["ok", "retry"]
 
 在常见的小端环境中，前两个 dtype 显示为 `<U2` 和 `<U5`。`U` 表示定宽 Unicode 字符串，数字是最多容纳的 Unicode 码点数，前面的符号描述字节序。它们的种类相同，容量不同。[NumPy 的字符串说明](https://numpy.org/doc/stable/user/basics.strings.html#fixed-width-data-types)解释了这种表示。
 
-按这些类型规则，例子的预期内容如下。表中省略了字节序前缀，并不是一次新的运行日志。
+这三个数组的内容和容量如下，表中省略了字节序前缀。
 
 | 对象 | 内容 | dtype | 每个元素的容量 |
 |---|---|---|---:|
