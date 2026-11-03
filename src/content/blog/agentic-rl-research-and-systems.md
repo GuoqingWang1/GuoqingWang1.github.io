@@ -1,390 +1,415 @@
 ---
-title: "Agentic RL：研究与系统实践"
-description: "搜索型Agent的学习信号、系统基建、完整实验与关键边界。"
+title: "Deep Research Agent RL：系统建设与算法探索"
+description: "Deep Research场景与Pipeline、基础设施与效率优化、IGPO到CTF-IGPO、短程与完整实验结果。"
 category: technical
 lang: zh-CN
 translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T04:04:03+08:00"
+updatedDate: "2026-11-04T05:28:55+08:00"
 draft: false
 review: false
 presentation: true
 ---
 
-## 一、研究问题与工作全景
+## 一、Deep Research Agent：场景、目标与Pipeline
 
-### 1.1 保持质量，减少无效交互
+### 1.1 在保持质量的前提下减少交互成本
 
-研究目标是在保持任务质量的前提下，降低交互与生成成本。
+Deep Research Agent通过多轮推理、搜索与网页读取完成任务；目标是保持答案质量，同时减少交互与生成消耗。
 
-- Agent决定下一步行动、核查证据，并选择何时回答。
-- 联合观察质量、轮次、总token与单轮长度，避免“少轮次、长输出”的补偿。
-- 方法、数据、环境、训练和评测共同决定学习是否有效。
+- **行动**：选择Search、Visit或继续推理，判断证据是否充分，决定何时回答。
+- **成本**：同时观察逻辑轮次、总生成token和单轮长度，避免用长输出补偿少轮次。
+- **两类效率**：系统减少等待与重复计算；算法学习更有效的行动。两者分别验证。
 
-### 1.2 Search Agent如何执行与学习
+### 1.2 推理Pipeline：行动—观察循环
 
-**合成示例：虚构产品A、B，哪款更早正式发布？** Agent需反复查证，区分预告、发布与上市日期。
+工具观察回填上下文，Agent继续行动或给出最终回答。
 
-<figure class="talk-figure " data-talk-figure="search-agent-loop" lang="zh-CN" aria-labelledby="talk-search-agent-loop-title">
-<p class="tf-title" id="talk-search-agent-loop-title">Search Agent：行动、观察与回答</p>
-<div class="tf-agent-loop"><div class="tf-node tf-state"><strong>任务与当前上下文</strong><small>问题、已有材料、行动历史</small></div><span class="tf-edge tf-state-edge" aria-hidden="true"></span><div class="tf-node tf-agent tf-emphasis"><strong>Search Agent</strong><small>选择下一步行动，或结束任务</small></div><span class="tf-edge tf-tool-edge" aria-hidden="true"></span><div class="tf-node tf-tools tf-soft"><strong>工具</strong><small>Search / Visit，按需选择</small></div><div class="tf-return"><span>工具观察回填到上下文，再次判断</span></div><div class="tf-node tf-answer"><strong>回答与依据</strong><small>Agent 选择结束时</small></div><span class="tf-answer-edge" aria-hidden="true"></span></div><div class="tf-training"><p class="tf-stage-label">训练阶段，与任务执行分开</p><div class="tf-linear tf-linear-four"><div class="tf-node "><strong>轨迹与版本</strong></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>训练信号</strong><small>结果／过程／成本，按配方启用</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>策略更新</strong></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>后续采样</strong></div></div></div>
-<figcaption>图1 · 工具观察需核查；参数更新属于训练阶段，新策略用于后续采样。</figcaption>
+<figure class="talk-figure dr-figure" data-talk-figure="inference-pipeline" lang="zh-CN" aria-labelledby="talk-inference-pipeline-title">
+<p class="tf-title" id="talk-inference-pipeline-title">Deep Research · 推理 pipeline</p>
+<div class="dr-panel"><p class="dr-stage">固定策略 · 多轮交互</p><div class="dr-three dr-inference-grid"><div class="dr-node dr-checkpoint dr-soft-blue"><strong>已训练 checkpoint</strong></div><span class="dr-down dr-weight-arrow" aria-hidden="true">↓</span><div class="dr-node dr-question"><strong>用户问题</strong><small>任务与约束</small></div><span class="dr-arrow dr-question-arrow" aria-hidden="true"></span><div class="dr-node dr-policy dr-blue"><strong>Agent policy</strong><small>AgentLoop · SGLang</small></div><span class="dr-arrow dr-answer-arrow" aria-hidden="true"></span><div class="dr-node dr-answer dr-green"><strong>最终回答</strong><small>选择结束时</small></div></div><div class="dr-interaction"><span>调用工具</span><b aria-hidden="true">↕</b><span>观察回填上下文</span></div><div class="dr-tools"><p class="dr-stage">工具环境 · 按需选择</p><div class="dr-tool-options"><div class="dr-node dr-soft-blue"><strong>Search</strong><small>查询 → 检索结果</small></div><div class="dr-node dr-peach"><strong>Visit</strong><small>URL → 页面内容</small><div class="dr-service-chain"><span>Reader</span><b aria-hidden="true">→</b><span>Summary</span></div></div></div></div></div>
+<figcaption>图1 · 固定权重执行多轮交互；Search 与 Visit 为可选动作，Reader / Summary 按后端配置执行。</figcaption>
 </figure>
 
-### 1.3 五层工作与执行规模
+- Search与Visit按需选择；HTTP成功不等于证据可靠。
+- 保留实际生成动作、行为概率与策略版本；工具返回和控制器文本可进入上下文，但不作为策略动作。
+- 单次任务执行不更新模型权重，新策略在训练后用于后续采样。
 
-工作覆盖完整Agent闭环，规模包含团队协作，不代表个人独立完成所有环节。
+### 1.3 训练Pipeline：从轨迹到下一版策略
 
-| 层面 | 工作 |
-| --- | --- |
-| 方法 | 奖励、信用、质量与成本、更新规则 |
-| 数据 | 来源、版本、修订、准入与验证隔离 |
-| 环境 | Search / Visit / Summary / Judge |
-| 训练 | 运行栈、采样、更新、同步、保存与恢复 |
-| 评测 | 初始参照、训练对照、完整曲线与诊断 |
+结果与可选过程/成本信号进入优势计算，再由Actor更新并发布权重。
 
-- **6,994条训练数据**：6,315条原版＋679条修订；可用不等于无误金标准。
-- **3条完整训练**：每条55次模型路径更新；恢复返工另记。
-- **每条8个验证节点×246题**：包含初始点，属于开发评测；三条配置均未达联合质量—成本目标。
-
-## 二、算法探索与学习信号
-
-### 2.1 搜索行动与证据处理
-
-WebFilter学习怎样查询，EviNoteRAG学习怎样保留支持答案的证据。
-
-| 方法 | 干预位置 | 训练信号 |
-| --- | --- | --- |
-| [WebFilter](https://arxiv.org/abs/2508.07956) | 限定来源查询、检索过滤 | 行为与结果奖励 |
-| [EviNoteRAG](https://aclanthology.org/2026.emnlp-main.2108/) | 精简证据笔记 | 基于蕴含的证据质量奖励 |
-
-两项方法并列，不表示已联合训练。
-
-### 2.2 Atom-Searcher：细粒度过程反馈
-
-[Atom-Searcher](https://arxiv.org/abs/2508.12800)把推理拆成可监督的功能单元。
-
-- **Atomic Thought**：定位推理单元。
-- **RRM → ATR**：奖励模型评价单元，形成过程奖励。
-- **课程式调度**：调整过程奖励与最终结果奖励的侧重。
-
-### 2.3 IGPO：以信息增益构造轮级信号
-
-[IGPO](https://arxiv.org/abs/2510.14967)从策略对正确答案的概率变化构造轮级奖励。
-
-- 对比每轮观察前后的评分，提供中间反馈。
-- 将轮级信息增益与终局结果监督结合。
-- 评分上下文、公式与奖励组合绑定具体版本。
-
-### 2.4 DR-Venus：从方法到训练方案
-
-[DR-Venus](https://arxiv.org/abs/2604.19859)连接公开数据、SFT与IGPO式Agentic RL。
-
-- 清洗公开轨迹，重采样长轨迹。
-- 通过SFT建立初始能力，再进行过程与结果监督的RL。
-- 后续探索：信用分配、成本约束与更新规则，与公开配方分别验证。
-
-### 2.5 从原始评分到实际更新
-
-过程评分、信用与优势、参数更新和任务收益需要分层验证。
-
-<figure class="talk-figure " data-talk-figure="credit-update-flow" lang="zh-CN" aria-labelledby="talk-credit-update-flow-title">
-<p class="tf-title" id="talk-credit-update-flow-title">从评分到实际更新的几个层次</p>
-<div class="tf-sources"><div class="tf-node tf-soft"><strong>过程评分</strong><small>例如信息增益</small></div><div class="tf-node tf-soft"><strong>结果信号</strong><small>任务质量</small></div><div class="tf-node tf-soft"><strong>成本信号</strong><small>交互与生成</small></div></div><div class="tf-join" aria-hidden="true"></div><div class="tf-merged"><div class="tf-node tf-emphasis"><strong>信用与优势</strong><small>按配方构造与启用</small></div></div><div class="tf-to-first" aria-hidden="true"></div><div class="tf-linear"><div class="tf-node "><strong>更新规则</strong><small>ratio / clip / reduction</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>参数更新</strong><small>参数增量</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>后续行为</strong><small>质量与成本</small></div></div>
-<figcaption>图2 · 按配方启用信号，不代表已优选组合；评分、优势与任务收益分别验证。</figcaption>
+<figure class="talk-figure dr-figure" data-talk-figure="training-pipeline" lang="zh-CN" aria-labelledby="talk-training-pipeline-title">
+<p class="tf-title" id="talk-training-pipeline-title">Deep Research · RL 训练 pipeline</p>
+<div class="dr-training-grid"><div class="dr-panel"><p class="dr-stage">01 · 采样</p><div class="dr-three dr-entry"><div class="dr-node "><strong>训练任务</strong><small>只输入问题</small></div><span class="dr-arrow " aria-hidden="true"></span><div class="dr-node dr-blue"><strong>多轨迹 Rollout</strong><small>AgentLoop · SGLang</small></div><span class="dr-arrow " aria-hidden="true"></span><div class="dr-node dr-soft-blue"><strong>轨迹与策略版本</strong><small>动作 token · behaviour logprob</small></div></div></div><div class="dr-flow-down" aria-hidden="true">↓</div><div class="dr-panel"><p class="dr-stage">02 · 评分与信用</p><div class="dr-supervision"><strong>监督答案</strong> → 仅用于 Judge 与 IG 评分</div><div class="dr-scorers"><div class="dr-node dr-green"><strong>Judge</strong><small>终局质量</small></div><div class="dr-node dr-yellow"><strong>IG scoring</strong><small>轮级信息增益</small></div><div class="dr-node dr-peach"><strong>Cost</strong><small>交互与生成成本</small></div></div><div class="dr-merge" aria-hidden="true"></div><div class="dr-node dr-advantage dr-soft-blue"><strong>信用分配与优势</strong></div></div><div class="dr-actor-feed" aria-hidden="true"></div><div class="dr-panel"><p class="dr-stage">03 · VERL：更新与同步</p><div class="dr-update-row"><div class="dr-adv-input">合成优势</div><span class="dr-adv-input-arrow" aria-hidden="true">↓</span><div class="dr-node dr-reference"><strong>Reference policy</strong><small>ref logprob · KL</small></div><span class="dr-arrow dr-kl-arrow" aria-hidden="true"></span><div class="dr-node dr-actor dr-blue"><strong>Actor · PPO</strong><small>合成优势 + old logprob</small></div><span class="dr-arrow dr-sync-arrow" aria-hidden="true"></span><div class="dr-node dr-sync dr-soft-blue"><strong>权重同步</strong><small>发布新策略</small></div></div><div class="dr-out-branches" aria-hidden="true"><span></span><span></span></div><div class="dr-outputs"><div class="dr-node dr-soft-blue"><strong>后续 Rollout</strong></div><div class="dr-node dr-green dr-eval"><strong>开发评测</strong><small>Q / R / T / U</small></div></div></div></div><div class="dr-save-state"><strong>Save / restore</strong><span>模型 · 优化器 · 数据游标 · Partial 状态</span></div>
+<figcaption>图2 · 监督答案只进入评分。训练侧重算 old/ref；开发评测不回流梯度。信号与执行顺序按版本配置。</figcaption>
 </figure>
 
-- 探索维度：观测条件化、signed/positive-only、成功门控、启用阶段、局部/累计映射与归一化。
+- Rollout、工具与Judge产生轨迹和评分；训练按配方准备优势及old/ref概率。
+- Actor更新后同步给推理侧，保存模型、优化器及相应数据和采样状态。
+- 共享GPU按阶段调度；Partial不意味着Actor与rollout始终同时运行。
 
-### 2.6 质量与成本必须联合解释
+## 二、Infra搭建与效率优化
 
-轮次下降可能伴随单轮变长，不能单独作为效率收益。
+### 2.1 三条建设线：运行栈、训练链与工具服务
 
-| 指标 | 口径 |
+现有工程记录覆盖2026年8月至11月初，主要交付沿三条线推进。
+
+| 建设线 | 基础建设（2026-08） | 后续交付（2026-09–10） |
+| --- | --- | --- |
+| 镜像与运行栈 | 依赖/ABI、B300算子、8卡通信 | 混合模型适配，真实更新、保存与权重同步 |
+| RL训练 | 阶段计时与长上下文路径 | Actor/IG优化、Partial、连续Eval、恢复 |
+| Tool server | 请求与流式状态观测 | Go迁移、双层缓存、失败子集重试、取消与Judge语义 |
+
+早期compute-only检查关闭工具和Judge，不能代替真实Deep Research训练验收。
+
+### 2.2 Qwen3.5 × B300：打通混合模型运行链
+
+2026年9月的真实工具运行中，GRPO和IGPO各完成384条轨迹、3次Actor更新及最终checkpoint。
+
+| 层面 | 具体工作 |
 | --- | --- |
-| Q | 当前面板的正确题数 |
-| R | 平均逻辑轮次 |
-| T | 面板总生成token，不是全部计算资源 |
-| U | 池化单轮长度：ΣT/ΣR，非逐题T/R的均值 |
+| 模型与内核 | 标准注意力与GatedDeltaNet分别适配，核对位置与长上下文行为 |
+| 训练与转换 | VERL、Megatron-Core、MBridge、Transformer Engine |
+| 推理与硬件 | SGLang、Triton、单机8×B300 |
+| 闭环验收 | 真实Search/Visit/Judge、8-rank更新、保存、同步与正常退出 |
 
-成本信用与实际资源账单分开；失败、unknown和慢样本保留在原分母中。
+范围绑定Qwen3.5-4B的实际配置；更大模型Eval或三机安装不能代替这一训练验收。
 
-### 2.7 更新规则决定信号的作用
+### 2.3 Tool server：缓存、降级与生命周期
 
-同样的评分，经过不同权重、裁剪与归约后，可能形成不同更新目标。
+工具链保留已有成功结果，并将失败和取消传到真正执行的位置。
 
-| 层面 | 研究变量 |
-| --- | --- |
-| 信号 | 质量/IG/成本权重、成功门控、有效token支持 |
-| 更新 | 学习率、KL、重要性比率、PPO裁剪 |
-| 归约 | token均值、序列等权、分量目标 |
-
-联合优势裁剪与各分量分别裁剪不能无条件等同；历史对照范围见附录B05。
-
-## 三、训练系统与基础设施
-
-### 3.1 有状态的训练闭环
-
-轨迹、训练信号与策略版本必须对应实际消费者。
-
-<figure class="talk-figure " data-talk-figure="training-system" lang="zh-CN" aria-labelledby="talk-training-system-title">
-<p class="tf-title" id="talk-training-system-title">训练系统的组件与状态边界</p>
-<p class="tf-stage-label">采样与环境交互</p><div class="tf-system-input"><div class="tf-node "><strong>数据与运行状态</strong><small>任务、游标与待消费状态</small></div></div><p class="tf-runtime-lead" aria-hidden="true">↓</p><div class="tf-runtime"><div class="tf-node tf-emphasis"><strong>Rollout</strong><small>生成、行动与观察回填</small></div><span class="tf-edge tf-bidirectional" aria-hidden="true"></span><div class="tf-side-services"><div class="tf-node "><strong>Tools</strong><small>Search / Visit</small></div><div class="tf-node "><strong>Judge</strong><small>按实际评分路径调用</small></div></div></div><p class="tf-runtime-handoff">↓ 交付轨迹与训练信号</p><div class="tf-training"><p class="tf-stage-label">学习与策略同步</p><div class="tf-linear"><div class="tf-node "><strong>轨迹与训练信号</strong><small>奖励、信用与优势</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>Actor 更新</strong><small>实际参数更新</small></div><span class="tf-edge " aria-hidden="true"></span><div class="tf-node "><strong>权重发布</strong><small>新版本用于后续 Rollout</small></div></div></div><p class="tf-feedback-note">↺ 发布的策略用于后续 Rollout</p><p class="tf-save"><strong>保存与恢复</strong>参数、优化器、数据游标与待消费状态，在对应消费边界衔接。</p>
-<figcaption>图3 · 工具与Judge按实际路径调用；保存与恢复以具体实现的验收范围为准。</figcaption>
+<figure class="talk-figure tr-figure" data-talk-figure="tool-stack" lang="zh-CN" aria-labelledby="talk-tool-stack-title">
+<p class="tf-title" id="talk-tool-stack-title">Tool server：检索、读取与摘要</p>
+<div class="tr-node tr-shared tr-blue"><strong>Agent 工具调用</strong><small>按动作选择 Search 或 Visit</small></div><div class="tr-two-branch tr-tool-branch" aria-hidden="true"><span>↓</span><span>↓</span></div><div class="tr-two tr-tools" role="group" aria-label="可选工具"><div class="tr-panel"><p class="tr-panel-heading">Search</p><div class="tr-node tr-search-card tr-soft-blue"><strong>搜索服务</strong><small>限流 · 请求缓存</small></div></div><div class="tr-panel"><p class="tr-panel-heading">Visit</p><div class="tr-node tr-peach"><strong>Reader</strong><small>正文缓存</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-peach"><strong>Summary</strong><small>摘要缓存</small></div></div></div><div class="tr-join" aria-hidden="true"></div><div class="tr-node tr-shared tr-green"><strong>结构化结果 + 逐项错误</strong><small>返回 Agent 的下一轮上下文</small></div>
+<figcaption>图3 · 保留成功项，仅重试失败项；取消需追到实际执行句柄，运行中工作退出后再归还容量。</figcaption>
 </figure>
 
-### 3.2 数据版本与准入
+- **Go服务与双层缓存**：Reader正文缓存、与goal相关的摘要缓存；更换goal可复用正文。
+- **失败子集重试**：逐URL/query保留成功项，仅重试失败项，共用原总期限。
+- **取消传播**：排队工作定位执行句柄；运行线程退出后才归还容量。进程内检查不证明远端计算终止。
 
-保留来源和修订，形成可追溯的训练版本。
+### 2.4 工具观测：从笼统超时到具体阶段
 
-| 对象 | 规模 | 范围 |
-| --- | --- | --- |
-| 原始池 | 8,640 | 审阅与版本处置 |
-| 固定可用版本 | 6,994 | 6,315原版＋679修订 |
-| 优先研究集 | 512 | 独立冻结，不与6,994简单并集 |
-| 已知错误／实质争议 | 835／767 | 暂扣，不改历史输入与分数 |
+串联请求ID、Reader/Summary阶段、重试与缓存状态，将一次工具失败追到实际处理环节。
 
-可消费版本不等于无误金标准；内容审阅与训练准入分别判断。
+| 观察范围 | 结果 |
+| --- | --- |
+| 2,218次逻辑Visit | 52次业务失败，其中47次归属Reader、5次归属Summary |
+| 46个历史失败URL的定向复现 | 73次Reader尝试；42次timeout均停在等待响应头 |
+| 集中看板 | Search/Visit/Router各6实例，Summary 10实例 |
 
-### 3.3 工具失败与取消
+业务失败也可能返回HTTP 200。已定位到Reader等待阶段；上游排队、抓取与渲染的内部占比仍未确定。
 
-外层请求结束，不代表后台工作和远端计算已经停止。
+### 2.5 Judge：让评分可用，也让结果可信
 
-- Search / Visit / Summary：逐项归属错误，保留预算、超时与模型可见反馈。
-- 取消排队工作需定位执行器句柄；运行中线程退出后才归还容量。
-- 历史复现与4项回归支持进程内边界，不证明远端HTTP计算终止。
+同时建设有界调用服务与语义判分规则，避免技术失败和不确定答案变成错误奖励。
 
-### 3.4 Judge：三种验收分母
+- **服务侧**：统一四路模型，补齐备用、限流、任务期限和恢复身份，兼容旧调用入口。
+- **语义侧**：审查36,601个历史请求，确认172项误判；修正别名、数量单位、年代与引用校验。
+- **修复验证**：同一40项开发面板中，符合预期的处理从38项到40项，包含2项应保留的unknown。
 
-历史语义审查、开发面板与服务验收回答不同问题。
+40/40是该开发面板的最终处理结果；生产上线验收实际命中一路。更细的响应使用与分母见附录B03。
 
-| 对象 | 记录 | 解释 |
-| --- | --- | --- |
-| 历史审查（2026-10-07） | 36,601个请求条目；确认误拒71、误收101，共172项 | 非独立题数或总体错误率；另有支持与未决等级 |
-| 冻结开发面板 | 最终判定38/40→40/40；原始主判39/40未变 | 32普通＋8边界，包含2个非数值unknown |
-| 四provider统一服务 | 最终验收1个真实primary请求 | 未强制走四路，也不证明新配置已通过RL |
+### 2.6 端到端计时：评分等待藏在rollout里
 
-- 面板修复复用41个旧响应，仅新增1次真实复核，不是独立重测40题。
-- 172项历史确认错误与40项面板不是同一分母；历史统计没有提供新版逐项复验结果。
+reward阶段接近零，不代表Judge几乎没有成本。
 
-### 3.5 同一输出，不同解析结果
-
-同一批357条末次输出因plain配置不同，在训练与评测中被分别拒绝和接受。
-
-| 处理路径 | ERROR | END |
-| --- | --- | --- |
-| 原训练parser：plain关闭 | 357 | 0 |
-| 原Eval parser：plain开启 | 0 | 357 |
-| 训练parser：仅开启plain | 0 | 357 |
-
-这是404条解析失败中的同输入审计；END是语法接受，不是答案正确。
-
-### 3.6 恢复必须跨过实际消费
-
-恢复验收包括新旧混批、真实更新、策略发布与后续验证。
-
-- 256成员混批后，完成第9、10次更新及策略版本5的发布验证。
-- 从已有8次更新的checkpoint恢复后，新增47次，模型路径累计55次更新。
-- 不声称逐位随机续接；恢复返工仍计入物理工作量。
-
-### 3.7 评分等待嵌在rollout中
-
-reward计时接近零，不代表Judge几乎没有成本。
-
-| 2026-09-18单步记录 | 时间 | 口径 |
+| 2026-09-18单步 | 耗时 | 口径 |
 | --- | --- | --- |
 | 完整iteration | 5411.207 s | driver整步墙钟 |
-| generate | 2859.381 s | 含工具与评分后处理 |
-| old-logprob | 734.510 s | driver阶段 |
-| reference | 165.967 s | driver阶段 |
+| generate / rollout阶段 | 2859.381 s | 含工具与评分后处理 |
 | Actor update | 1609.646 s | driver阶段 |
 | Judge客户端 | 881.243 s／154 calls | 并发请求累计，已在generate内 |
 | reward | 0.000167 s | 读取现成结果 |
 
-请求累计时间不能再次加到整步墙钟，也不能当作串行等待。
+Judge累计时间不能再次加到整步墙钟；完整阶段表见附录B04。
 
-### 3.8 运行栈与分布式闭环
+### 2.7 Actor：编译缓存与动态形状去特化
 
-冻结配置完成真实更新、保存、同步与新策略消费。
+固定Actor replay的缓存对照从1925.391 s降至656.149 s，但严格数值等价未通过。
 
-| 建设层 | 内容 |
+<figure class="talk-figure" data-talk-figure="actor-cache" lang="zh-CN" aria-labelledby="talk-actor-cache-title">
+<p class="tf-title" id="talk-actor-cache-title">固定输入 Actor 回放：持久缓存的性能观测</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/actor-cache-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图: 固定输入 Actor 回放：持久缓存的性能观测"><img src="/figures/agentic-rl-talk/actor-cache-zh.svg" alt="同256条轨迹，两次新进程，空缓存1925.39秒、保留缓存656.15秒。严格数值等价未通过。" loading="lazy" decoding="async" width="768" height="336"></a>
+<figcaption>图4 · 固定输入、两次新进程的 Actor-only 计时；不是整步收益，严格数值等价未通过。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/actor-cache-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
+- 两次均为新进程；保留磁盘缓存后，可观测编译miss从19,718到0。**65.92%仅为单阶段性能观测。**
+- 冷/热更新数值不等价，不能称无损加速；NB去特化的后续受控梯度/master一致是另一份资格。
+- 持久缓存与卷积NB去特化共同进入真实三步训练；保留autotune，后两步无新增可观测Actor JIT入口。
+
+### 2.8 IG评分：减少无关投影，复用已有上下文
+
+只投影目标预测行，并复用rollout上下文；优化同时核对目标token、三轴mRoPE与策略版本。
+
+| 已验范围 | 结果 |
 | --- | --- |
-| 模型与算术 | Qwen3.5-4B、标准注意力、GatedDeltaNet、长上下文 |
-| 训练与转换 | VERL、Megatron-Core、MBridge、Transformer Engine |
-| 推理与硬件 | SGLang、Triton、单机8×B300 |
+| Qwen3固定组件负载 | 中位时延158.56 → 87.65 ms |
+| Qwen3.5固定12目标token负载 | 增量峰值显存约1.21 → 0.191 GB；该负载评分误差0 |
+| 真实三步IGPO的attached路径 | 5,224次评分、0失败；均值63.5 ms，P95 147.6 ms |
 
-- 2026-09-04：GRPO、IGPO各完成384条轨迹、3次Actor更新与最终checkpoint。
-- 8个rank覆盖DCP、优化器/RNG保存及训练—推理权重同步。
-- 验收仅适用于该配置；更大模型的Eval不作为训练验收。
+组件比较与真实调用分布属于不同负载，不能串成统一加速倍数；跨策略版本需要重评对应边界。
 
-### 3.9 编译缓存与卷积优化进入训练
+### 2.9 Partial：减少等待，保留完整组与版本
 
-同一三步运行保留768条轨迹，8个Actor rank确认优化生效。
+任务池允许暂停和续跑，但训练仍按完整组准入并保留行为版本。
 
-| 步骤 | Actor阶段耗时 |
-| --- | --- |
-| 1 | 973.715 s |
-| 2 | 752.250 s |
-| 3 | 655.359 s |
+<figure class="talk-figure tr-figure" data-talk-figure="partial-scheduling" lang="zh-CN" aria-labelledby="talk-partial-scheduling-title">
+<p class="tf-title" id="talk-partial-scheduling-title">Partial：保留任务状态，按完整组交付</p>
+<div class="tr-two tr-schedule"><div class="tr-panel"><p class="tr-panel-heading">同步整批</p><div class="tr-node "><strong>整批开始采样</strong><small>同一批任务</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node "><strong>等待整批结束</strong><small>完成时间受最长轨迹影响</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-green"><strong>Actor 更新</strong><small>随后进入下一批</small></div></div><div class="tr-panel"><p class="tr-panel-heading">Partial rollout</p><div class="tr-node tr-soft-blue"><strong>持久任务池</strong><small>保留未完成轨迹</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-soft-blue"><strong>完整组 ready</strong><small>交付完整组，剩余任务留池</small></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-green"><strong>阶段切换</strong><small>暂停生成 → Actor 更新 → 续跑</small></div></div></div>
+<figcaption>图5 · 调度关系示意，不表示时间比例。共享 GPU 时按阶段暂停、更新与续跑，保留组完整性及策略版本。</figcaption>
+</figure>
 
-后两步无新增可观测Actor JIT入口；token与微批形状不同，耗时变化不能独归因缓存或视为整步加速率。
+- 四个正式对照臂各96题×8轨迹，共768条/臂；保留完整组、ready缓冲和跨版本记录。
+- 容器墙钟观测：GRPO减少11.41%，IGPO减少7.46%。
+- 工具、缓存、轨迹及校正条件不同，不能全部归因调度，也不证明长期off-policy无损。
 
-### 3.10 镜像升级：功能通过不等于性能胜出
+### 2.10 连续Eval：完成一条，补入下一条
 
-两组三步原生运行完成，但单次对照未支持切换旧默认。
-
-| 热态step2–3 | 旧镜像 | 新候选 |
-| --- | --- | --- |
-| 整步平均秒 | 3233.142 | 3192.462 |
-| Actor秒／百万packed token | 19.593 | 20.420 |
-| old-logprob秒／百万token | 5.535 | 6.454 |
-| 完整生命周期 | 3/3通过 | 3/3通过 |
-
-数值一致性需独立验收，不能由速度提升替代。
-
-### 3.11 完整Eval的调度观测
-
-同512题均完成生成与评分，完整Eval从4505.21 s降至4126.03 s，本次观测下降8.42%。
+同512题均完成生成与评分，完整Eval从4505.21 s降到4126.03 s，观测下降8.42%。
 
 <figure class="talk-figure" data-talk-figure="eval-scheduling" lang="zh-CN" aria-labelledby="talk-eval-scheduling-title">
 <p class="tf-title" id="talk-eval-scheduling-title">完整 Eval 的调度观测</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：完整 Eval 的调度观测"><img src="/figures/agentic-rl-talk/eval-scheduling-zh.svg" alt="同512题、同模型的两次完整Eval，零起点比较墙钟时间。" loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>图4 · 共享工具、缓存与随机输出限制因果归因；单请求延迟也有所上升。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+<figcaption>图6 · 共享工具、缓存与随机输出限制因果归因；单请求延迟也有所上升。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
 </figure>
 
-### 3.12 环境交付与可观测性
+- 持续维持active任务，减轻批次尾部的空闲。
+- 随机输出、共享工具与缓存限制精确因果归因，单请求延迟有所上升。
+- 独立Eval与训练内Validate各有生命周期，不能据此认定二者自动使用同一路径。
 
-安装、算子、有效学习和多机训练使用不同验收边界。
+### 2.11 数据与恢复：让训练跨过真实消费
 
-| 交付 | 已证范围 |
+可恢复系统需要数据版本和完整状态，而不只是一次成功load。
+
+| 交付 | 实际范围 |
 | --- | --- |
-| DR-Venus三机环境 | 软件与镜像一致；仅首台完成单卡GPU检查 |
-| 模型保存冒烟 | 原生checkpoint完整保存；奖励/梯度为0，只证明生命周期 |
-| 运行观测 | run、step、轨迹与请求身份关联，分层追踪工具和评分 |
-| 资产同步 | 文件校验、源码清单与结果归档，保留失败和恢复证据 |
+| 固定训练版本 | 6,994＝6,315原版＋679修订；可用不等于无误金标准 |
+| 优先研究集 | 512条独立冻结，不与6,994简单并集 |
+| A009恢复闭环 | 从8次更新checkpoint恢复，新增47次，累计55次模型路径更新、28次策略发布 |
+| 保存与消费 | 混批、更新、同步和后续验证；参数、优化器与相应数据/采样状态衔接 |
 
-## 四、实验证据与关键认识
+恢复需跨过新旧混批、真实更新与后续采样；状态加载成功本身不足以证明连续训练正确。
 
-### 4.1 三种参照，三类问题
+## 三、算法探索：IGPO → CTF-IGPO
 
-整体RL收益与新增组件增量需要不同对照。
+### 3.1 IGPO：为信息获取增加中间反馈
 
-| 参照 | 检验什么 | 固定条件 |
+[IGPO](https://arxiv.org/abs/2510.14967)从策略对正确答案概率的变化构造轮级信号，补充终局结果监督。
+
+<figure class="talk-figure tr-figure" data-talk-figure="igpo-signal" lang="zh-CN" aria-labelledby="talk-igpo-signal-title">
+<p class="tf-title" id="talk-igpo-signal-title">IGPO：从终局奖励到轮级反馈</p>
+<div class="tr-panel tr-trajectory"><p class="tr-panel-heading">任务内的多轮交互</p><div class="tr-three-flow"><div class="tr-node tr-soft-blue"><strong>第 1 轮</strong><small>行动 → 观察</small></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-soft-blue"><strong>后续轮</strong><small>行动 → 观察</small></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-green"><strong>最终回答</strong></div></div></div><p class="tr-supervision">训练监督 · 参考答案用于评分</p><div class="tr-ig-sources"><div class="tr-panel"><p class="tr-panel-heading">轮级过程信号</p><div class="tr-score-pair"><div class="tr-node tr-yellow"><strong>观察前评分</strong></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-yellow"><strong>观察后评分</strong></div></div><span class="tr-down" aria-hidden="true"></span><div class="tr-node tr-yellow"><strong>参考答案评分变化</strong></div></div><div class="tr-panel tr-ig-result"><p class="tr-panel-heading">终局结果监督</p><div class="tr-node tr-green"><strong>回答质量</strong><small>最终结果</small></div></div></div><div class="tr-join tr-ig-join" aria-hidden="true"></div><div class="tr-node tr-shared tr-blue"><strong>结合过程与结果训练策略</strong></div>
+<figcaption>图7 · IGPO 在终局监督之外提供轮级反馈。评分差是训练代理信号，不等于已识别的因果信息价值。</figcaption>
+</figure>
+
+- 最终答案相同的成败标签，难以区分中间交互的作用。
+- 过程评分提供更密集反馈，但仍是代理，不等同事实可靠性或因果行动价值。
+- 评分上下文、目标跨度、预测行和权重版本需要一致。
+
+### 3.2 Flash-IGPO：单轨迹与批级训练
+
+每题一条轨迹扩大问题覆盖，同时改变了优势统计与采样组织。
+
+- 正式运行覆盖768个不同问题、n=1，完成3次有效更新与工作排空。
+- 过程/结果信用按相应批级规则处理，不是同题多样本GRPO归一化。
+- 旧96×8与新768×1的曝光不同；功能与容量通过不等于速度因果或长期质量收益。
+
+### 3.3 CTF-IGPO：当前行动承担后续成本
+
+**Cost-to-Go Augmented Flash-IGPO**在原优势上加入从当前轮到终点的成本约束。
+
+- 累计已记录的成本后缀，包含当前轮，折扣为1；失败轨迹不免除已发生消耗。
+- 初版计生成token与工具次数，完整原型改为逻辑轮费＋返回生成token/1000。
+- 成本代理之外，工具、prefill、评分、训练与恢复的真实资源另行记账。
+
+### 3.4 从联合归一化到独立质量与IG尺度
+
+质量、过程与成本分别处理，让各分量的统计单位和强度可解释。
+
+| 版本层面 | 关键取舍 |
+| --- | --- |
+| 完整v0 | 先对结果＋IG做ReBN，再减成本 |
+| 分离后 | 仅质量做有效轮批级归一化（ReBN）；IG和成本外加，合成后不再整体归一化 |
+| IG信用 | 观察条件差→后缀→首批RMS校准→成功门控/正信用/阶段开关 |
+
+这些选择分别保留证据；归一化、门控和正信用未被逐项证明最优，短程首批也不验证完整阶段调度。
+
+### 3.5 CTF-PW：成本预加权，统一进入PPO
+
+成本在合成优势前按轮调整token权重，质量与IG保持原路径。
+
+<figure class="talk-figure tr-figure" data-talk-figure="ctf-objective" lang="zh-CN" aria-labelledby="talk-ctf-objective-title">
+<p class="tf-title" id="talk-ctf-objective-title">CTF-IGPO：PW 的优势与更新结构</p>
+<div class="tr-cost-inputs"><div class="tr-node tr-green"><strong>Quality</strong><small>独立归一化</small></div><div class="tr-node tr-yellow"><strong>Information gain</strong><small>独立定标 / 门控</small></div><div class="tr-node tr-peach"><strong>Cost-to-go</strong><small>本轮起后缀累计 → 按轮预加权</small></div></div><div class="tr-join tr-join-three" aria-hidden="true"></div><div class="tr-node tr-combined tr-soft-blue"><strong>合成优势</strong><span class="tr-symbol">A<sub>Q</sub> + A<sub>IG</sub> + A<sub>C</sub></span></div><span class="tr-down" aria-hidden="true"></span><div class="tr-update"><div class="tr-node tr-blue"><strong>一次 PPO / dual-clip</strong><small>作用于总优势</small></div><span class="tr-arrow" aria-hidden="true"></span><div class="tr-node tr-soft-blue"><strong>Actor 更新</strong></div></div>
+<figcaption>图8 · PW 配方结构：合成后不再统一归一化，三路信号共用一次裁剪；该结构不代表已证明最优。</figcaption>
+</figure>
+
+- 仅成本项乘`D_m/(K_m·n_t)`：同一minibatch的有效token总数／非空有效轮数／该轮有效token数。
+- 合成后进入原单一PPO/dual-clip与token均值归约，不将分量分别裁剪后拼接。
+- 该实际组合被选为优化参考；不能拼历史最好组件，也不等于统计已证稳定收益。公式见附录B01。
+
+## 四、实验效果与关键认识
+
+### 4.1 固定短程对照出现正向点信号
+
+PW候选133/246，训练对照122/246，初始SFT为124/246。
+
+<figure class="talk-figure" data-talk-figure="short-run-results" lang="zh-CN" aria-labelledby="talk-short-run-results-title">
+<p class="tf-title" id="talk-short-run-results-title">固定短程实验：初始模型、训练对照与 PW 候选</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/short-run-results-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图: 固定短程实验：初始模型、训练对照与 PW 候选"><img src="/figures/agentic-rl-talk/short-run-results-zh.svg" alt="246题开发面板：初始SFT124题正确，训练对照122题，PW候选133题。" loading="lazy" decoding="async" width="768" height="320"></a>
+<figcaption>图9 · 训练输入固定256条、两次更新；评测为246题开发面板。候选较训练对照的点值改善未通过更强证据要求。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
+- **训练剂量**：固定保存256输入、2次Adam更新；评测为246题已暴露开发面板。
+- **相对训练对照**：正确数＋11，平均轮次−2.668%，总token−4.209%，池化单轮长度−1.583%。
+- 统计证据尚不足以确认稳定收益；相对SFT平均轮次仍＋0.164%，不是完整RL压缩成功。
+
+### 4.2 完整55步：三条配置均未达联合目标
+
+三条训练均完整执行，但没有同时保持质量、减少轮次并满足长度约束。
+
+<figure class="talk-figure" data-talk-figure="complete-quality" lang="zh-CN" aria-labelledby="talk-complete-quality-title">
+<p class="tf-title" id="talk-complete-quality-title">三条完整训练的质量轨迹</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/complete-quality-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图: 三条完整训练的质量轨迹"><img src="/figures/agentic-rl-talk/complete-quality-zh.svg" alt="三个独立面板保留每条运行的8个质量节点：原始组合120至1，更新权重上限115至0，固定尺度成本106至2；每点246题。" loading="lazy" decoding="async" width="768" height="420"></a>
+<figcaption>图10 · 各运行55次模型路径更新、每点246题；虚线为各自初始值。三条均未通过质量与成本联合要求，不作公平跨运行排名。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/complete-quality-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
+
+- 每条6,994成员、55次模型路径更新；节点0/8/16/24/32/40/48/55，每点246题。
+- 原始组合、权重上限、固定成本终点正确数分别为1、0、2；各自初始为120、115、106。
+- 各运行有自身初始与历史，不作公平跨run因果排名；133短程点不是这三条曲线的起点。完整Q/R/T/U见附录B06–B08。
+
+### 4.3 已修缺陷与退化原因分开
+
+具体缺陷的验收，不能直接解释完整训练的退化。
+
+| 已有证据 | 能证明什么 | 尚不能证明 |
 | --- | --- | --- |
-| 初始SFT | RL整体是否改善 | 模型起点、评测协议 |
-| 训练对照 | 原路径的效果 | 数据、剂量、服务条件 |
-| 新增候选 | 组件是否有增量 | 实际差分、预定验收要求 |
+| 同357条输出：ERROR→END | 解析接受发生变化 | 答案全部正确 |
+| 同奖9组72成员优势/回报严格为0 | 数值不变量恢复 | 整步无KL或优化器更新 |
+| 恢复链与事故暴露轨迹实际消费 | 接口修复或暴露事实 | 单项质量贡献、具体参数损害或唯一退化原因 |
 
-相同题数或seed不保证可比；失败、unknown与完整分母保留。
+KL、off-policy及学习机制的解释仍须对照；未由这些修复排除。
 
-### 4.2 扩评改变固定候选的判断
+### 4.4 阶段交付与下一步
 
-同一sequence-ratio候选的嵌套扩评没有支持采用。
+已形成可持续研究的运行系统，长期保质压缩目标仍未实现。
 
-| 开发面板 | 训练对照正确数 | 候选正确数 | 处置 |
+- **已交付**：运行栈、tool server、评分、采样、更新、同步、恢复与完整评测链。
+- **已保留**：数据版本、算法差分、完整曲线、失败与恢复成本，支持后续对照。
+- **待解决**：有效质量基线，以及过程/成本信号何时带来稳定增量。
+
+## 附录：公式、完整数据与验收范围
+
+### B01 CTF配方：信用、尺度与更新
+
+公式描述实际版本的结构，不代表每个组件分别达到最优。
+
+```text
+完整v0： A = ReBN_valid-turn(R + β·G_I) − λ·G_C
+分离后： A = ReBN_valid-turn(R) + I_eff − λ·G_C
+成本：   c_t = 1 + N_returned,t / 1000
+         G_C,t = Σ(k=t…T) c_k
+IG信用： G_I,t = Σ(k=t…T−1) δ_k；终止轮intrinsic为0
+         β = η / RMS(G_I,raw)
+         I_eff,t = m_s · max(β·R_i·G_I,t, 0)
+PW：     A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
+```
+
+- IG首批raw、未门控、未裁负后缀先定标；截断作用于加权后的后缀，不裁raw增量或总优势。
+- `n_t`为完整逻辑轮跨span的有效policy-token数；packing后复用，零active轮不做除零或删除成员。
+- PW保留有序FP32、单一PPO和token均值；进入clip后净优势符号和分支可变，不声称独立成本梯度等价。
+
+| 短程实际版本 | 配置 |
+| --- | --- |
+| 固定输入 | 256；minibatch 128×2；2次Adam、1次scheduler |
+| 学习率／KL | 5e−7／0.001 |
+| λ | 0.005660749929284128 |
+| PPO clip／dual-clip | [0.8, 1.28]／3 |
+| IG启用 | 继承首批有效IG，m=1；不等于完整early-off调度验收 |
+
+### B02 Actor性能与数值资格分开
+
+后续NB数值通过，不能补成早期缓存冷/热对照的无损证明。
+
+| 证据 | 性能记录 | 数值边界 |
+| --- | --- | --- |
+| 固定256轨迹Actor replay，NB关闭 | 新进程空缓存1925.391 s；保留缓存656.149 s | 严格等价失败；更新相对L2差5.61%，不是质量损失比例 |
+| 初次NB对照 | 1913.536→1197.195 s | autotune未完全受控，37.44%不能全归NB |
+| 后续受控NB检查 | 不作独立加速率估计 | 8-rank postclip梯度及初始/最终master逐位一致 |
+| 真实三步联用 | Actor 973.715 / 752.250 / 655.359 s | token/微批不同，非单组件因果 |
+
+持久缓存与去特化减少重复编译；数值、吞吐与端到端效果分别验收。
+
+### B03 工具与Judge的分母
+
+请求、URL、attempt、面板项和事件不能混用。
+
+| 统计范围 | 完整口径 |
+| --- | --- |
+| 历史Judge审查 | 36,601 task_id请求＝训练29,122＋Eval 7,479；legacy 7另列 |
+| 确认误判 | FN 71＋FP 101＝172；支持与未决等级另列，非总体错误率 |
+| 开发面板修复 | 32普通＋8边界，含2 unknown；最终40/40符合预期，主判39/40 |
+| 实际响应使用 | 41旧＋1新复核，非独立重测40题；历史统计未提供172项新版逐项复验结果 |
+| 四provider服务验收 | 1次逻辑请求、1次primary上游尝试；非四路压测或RL采用证明 |
+| Visit原窗口 | 2,218逻辑调用，52业务失败＝47 Reader＋5 Summary；HTTP均200 |
+| Reader定向复现 | 47历史失败去重46 URL；73 attempts＝23 success＋42 timeout＋8 invalid_payload |
+
+42次timeout均在等待响应头；无法据此区分上游排队、抓取或渲染。
+
+### B04 计时与调度的完整观察
+
+各项收益来自不同实验范围，不能相加或相乘成总提速。
+
+| 2026-09-18阶段 | 秒 | 单位 |
+| --- | --- | --- |
+| iteration | 5411.207 | driver墙钟 |
+| generate | 2859.381 | 已含工具/评分后处理 |
+| old-logprob | 734.510 | driver阶段 |
+| reference | 165.967 | driver阶段 |
+| Actor update | 1609.646 | driver阶段 |
+| Judge累计 | 881.243 | 154并发调用的累计 |
+| reward | 0.000167 | 读取结果 |
+
+| 调度观察 | 原方式秒 | 新方式秒 | 完整负载 |
 | --- | --- | --- | --- |
-| 128题 | 68 | 68 | 点估计通过，强证据门未过 |
-| 嵌套246题 | 131 | 121 | 固定候选未晋升 |
+| GRPO同步→Partial | 10828.329 | 9593.208 | 每臂768轨迹 |
+| IGPO同步→Partial | 11678.676 | 10807.729 | 每臂768轨迹 |
+| batch256→持续active256 Eval | 4505.21 | 4126.03 | 每组512题生成＋评分 |
 
-这是已有策略的扩评，没有新增训练，也不是独立测试；原始SFT与训练对照身份保留。
+工具、缓存、轨迹与随机输出限制因果解释；请求累计和跨rank时间不等于墙钟。
 
-### 4.3 三条完整训练，联合目标均未通过
+### B05 数据、模型路径与恢复返工
 
-完整执行已交付，但三条具体配置均未同时满足质量保持、轮次下降与长度约束。
+模型路径更新和实际执行工作量分别记录。
 
-| 配置 | 训练成员 | 模型路径更新 | 验证节点 |
-| --- | --- | --- | --- |
-| 原始组合 | 6,994 | 55 | 8×246题 |
-| 更新权重上限 | 6,994 | 55 | 8×246题 |
-| 固定尺度成本 | 6,994 | 55 | 8×246题 |
+| 项目 | 数量与范围 |
+| --- | --- |
+| 原始训练池 | 8,640；结构通过不代表全部事实正确 |
+| 固定可用版本 | 6,994＝6,315原版＋679修订 |
+| 优先研究集 | 512条独立冻结，不能简单并集 |
+| 已知错误／实质争议 | 835／767，暂扣并保留历史输入和分数 |
+| A009 | 已保存8更新＋新增47＝模型路径55；28次发布 |
+| 固定成本首attempt | 22次成功更新 |
+| 固定成本恢复点 | 已保存16次更新 |
+| 固定成本恢复后 | 新增39次更新 |
+| 固定成本总量 | 模型路径55；物理成功更新61；模型路径消费6,994成员 |
 
-- 节点为0/8/16/24/32/40/48/55，包含初始点。
-- 三个运行各有自身初始与历史，不作公平跨run因果排名，也不否定整个方法家族。
-- 固定成本方案物理成功更新61次；同开发面板选出的高点不是独立确认。
+rank数不乘算优化器更新；恢复之后的返工不从资源账单中消失。
 
-### 4.4 原始组合：轮次减少伴随质量退化
+### B06 原始组合：完整Q/R/T/U
 
-正确题数从120/246降至1/246，较少交互未保持任务质量。
+每节点246题，Q为正确数，R为平均逻辑轮次，T为面板总返回生成token，U=ΣT/ΣR。
 
 <figure class="talk-figure" data-talk-figure="training-a009" lang="zh-CN" aria-labelledby="talk-training-a009-title">
 <p class="tf-title" id="talk-training-a009-title">原始组合方案的完整训练曲线</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：原始组合方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-a009-zh.svg" alt="原始组合方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>图5 · 灰虚线为本运行初始值；完整Q/R/T/U见附录B01。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+<figcaption>图11 · 完整8个节点；灰虚线为该运行初始值。三图各指标使用相同尺度。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
 </figure>
-
-### 4.5 更新权重上限：短程高点未过联合门
-
-正确题数短程升至117/246，但轮次未降；最终为0/246。
-
-<figure class="talk-figure" data-talk-figure="training-cap2" lang="zh-CN" aria-labelledby="talk-training-cap2-title">
-<p class="tf-title" id="talk-training-cap2-title">更新权重上限方案的完整训练曲线</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：更新权重上限方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-cap2-zh.svg" alt="更新权重上限方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>图6 · 灰线为本运行初始值，各图采用相同指标尺度；完整数据见附录B02。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
-
-### 4.6 固定尺度成本：成本下降不能抵消质量损失
-
-早期正确题数增加伴随更多轮次；最终轮次与总token下降，正确题数却降至2/246。
-
-<figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="zh-CN" aria-labelledby="talk-training-fixed-cost-title">
-<p class="tf-title" id="talk-training-fixed-cost-title">固定尺度成本方案的完整训练曲线</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：固定尺度成本方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" alt="固定尺度成本方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>图7 · 横轴为模型路径更新；token刻度以百万显示，完整原单位数据见附录B03。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
-
-### 4.7 缺陷证据与退化原因分开
-
-局部修复成立，不等于已经解释完整训练的退化。
-
-| 已有证据 | 尚未建立 |
-| --- | --- |
-| 训练/Eval解析差异，同奖数值与恢复链问题 | 单项修复的独立质量贡献 |
-| 部分成功批次实际消费事故暴露轨迹 | 具体参数损害与退化的唯一原因 |
-
-事故暴露、实际消费与参数损害不能互相替代。
-
-## 五、阶段交付与下一步
-
-### 5.1 方法成果与角色
-
-公开方法构成技术积累，作者角色不等于全部实施分工。
-
-| 方向 | 工作 | 既定角色 |
-| --- | --- | --- |
-| 搜索与证据 | WebFilter、EviNoteRAG | 共同一作 |
-| 过程监督 | IGPO | 第一作者 |
-| 过程奖励与训练方案 | Atom-Searcher、DR-Venus | 核心贡献者 |
-| 记忆系统演化 | [MemPro](https://aclanthology.org/2026.emnlp-main.1364/) | 共同一作 |
-
-方法并列不表示完成集成；MemPro改进的是可运行的记忆构建—检索程序。
-
-### 5.2 可复用的研究资产
-
-保留可运行实现与失败证据，支持后续判断。
-
-- **实现**：训练、采样、工具、评分、同步与恢复路径。
-- **数据**：版本、准入、开发面板与实际曝光。
-- **证据**：完整曲线、负结果、运行成本与适用范围。
-
-### 5.3 下一步：可判别的研究问题
-
-聚焦质量基线、过程/成本增量与研究迭代效率。
-
-<figure class="talk-figure " data-talk-figure="next-questions" lang="zh-CN" aria-labelledby="talk-next-questions-title">
-<p class="tf-title" id="talk-next-questions-title">已有资产与后续研究问题</p>
-<p class="tf-stage-label">已有可复用资产</p><div class="tf-sources"><div class="tf-node tf-soft"><strong>方法实现</strong><small>训练与评分路径</small></div><div class="tf-node tf-soft"><strong>运行基建</strong><small>工具、恢复与观测</small></div><div class="tf-node tf-soft"><strong>数据与证据</strong><small>版本、对照与曲线</small></div></div><div class="tf-join" aria-hidden="true"></div><div class="tf-merged"><div class="tf-node tf-emphasis"><strong>支撑下一轮判断</strong></div></div><div class="tf-split" aria-hidden="true"><span>↓</span><span>↓</span><span>↓</span></div><div class="tf-sources" role="group" aria-label="后续研究问题"><div class="tf-node tf-future"><strong>质量基线</strong><small>建立可解释的质量学习参照</small></div><div class="tf-node tf-future"><strong>过程与成本效应</strong><small>识别有效增量的适用条件</small></div><div class="tf-node tf-future"><strong>迭代效率</strong><small>更快取得可信的研究结论</small></div></div>
-<figcaption>图8 · 后续研究方向，不表示新实验已启动或已取得增量收益。</figcaption>
-</figure>
-
-## 附录：数字与适用边界
-
-各验证节点246题；Q为正确题数，R为平均逻辑轮次，T为面板总生成token，U=ΣT/ΣR。小数仅显示舍入至三位；各运行保留自身初始参照。
-
-### B01 原始组合：完整Q/R/T/U
-
-八个节点全部保留，不以短程高点替代终局。
 
 | 路径更新 | 正确题数 | 平均轮次 | 总生成token | token/轮（池化） |
 | --- | --- | --- | --- | --- |
@@ -397,9 +422,15 @@ reward计时接近零，不代表Judge几乎没有成本。
 | 48 | 2 | 2.366 | 3414906 | 5867.536 |
 | 55 | 1 | 1.707 | 3425488 | 8155.924 |
 
-### B02 更新权重上限：完整Q/R/T/U
+### B07 更新权重上限：完整Q/R/T/U
 
-正确题数的短程增加没有同时满足轮次下降与长度约束。
+各运行保留自身初始参照，不能据跨run曲线高低推断单组件因果。
+
+<figure class="talk-figure" data-talk-figure="training-cap2" lang="zh-CN" aria-labelledby="talk-training-cap2-title">
+<p class="tf-title" id="talk-training-cap2-title">更新权重上限方案的完整训练曲线</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：更新权重上限方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-cap2-zh.svg" alt="更新权重上限方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
+<figcaption>图12 · 完整8个节点；灰虚线为该运行初始值。三图各指标使用相同尺度。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
 
 | 路径更新 | 正确题数 | 平均轮次 | 总生成token | token/轮（池化） |
 | --- | --- | --- | --- | --- |
@@ -412,9 +443,15 @@ reward计时接近零，不代表Judge几乎没有成本。
 | 48 | 1 | 2.183 | 3397617 | 6327.034 |
 | 55 | 0 | 1.573 | 3348536 | 8652.548 |
 
-### B03 固定尺度成本：完整Q/R/T/U
+### B08 固定尺度成本：完整Q/R/T/U
 
-较低的终局轮次与token伴随质量损失，不构成保质压缩。
+全部八节点保留；小数仅显示舍入三位，不重算评测或统计。U不是逐题比值均值。
+
+<figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="zh-CN" aria-labelledby="talk-training-fixed-cost-title">
+<p class="tf-title" id="talk-training-fixed-cost-title">固定尺度成本方案的完整训练曲线</p>
+<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：固定尺度成本方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" alt="固定尺度成本方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
+<figcaption>图13 · 完整8个节点；灰虚线为该运行初始值。三图各指标使用相同尺度。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+</figure>
 
 | 路径更新 | 正确题数 | 平均轮次 | 总生成token | token/轮（池化） |
 | --- | --- | --- | --- | --- |
@@ -426,66 +463,3 @@ reward计时接近零，不代表Judge几乎没有成本。
 | 40 | 13 | 9.955 | 3603415 | 1471.382 |
 | 48 | 5 | 5.199 | 3286799 | 2569.819 |
 | 55 | 2 | 3.764 | 2897535 | 3129.087 |
-
-### B04 Partial与Flash的正式负载
-
-Partial四个实验组各有96题×8轨迹，保留全部轨迹。
-
-| 算法 | 同步容器秒 | Partial容器秒 | 每臂轨迹 |
-| --- | --- | --- | --- |
-| GRPO | 10828.329 | 9593.208 | 768 |
-| IGPO | 11678.676 | 10807.729 | 768 |
-
-- 2026-09-22固定负载观测，已验证完整组交付与跨版本续跑。
-- 共享工具、缓存、轨迹及校正差异限制纯调度因果归因。
-- Flash-IGPO另用768个不同问题、n=1，完成3次有效更新与排空；不作同曝光速度对比或长期质量结论。
-
-### B05 更新变量的历史对照范围
-
-联合优势裁剪与分量分别裁剪不能无条件视为同一目标。
-
-| 变量 | 对照范围 |
-| --- | --- |
-| 学习率 | 常数1e−6/5e−7、线性衰减、匹配平均剂量 |
-| KL | 0.001与0.0005的限定对照 |
-| PPO | 上裁剪、共享/局部重要性比率 |
-| 归约 | token均值、序列等权、分量目标 |
-| 采样 | 同步、异步、Partial、实际曝光 |
-
-这些是历史研究维度，不是已优选的统一配方。
-
-### B06 数值正确性的验收边界
-
-数值不变量修复与任务质量收益分别验证。
-
-| 历史验收 | 已证范围 | 不代表 |
-| --- | --- | --- |
-| 同奖归零：9组72成员 | 优势与回报为0 | 整个训练步无其他更新 |
-| 512成员、64组、两次更新 | 原生数值验收 | 单项补丁独立提高质量 |
-
-KL项或优化器状态仍可能导致参数变化；零优势不等于整步零更新。
-
-### B07 恢复返工计入真实工作量
-
-固定成本方案模型路径55次更新，物理成功更新61次。
-
-| 记录 | 更新次数 |
-| --- | --- |
-| 首attempt成功更新 | 22 |
-| 恢复点已保存更新 | 16 |
-| 恢复后新增更新 | 39 |
-| 模型路径 | 55 |
-| 物理成功更新 | 61 |
-
-模型路径消费6,994成员；恢复点之后的返工不从账单中抹去。
-
-### B08 预测行与目标token对齐
-
-目标位置j由预测行j−1评分。
-
-| 输入位置 | 0 | 1 | 2 | 3 | 4 |
-| --- | --- | --- | --- | --- | --- |
-| 输入token | BOS | P0 | P1 | A0 | A1 |
-| 该行目标 | P0 | P1 | A0 | A1 | 后续 |
-
-给A0、A1打分读取第2、3行；这里只使用合成符号。

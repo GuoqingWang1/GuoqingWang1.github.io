@@ -1,21 +1,44 @@
 {
   "slug": "agentic-rl-research-and-systems",
   "figure_order": [
-    "search-agent-loop",
-    "credit-update-flow",
-    "training-system",
+    "inference-pipeline",
+    "training-pipeline",
+    "tool-stack",
+    "actor-cache",
+    "partial-scheduling",
     "eval-scheduling",
+    "igpo-signal",
+    "ctf-objective",
+    "short-run-results",
+    "complete-quality",
     "training-a009",
     "training-cap2",
-    "training-fixed-cost",
-    "next-questions"
+    "training-fixed-cost"
   ],
   "assets": [
+    {
+      "id": "actor-cache",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/actor-cache-zh.svg",
+      "sha256": "57dcc8064b26f8ab551b4d15e9ea49ceec569031a18239bbcd3be6e87bf1463a"
+    },
     {
       "id": "eval-scheduling",
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/eval-scheduling-zh.svg",
       "sha256": "d1a0924da2e5f24cb21b873e7e43cbc9fd36843ba87185d6c6eec7f1e2b9d087"
+    },
+    {
+      "id": "short-run-results",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/short-run-results-zh.svg",
+      "sha256": "5bf902835ffe753cf469a8e30c7d7d52b05249a77785b18814b2e5a1b1148bf5"
+    },
+    {
+      "id": "complete-quality",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/complete-quality-zh.svg",
+      "sha256": "d7672281f91c412015d470e5c41a032824cff1ea5f19043dd311d513c4678cdd"
     },
     {
       "id": "training-a009",
@@ -36,10 +59,28 @@
       "sha256": "633836130e4926b1b568944b7a410f08575aa6f4b1258a0463f0ae5a1fded22c"
     },
     {
+      "id": "actor-cache",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/actor-cache-en.svg",
+      "sha256": "bf1921e82be6e8cd042e51c25986bffd6293a1163253baf5fd63404c2da774e6"
+    },
+    {
       "id": "eval-scheduling",
       "lang": "en",
       "path": "/figures/agentic-rl-talk/eval-scheduling-en.svg",
       "sha256": "eac691a3a724d115efeed7d588453c667272a28a5e4a7c4b90759e0d05364e8e"
+    },
+    {
+      "id": "short-run-results",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/short-run-results-en.svg",
+      "sha256": "088d0d100ca858cf6e08f2dfe0590f6006ea8b7bcc04bb4d1f5eabe3c71cc138"
+    },
+    {
+      "id": "complete-quality",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/complete-quality-en.svg",
+      "sha256": "70568842e66a0d7515f48608f4b9e7a041152b0835965ec2340eca051add4301"
     },
     {
       "id": "training-a009",
