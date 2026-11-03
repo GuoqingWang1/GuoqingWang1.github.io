@@ -21,15 +21,15 @@ if (otherVersion) {
 }
 ---
 <BaseLayout title={post.data.title} description={post.data.description} active="blog" lang={post.data.lang} article articleTranslations={articleTranslations} articleAnchors={articleAnchors} published={post.data.pubDate} updated={post.data.updatedDate}>
-  <article data-translation-key={postKey(post)} data-reading-article
+  <article class:list={{ 'presentation-article': post.data.presentation }} data-presentation={post.data.presentation ? 'true' : undefined} data-translation-key={postKey(post)} data-reading-article
     data-copy-label={t.copyCode} data-copied-label={t.codeCopied} data-copy-failed-label={t.copyFailed} data-copy-aria-label={t.copyCodeLabel}>
     <header class="article-header">
       <h1>{post.data.title}</h1>
-      <div class="article-meta">
+      {!post.data.presentation && <div class="article-meta">
         <time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
         {post.data.review && <><span aria-hidden="true">·</span><span class="article-review">{t.draftLabel}</span></>}
         <span aria-hidden="true">·</span><span>{lang === 'zh-CN' ? `约 ${readingMinutes(post.body)} 分钟阅读` : `~${readingMinutes(post.body)} min read`}</span>
-      </div>
+      </div>}
     </header>
     {toc.length > 1 && <details class="article-toc-inline">
       <summary>{t.contents}</summary>
@@ -42,7 +42,7 @@ if (otherVersion) {
       <div class="article-body"><Content /></div>
     </div>
   </article>
-  {related.length > 0 && <nav class="related-notes" aria-label={t.relatedNotes}>
+  {!post.data.presentation && related.length > 0 && <nav class="related-notes" aria-label={t.relatedNotes}>
     <h2>{t.relatedNotes}</h2>
     <ul>{related.map(note => <li><a href={postPath(note)} lang={lang} data-related-key={postKey(note)}>{note.data.title}</a></li>)}</ul>
   </nav>}

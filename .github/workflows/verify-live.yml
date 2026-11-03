@@ -67,10 +67,12 @@ jobs:
                   self.in_header = False; self.in_navigation = False; self.anchor = None
                   self.meta_properties = {}; self.meta_names = {}
                   self.links = []; self.rss_links = []
-                  self.article_key = None; self.h2_ids = []
+                  self.article_key = None; self.h2_ids = []; self.presentation = False
               def handle_starttag(self, tag, attrs):
                   a = dict(attrs)
-                  if tag == 'article' and a.get('data-translation-key'): self.article_key = a['data-translation-key']
+                  if tag == 'article' and a.get('data-translation-key'):
+                      self.article_key = a['data-translation-key']
+                      self.presentation = a.get('data-presentation') == 'true'
                   if tag == 'h2' and a.get('id'): self.h2_ids.append(a['id'])
                   if a.get('id'): self.ids.add(a['id'])
                   if 'news-item' in a.get('class', '').split(): self.news += 1
@@ -228,8 +230,9 @@ jobs:
               back = [a for a in parser.links if 'article-back' in a.get('class', '').split()]
               assert len(back) == 1 and back[0].get('href') == home+'blog/', path
               related = [a for a in parser.links if a.get('data-related-key')]
-              expected_related = related_post_keys[parser.article_key]
-              assert 1 <= len(related) <= 2 and [a['data-related-key'] for a in related] == expected_related, path
+              assert parser.presentation == (parser.article_key == talk_figures['slug']), path
+              expected_related = [] if parser.presentation else related_post_keys[parser.article_key]
+              assert [a['data-related-key'] for a in related] == expected_related, path
               assert [a['href'] for a in related] == [home+'blog/'+key+'/' for key in expected_related], path
               assert all(a.get('lang') == lang for a in related), path
               for anchor in parser.links:

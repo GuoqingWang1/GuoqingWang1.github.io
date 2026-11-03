@@ -253,7 +253,10 @@ for (const filename of output) {
     assert(expectedKeys?.length >= 1 && expectedKeys.length <= 2, `Expected one or two related notes: ${key}`);
     assert(new Set(expectedKeys).size === expectedKeys.length && !expectedKeys.includes(key), `Duplicate/self related note: ${key}`);
     const relatedLinks = anchors.filter(anchor => anchor['data-related-key']);
-    assert.deepEqual(relatedLinks.map(anchor => anchor['data-related-key']), expectedKeys, `Wrong related-note order: ${relative}`);
+    const presentation = tags(html, 'article')[0]['data-presentation'] === 'true';
+    assert.equal(presentation, key === talkFigures.slug, `Unexpected presentation mode: ${relative}`);
+    if (presentation) assert(!html.includes('class="article-meta"') && !html.includes('class="related-notes"'), `Talk contains reading metadata or related notes: ${relative}`);
+    assert.deepEqual(relatedLinks.map(anchor => anchor['data-related-key']), presentation ? [] : expectedKeys, `Wrong related-note order: ${relative}`);
     for (const anchor of relatedLinks) {
       const route = `${lang === 'zh-CN' ? '/zh' : ''}/blog/${anchor['data-related-key']}/`;
       assert.equal(anchor.href, route, `Related note must stay in the same language: ${relative}`);
