@@ -7,7 +7,7 @@ translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T07:16:44+08:00"
+updatedDate: "2026-11-04T08:12:50+08:00"
 draft: false
 review: false
 presentation: true
@@ -44,35 +44,17 @@ Deep Research训练同时依赖GPU计算、多轮采样与外部服务。我们�
 
 ### 2.2 工具与评分环境：把外部依赖变成可复用服务
 
-#### Tool Server：按复用边界建设缓存
+#### Tool Server：关键链路与改造位置
 
-从Python服务演进到Go服务，缓存覆盖检索结果、网页正文与目标相关摘要，并补齐跨版本兼容、并发与持久化语义。
+沿Search与Visit两条路径，展示请求执行、缓存复用、Summary处理和结果返回。蓝色编号标出重点建设与改动，绿色箭头标出缓存命中的捷径。
 
-<figure class="talk-figure tc-figure" data-talk-figure="tool-stack" lang="zh-CN" aria-labelledby="talk-tool-stack-title">
-<p class="tf-title" id="talk-tool-stack-title">工具缓存：复用不同阶段的已有结果</p>
-<div class="tc-layers"><div class="tc-row"><strong>检索结果</strong><span>工具、查询与参数匹配</span><span class="tc-result">省去重复搜索</span></div><div class="tc-row"><strong>Reader正文</strong><span>页面内容仍有效</span><span class="tc-result">换goal仍可复用抓取</span></div><div class="tc-row"><strong>目标摘要</strong><span>内容、goal、模型与提示身份匹配</span><span class="tc-result">省去重复摘要推理</span></div></div>
-<figcaption>命中依赖相应版本、到期与内容检查；这是复用边界示意，三层不是一条固定串行调用链。</figcaption>
+<figure class="talk-figure tool-architecture" data-talk-figure="tool-stack" lang="zh-CN" aria-labelledby="talk-tool-stack-title">
+<p class="tf-title" id="talk-tool-stack-title">Tool Server：关键链路与改造位置</p>
+<div class="tool-architecture-scroll" role="region" aria-label="查看完整框架图" tabindex="0"><a class="talk-plot-link" href="/figures/agentic-rl-talk/tool-server-framework-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看完整框架图"><img src="/figures/agentic-rl-talk/tool-server-framework-zh.svg" alt="Tool Server详细框架：请求入口分到Search和Visit；有效缓存命中直接返回，未命中才访问上游；Summary每次尝试均校验，再在原预算内重试或切换。蓝色01至07标出重点改动。" width="1600" height="1060" loading="lazy" decoding="async"></a></div>
+<figcaption>Search与Visit是可选分支；缓存有效性、备用与重试均受原身份、版本和预算约束。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/tool-server-framework-zh.svg" target="_blank" rel="noopener noreferrer">查看完整框架图 ↗</a><span class="tool-scroll-hint">手机可横向滚动查看。</span></figcaption>
 </figure>
 
-| 建设内容 | 完成的工作与作用 |
-| --- | --- |
-| 检索缓存 | 按工具和参数隔离；逐项保留批量结果；覆盖网页、学术、图片、地图与反向图片检索 |
-| 正文与摘要分层 | Reader正文独立缓存；换goal可复用正文；摘要按内容、goal、模型和提示词等身份隔离 |
-| 一致性与生命周期 | 默认365天TTL并保留显式覆盖；校验版本、到期与内容依赖；受限读取旧Python缓存，区分排队写入与已持久化 |
-| 有效结果准入 | 校验空正文、畸形结果、摘要拒绝与过滤；合法备用摘要可以缓存；缓存存储故障不改写已成功的工具结果 |
-| 并发与扩展 | 同进程合并相同缓存工作；支持自定义提示词及等价默认提示复用；图文最终摘要缓存隔离，Reader正文与锁可共享 |
-
-这些能力分别减少重复搜索、重复抓取和重复摘要；当前没有可比的统一“缓存提速倍数”。
-
-#### Tool Server：管理一次调用的完整生命周期
-
-缓存之外，服务还要正确处理并发、流式返回、重试、取消和观测。
-
-- **执行与恢复**：只重试失败的query/URL，保留成功项和原总期限；管理队列、准入及取消，运行中的工作退出后再归还容量。
-- **摘要与传输**：主备路由、长文分流、流式结束与JSON校验；Reader业务错误和逐项失败原因能够返回给Agent。
-- **可观测性**：串联根请求、上游尝试、Reader/Summary阶段、缓存读写和实际路由；集中看板覆盖Search/Visit/Router各6实例及10个Summary实例。
-
-历史6题Go主链验收完成27次Search、9次Visit、0工具错误；一次失败定向复现把42次Reader超时定位到响应头等待。前者验证可用链路，后者为定位上游提供依据。
+<details class="tool-change-notes"><summary>图中改动说明</summary><ol><li><strong>01 统一入口与执行控制</strong><span>完成Python到Go服务接入与接口兼容。批量请求保留逐项成功状态，仅补失败项；沿用原总期限。排队取消定位执行句柄，运行中的工作退出后才释放容量。</span></li><li><strong>02 检索结果缓存</strong><span>按工具、查询参数和版本隔离；命中跳过重复上游搜索。结果结构检查决定缓存资格，存储失败不改写已成功的工具结果。</span></li><li><strong>03 Visit 双层语义缓存</strong><span>正文缓存与goal相关的最终摘要分开。有效final命中可跳过Reader抓取和Summary；final未命中时，换goal仍可复用正文。</span></li><li><strong>04 Summary 路由</strong><span>按配置选择主路、受限备用与长文路径；主备共用原剩余预算，并保留实际来源。</span></li><li><strong>05 每次尝试的结果校验</strong><span>检查响应、JSON与拒绝/过滤等状态；只有允许的失败进入预算内重试或备用。通过校验的主路或备用结果才有final缓存资格。</span></li><li><strong>06 缓存身份与持久化</strong><span>检查goal、模型、提示词、版本、内容依赖及到期；默认365天TTL可被配置覆盖。同进程合并不等于跨副本锁；queued不等于已落盘。图文final独立，Reader正文和锁可共享。</span></li><li><strong>07 全链路可观测性</strong><span>关联根请求、上游尝试、Reader/Summary与缓存事件；持久化spool、分页读取和ACK支撑中央看板，区分命中、写入、错误、取消和采集缺口。</span></li></ol></details>
 
 #### LLM Judge：持久任务、有界执行、明确语义
 

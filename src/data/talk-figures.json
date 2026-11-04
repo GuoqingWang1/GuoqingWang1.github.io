@@ -19,6 +19,12 @@
   ],
   "assets": [
     {
+      "id": "tool-stack",
+      "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/tool-server-framework-zh.svg",
+      "sha256": "71c2ae5f9ffa114b7760aa8ff40cc8897ba8297fd84bfae5e1c212fe907d36b6"
+    },
+    {
       "id": "infra-benefits",
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/infra-benefits-zh.svg",
@@ -65,6 +71,12 @@
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/training-fixed-cost-zh.svg",
       "sha256": "633836130e4926b1b568944b7a410f08575aa6f4b1258a0463f0ae5a1fded22c"
+    },
+    {
+      "id": "tool-stack",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/tool-server-framework-en.svg",
+      "sha256": "3c702cc025fdbbffeda3145080925f029ff5ff6fe94e16186da2317647ccea80"
     },
     {
       "id": "infra-benefits",

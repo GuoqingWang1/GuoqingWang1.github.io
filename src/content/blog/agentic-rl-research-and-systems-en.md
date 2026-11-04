@@ -7,7 +7,7 @@ translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T07:16:44+08:00"
+updatedDate: "2026-11-04T08:12:50+08:00"
 draft: false
 review: false
 presentation: true
@@ -44,35 +44,17 @@ Deep Research training combines GPU computation, multi-turn sampling, and extern
 
 ### 2.2 Tools and judging: reusable services for external dependencies
 
-#### Tool Server: cache at the right reuse boundaries
+#### Tool Server: request paths and engineering changes
 
-The Python-to-Go service evolution covers search results, page bodies, and goal-dependent summaries, with version compatibility, concurrency, and persistence semantics.
+Follow the Search and Visit paths through execution, cache reuse, Summary handling, and result delivery. Blue numbers mark engineering work; green arrows mark cache-hit shortcuts.
 
-<figure class="talk-figure tc-figure" data-talk-figure="tool-stack" lang="en" aria-labelledby="talk-tool-stack-title">
-<p class="tf-title" id="talk-tool-stack-title">Tool caching: reuse work at distinct stages</p>
-<div class="tc-layers"><div class="tc-row"><strong>Search results</strong><span>Matching tool, query, and parameters</span><span class="tc-result">Avoid repeated searches</span></div><div class="tc-row"><strong>Reader body</strong><span>Page content remains valid</span><span class="tc-result">Reuse the fetch for a new goal</span></div><div class="tc-row"><strong>Goal summary</strong><span>Matching content, goal, model, and prompt</span><span class="tc-result">Avoid repeated summarization</span></div></div>
-<figcaption>Hits depend on version, expiry, and content checks. These are reuse boundaries, not a fixed three-stage call chain.</figcaption>
+<figure class="talk-figure tool-architecture" data-talk-figure="tool-stack" lang="en" aria-labelledby="talk-tool-stack-title">
+<p class="tf-title" id="talk-tool-stack-title">Tool Server: request paths and engineering changes</p>
+<div class="tool-architecture-scroll" role="region" aria-label="Open full-size framework" tabindex="0"><a class="talk-plot-link" href="/figures/agentic-rl-talk/tool-server-framework-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size framework"><img src="/figures/agentic-rl-talk/tool-server-framework-en.svg" alt="Detailed Tool Server framework: admission branches into Search or Visit; valid cache hits return directly and misses call upstream services. Each Summary attempt is validated before budgeted retry or fallback. Blue01–07 mark engineering changes." width="1600" height="1060" loading="lazy" decoding="async"></a></div>
+<figcaption>Search and Visit are alternative paths; cache validity, fallback, and retries retain their identity, version, and budget constraints. <a class="tf-caption-link" href="/figures/agentic-rl-talk/tool-server-framework-en.svg" target="_blank" rel="noopener noreferrer">Open full-size framework ↗</a><span class="tool-scroll-hint">Scroll horizontally on a narrow screen.</span></figcaption>
 </figure>
 
-| Area | Implemented work and purpose |
-| --- | --- |
-| Search caching | Isolate by tool and parameters; retain batch-item results; cover web, scholar, image, maps, and reverse-image search |
-| Body/summary separation | Cache Reader bodies independently; reuse a body for a new goal; isolate summaries by content, goal, model, prompt, and related identities |
-| Consistency and lifetime | Default 365-day TTL with explicit overrides; validate version, expiry, and content dependencies; scope legacy Python reads and distinguish queued from durable writes |
-| Result admission | Validate empty bodies, malformed results, refusal, and filtering; allow validated fallback summaries; storage failure does not rewrite a successful tool outcome |
-| Concurrency and extensions | Coalesce identical work within a process; support custom prompts and equivalent-default reuse; isolate multimodal final-summary caches while sharing Reader bodies and locks |
-
-These capabilities avoid repeated searches, fetches, and summaries. A comparable overall cache-speedup factor has not been measured.
-
-#### Tool Server: manage the entire call lifecycle
-
-Beyond caching, the service must handle concurrency, streaming, retries, cancellation, and observability.
-
-- **Execution and recovery**: retry failed queries/URLs only, retain successes and the original deadline, manage queues and admission, and release running capacity only when work exits.
-- **Summary and transport**: primary/fallback routing, long-input routing, stream termination, and JSON validation; expose Reader business errors and per-item failures to the agent.
-- **Observability**: link root requests, upstream attempts, Reader/Summary stages, cache operations, and actual routing; a central dashboard covers 6 instances each of Search/Visit/Router and 10 Summary instances.
-
-A historical 6-question Go-path acceptance completed 27 Search and 9 Visit calls with 0 tool errors. Separately, targeted reproduction localized 42 Reader timeouts to waiting for response headers: one verifies a usable path, the other narrows upstream diagnosis.
+<details class="tool-change-notes"><summary>Engineering changes in the diagram</summary><ol><li><strong>01 Request admission and execution</strong><span>Connect the Python-to-Go service path while preserving interface compatibility. Retain successful batch items and retry failed items only within the original deadline. Cancellation targets the execution handle; running work releases capacity only after exit.</span></li><li><strong>02 Search-result caching</strong><span>Isolate by tool, query parameters, and version. Hits skip repeated upstream searches. Structural checks govern cache eligibility; storage errors do not rewrite successful tool outcomes.</span></li><li><strong>03 Two semantic Visit caches</strong><span>Separate Reader bodies from goal-dependent final summaries. Valid final hits skip Reader fetching and Summary; a new goal can reuse the body after a final-cache miss.</span></li><li><strong>04 Summary routing</strong><span>Select primary, bounded fallback, and long-input routes by configuration. Routes retain the original remaining budget and the actual source identity.</span></li><li><strong>05 Validate every attempt</strong><span>Check the response, JSON, refusal, and filtering before deciding whether an allowed failure can retry or use fallback. Only validated primary or fallback results qualify for final caching.</span></li><li><strong>06 Cache identity and durability</strong><span>Check goal, model, prompt, version, content dependencies, and expiry; the 365-day TTL default is configurable. Process-local coalescing is not a cross-replica lock, and queued is not durable. Multimodal finals are separate; Reader bodies and locks may be shared.</span></li><li><strong>07 End-to-end observation</strong><span>Link root requests, upstream attempts, Reader/Summary, and cache events. Durable spools, paginated reads, and acknowledgments support the central dashboard, distinguishing hits, writes, errors, cancellations, and missing telemetry.</span></li></ol></details>
 
 #### LLM Judge: durable tasks, bounded execution, explicit semantics
 
