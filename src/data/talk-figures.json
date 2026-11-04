@@ -16,6 +16,12 @@
     {
       "id": "tool-stack",
       "lang": "zh-CN",
+      "path": "/figures/agentic-rl-talk/tool-server-overview-zh.svg",
+      "sha256": "884cd5afd0a790273978eaa009b2782c75043fdd4ff271a1f192d805bd27081a"
+    },
+    {
+      "id": "tool-stack",
+      "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/tool-server-framework-zh.svg",
       "sha256": "a3c96cfed85cccfe1b36979afd266c0f3f16fbd1833999fa8c3fc3c7cf8a7347"
     },
@@ -36,6 +42,12 @@
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/eval-scheduling-zh.svg",
       "sha256": "d1a0924da2e5f24cb21b873e7e43cbc9fd36843ba87185d6c6eec7f1e2b9d087"
+    },
+    {
+      "id": "tool-stack",
+      "lang": "en",
+      "path": "/figures/agentic-rl-talk/tool-server-overview-en.svg",
+      "sha256": "1112d5eca9529667af2a0946e5f562d090915f54c8253fb2a81cd5a95d2a31ff"
     },
     {
       "id": "tool-stack",

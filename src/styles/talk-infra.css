@@ -70,3 +70,11 @@
  .theme-e .article-body .tool-scroll-hint { display:block; margin-top:6px; }
 }
 @media print { .theme-e .article-body .tool-architecture-scroll .talk-plot-link { width:100%; } }
+
+/* Compact main figure; the detailed architecture stays folded. */
+.theme-e .article-body .tool-overview-scroll { width:100%; max-width:100%; overflow-x:auto; background:#fff; border:1px solid #dbe1e8; border-radius:12px; }
+.theme-e .article-body .tool-change-notes .tool-architecture-scroll { margin:16px 0; }
+.theme-e .article-body .tool-change-notes .talk-plot-link img { display:block; width:100%; height:auto; margin:0; }
+.theme-e .article-body .tool-change-notes .talk-plot-link { display:block; }
+@media(max-width:700px) { .theme-e .article-body .tool-overview-scroll .talk-plot-link { width:860px; max-width:none; } }
+@media print { .theme-e .article-body .tool-overview-scroll .talk-plot-link { width:100%; } }

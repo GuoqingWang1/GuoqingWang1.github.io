@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="480" viewBox="50 195 1180 480" role="img" aria-labelledby="title"><title id="title">Tool Server overview</title><defs><marker id="blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#315f9d"/></marker><marker id="green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#3f7f68"/></marker></defs><rect x="50" y="195" width="1180" height="480" fill="white"/><g font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif" fill="#171717">
+<polyline points="212,390 250,390 250,292 310,292" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="212,390 250,390 250,472 310,472" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="490,292 700,292" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="876,292 1020,292 1020,390 1060,390" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="400,258 400,220 1134,220 1134,352" fill="none" stroke="#3f7f68" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#green)"/>
+<polyline points="490,472 575,472" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="725,472 805,472" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="983,472 1020,472 1020,390 1060,390" fill="none" stroke="#315f9d" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#blue)"/>
+<polyline points="400,506 400,560 1134,560 1134,428" fill="none" stroke="#3f7f68" stroke-width="2.3" stroke-linejoin="round"  marker-end="url(#green)"/>
+<polyline points="840,438 840,410 945,410 945,438" fill="none" stroke="#7087a4" stroke-width="2.3" stroke-linejoin="round" stroke-dasharray="6 5" marker-end="url(#blue)"/>
+<rect x="72" y="352" width="140" height="76" rx="8" fill="#e4edf9" stroke="#d7dce2" stroke-width="1.4"/><text x="142" y="390" text-anchor="middle" dominant-baseline="middle" font-size="28">Agent</text>
+<rect x="310" y="258" width="180" height="68" rx="8" fill="#eaf1fb" stroke="#d7dce2" stroke-width="1.4"/><text x="400" y="292" text-anchor="middle" dominant-baseline="middle" font-size="28">Search cache</text>
+<rect x="700" y="258" width="176" height="68" rx="8" fill="#f1f3f6" stroke="#d7dce2" stroke-width="1.4"/><text x="788" y="292" text-anchor="middle" dominant-baseline="middle" font-size="28">Search</text>
+<rect x="310" y="438" width="180" height="68" rx="8" fill="#eaf1fb" stroke="#d7dce2" stroke-width="1.4"/><text x="400" y="472" text-anchor="middle" dominant-baseline="middle" font-size="28">Final cache</text>
+<rect x="575" y="438" width="150" height="68" rx="8" fill="#f1f3f6" stroke="#d7dce2" stroke-width="1.4"/><text x="650" y="472" text-anchor="middle" dominant-baseline="middle" font-size="28">Reader</text>
+<rect x="805" y="438" width="178" height="68" rx="8" fill="#fff2cc" stroke="#d7dce2" stroke-width="1.4"/><text x="894" y="472" text-anchor="middle" dominant-baseline="middle" font-size="28">Summary</text>
+<rect x="1060" y="352" width="148" height="76" rx="8" fill="#edf5ef" stroke="#d7dce2" stroke-width="1.4"/><text x="1134" y="390" text-anchor="middle" dominant-baseline="middle" font-size="28">Results</text>
+<rect x="540" y="251" width="110" height="36" fill="white"/><text x="595" y="269" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="#62676e">Miss</text>
+<rect x="662" y="202" width="176" height="36" fill="white"/><text x="750" y="220" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="#3f7f68">Valid hit</text>
+<rect x="478" y="398" width="110" height="36" fill="white"/><text x="533" y="416" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="#62676e">Miss</text>
+<rect x="612" y="542" width="176" height="36" fill="white"/><text x="700" y="560" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="#3f7f68">Valid hit</text>
+<rect x="771" y="366" width="240" height="36" fill="white"/><text x="891" y="384" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="#62676e">Bounded recovery</text>
+<text x="250" y="239" font-size="24" fill="#62676e">Search</text>
+<text x="250" y="419" font-size="24" fill="#62676e">Visit</text>
+<text x="245" y="632" font-size="28" text-anchor="middle" fill="#315f9d">Layered caches</text>
+<text x="640" y="632" font-size="28" text-anchor="middle" fill="#315f9d">Bounded calls</text>
+<text x="1035" y="632" font-size="28" text-anchor="middle" fill="#315f9d">Observability</text>
+</g></svg>

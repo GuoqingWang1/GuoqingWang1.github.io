@@ -7,7 +7,7 @@ translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T09:01:15+08:00"
+updatedDate: "2026-11-04T01:55:17.730Z"
 draft: false
 review: false
 presentation: true
@@ -42,19 +42,17 @@ Deep Research训练同时依赖GPU计算、多轮采样与外部服务。我们�
 <div class="im-modules" role="group" aria-label="协同支撑研究迭代的四类能力"><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="9" r="5"/><path d="m13 13 4 4M16 4h5M16 8h5M4 20h7m5 0 2 2 4-5"/></svg><strong>工具与评分环境</strong></div><div class="im-lines"><span>Search / Visit 缓存 · 并发控制</span><span>重试与取消 · Judge 服务</span></div></div><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3"/></svg><strong>训练计算</strong></div><div class="im-lines"><span>Qwen / B300 运行栈 · Actor 优化</span><span>编译缓存 / 内核 · IG 与 logprob</span></div></div><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 5h13M3 10h9M3 15h6"/><circle cx="17" cy="16" r="5"/><path d="M17 13v3l2 1"/></svg><strong>采样与评测调度</strong></div><div class="im-lines"><span>Partial · 完整组与策略版本</span><span>连续补入 · 完整 Eval</span></div></div><div class="im-card"><div class="im-heading"><svg class="im-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 4 6v6c0 4.7 4.2 7.5 8 9 3.8-1.5 8-4.3 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><strong>运行保障</strong></div><div class="im-lines"><span>数据版本 · 保存与恢复</span><span>运行观测 · 结果归档</span></div></div></div><div class="im-connector" aria-hidden="true"></div><div class="im-objective"><span class="im-objective-label">优化目标</span><strong>更少重复工作 · 更短等待 · 可恢复的完整实验</strong></div>
 </figure>
 
-### 2.2 工具与评分环境：把外部依赖变成可复用服务
+### 2.2 工具与评分服务
 
-#### Tool Server：关键链路与改造位置
-
-沿Search与Visit两条路径，展示请求执行、缓存复用、Summary处理和结果返回。蓝色编号标出重点建设与改动，绿色箭头标出缓存命中的捷径。
+#### Tool Server
 
 <figure class="talk-figure tool-architecture" data-talk-figure="tool-stack" lang="zh-CN" aria-labelledby="talk-tool-stack-title">
-<p class="tf-title" id="talk-tool-stack-title">Tool Server：关键链路与改造位置</p>
-<div class="tool-architecture-scroll" role="region" aria-label="查看完整框架图" tabindex="0"><a class="talk-plot-link" href="/figures/agentic-rl-talk/tool-server-framework-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看完整框架图"><img src="/figures/agentic-rl-talk/tool-server-framework-zh.svg" alt="Tool Server详细框架：请求入口分到Search和Visit；有效缓存命中直接返回，未命中才访问上游；Summary每次尝试均校验，再在原预算内重试或切换。蓝色01至07标出重点改动。" width="1600" height="1060" loading="lazy" decoding="async"></a></div>
-<figcaption>Search与Visit是可选分支；缓存有效性、备用与重试均受原身份、版本和预算约束。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/tool-server-framework-zh.svg" target="_blank" rel="noopener noreferrer">查看完整框架图 ↗</a><span class="tool-scroll-hint">手机可横向滚动查看。</span></figcaption>
+<p class="tf-title" id="talk-tool-stack-title">Tool Server</p>
+<div class="tool-overview-scroll" role="region" aria-label="Tool Server" tabindex="0"><a class="talk-plot-link" href="/figures/agentic-rl-talk/tool-server-overview-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图"><img src="/figures/agentic-rl-talk/tool-server-overview-zh.svg" alt="Tool Server简图：Agent按需选择Search或Visit，有效检索/摘要缓存命中直接返回；未命中才执行检索或Reader与Summary。" width="1180" height="480" loading="lazy" decoding="async"></a></div>
+<figcaption><a class="tf-caption-link" href="/figures/agentic-rl-talk/tool-server-overview-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
 </figure>
 
-<details class="tool-change-notes"><summary>图中改动说明</summary><ol><li><strong>01 统一入口与执行控制</strong><span>完成Python到Go服务接入与接口兼容。批量请求保留逐项成功状态，仅补失败项；沿用原总期限。排队取消定位执行句柄，运行中的工作退出后才释放容量。</span></li><li><strong>02 检索结果缓存</strong><span>按工具、查询参数和版本隔离；命中跳过重复上游搜索。结果结构检查决定缓存资格，存储失败不改写已成功的工具结果。</span></li><li><strong>03 Visit 双层语义缓存</strong><span>正文缓存与goal相关的最终摘要分开。有效final命中可跳过Reader抓取和Summary；final未命中时，换goal仍可复用正文。</span></li><li><strong>04 Summary 路由</strong><span>按配置选择主路、受限备用与长文路径；主备共用原剩余预算，并保留实际来源。</span></li><li><strong>05 每次尝试的结果校验</strong><span>检查响应、JSON与拒绝/过滤等状态；只有允许的失败进入预算内重试或备用。通过校验的主路或备用结果才有final缓存资格。</span></li><li><strong>06 缓存身份与持久化</strong><span>检查goal、模型、提示词、版本、内容依赖及到期；默认365天TTL可被配置覆盖。同进程合并不等于跨副本锁；queued不等于已落盘。图文final独立，Reader正文和锁可共享。</span></li><li><strong>07 全链路可观测性</strong><span>关联根请求、上游尝试、Reader/Summary与缓存事件；持久化spool、分页读取和ACK支撑中央看板，区分命中、写入、错误、取消和采集缺口。</span></li></ol></details>
+<details class="tool-change-notes"><summary>详细架构与改动说明</summary><div class="tool-architecture-scroll" role="region" aria-label="查看详细架构" tabindex="0"><a class="talk-plot-link" href="/figures/agentic-rl-talk/tool-server-framework-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看详细架构"><img src="/figures/agentic-rl-talk/tool-server-framework-zh.svg" alt="详细架构与改动说明" width="1600" height="1060" loading="lazy" decoding="async"></a></div><ol><li><strong>01 统一入口与执行控制</strong><span>完成Python到Go服务接入与接口兼容。批量请求保留逐项成功状态，仅补失败项；沿用原总期限。排队取消定位执行句柄，运行中的工作退出后才释放容量。</span></li><li><strong>02 检索结果缓存</strong><span>按工具、查询参数和版本隔离；命中跳过重复上游搜索。结果结构检查决定缓存资格，存储失败不改写已成功的工具结果。</span></li><li><strong>03 Visit 双层语义缓存</strong><span>正文缓存与goal相关的最终摘要分开。有效final命中可跳过Reader抓取和Summary；final未命中时，换goal仍可复用正文。</span></li><li><strong>04 Summary 路由</strong><span>按配置选择主路、受限备用与长文路径；主备共用原剩余预算，并保留实际来源。</span></li><li><strong>05 每次尝试的结果校验</strong><span>检查响应、JSON与拒绝/过滤等状态；只有允许的失败进入预算内重试或备用。通过校验的主路或备用结果才有final缓存资格。</span></li><li><strong>06 缓存身份与持久化</strong><span>检查goal、模型、提示词、版本、内容依赖及到期；默认365天TTL可被配置覆盖。同进程合并不等于跨副本锁；queued不等于已落盘。图文final独立，Reader正文和锁可共享。</span></li><li><strong>07 全链路可观测性</strong><span>关联根请求、上游尝试、Reader/Summary与缓存事件；持久化spool、分页读取和ACK支撑中央看板，区分命中、写入、错误、取消和采集缺口。</span></li></ol></details>
 
 #### LLM Judge：持久任务、有界执行、明确语义
 
