@@ -1,13 +1,13 @@
 ---
 title: "Deep Research Agent RL: Systems and Algorithm Exploration"
-description: "Deep Research pipelines, infrastructure and efficiency, IGPO to CTF-IGPO, and short-run and complete experimental results."
+description: "Deep Research scenarios, infrastructure and efficiency, IGPO to CTF-IGPO, short-run findings, and system validation."
 category: technical
 lang: en
 translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T08:12:50+08:00"
+updatedDate: "2026-11-04T09:01:15+08:00"
 draft: false
 review: false
 presentation: true
@@ -67,7 +67,7 @@ Judge evolved from a scoring call into a task service shared by training and eva
 | Scoring semantics | Strict output checks; aliases, units, years, and citations; preserve unknown | Do not silently turn uncertainty or technical failure into an incorrect reward of 0 |
 | Consumers and observation | Separate generation/scoring, preserve legacy interfaces, select new protocols explicitly, persist events and collect them centrally | Identify the actual model route, scoring state, and failure location |
 
-Reviewing 36,601 historical requests confirmed 172 misjudgments. On a separate 40-case development panel, expected handling rose from 38 to 40, including 2 required unknown outcomes. Production acceptance of the four-route service actually exercised one route; detailed denominators are in Appendix B03.
+Reviewing 36,601 historical requests confirmed 172 misjudgments. On a separate 40-case development panel, expected handling rose from 38 to 40, including 2 required unknown outcomes. Production acceptance of the four-route service actually exercised one route; detailed denominators are in Appendix B02.
 
 ### 2.3 Training computation: runtime, Actor, and IG scoring
 
@@ -88,7 +88,6 @@ Qwen3.5's hybrid architecture, B300 kernels, training frameworks, and inference 
 - **IG scoring**: project target prediction rows only, check three-axis mRoPE, reuse rollout context, and handle scoring boundaries across policy versions.
 - **End-to-end diagnosis**: connect timing across rollout, tools/Judge, old/ref, Actor, synchronization, and saving; optimize the observed critical path.
 
-The fixed Actor cache replay observed 1925.39→656.15 seconds, but strict numerical equivalence failed; this is not a lossless-speedup result. That comparison and the later independent NB check remain in Appendix B02.
 
 ### 2.4 Sampling and evaluation: reduce idle capacity at the tail
 
@@ -109,7 +108,7 @@ Task pools, ready buffers, policy versions, pause/resume, and IG boundary rescor
 
 Maintain active tasks and separate generation from scoring postprocessing, instead of waiting for the slowest sample in every batch before admitting the next.
 
-All 512 questions completed generation and scoring. Full Eval fell from 4505.21 to 4126.03 seconds, an observed 8.42% reduction; per-request latency increased. Standalone Eval adopted continuous replenishment, while training-time Validate retained its own path.
+All 512 questions completed generation and scoring. Full Eval fell from 4505.21 to 4126.03 seconds, an observed 8.42% reduction; the measure is complete-evaluation wall time. Standalone Eval adopted continuous replenishment, while training-time Validate retained its own path.
 
 ### 2.5 Run reliability: continue research after interruptions
 
@@ -202,57 +201,43 @@ Adjust the cost channel's token weight by turn before combining advantages, reta
 - Feed the combination to the original single PPO/dual-clip and token-mean reduction, rather than clipping components separately.
 - This executed recipe became an optimization reference, not a mixture of historical best components or statistically established stable gains. Formulas: Appendix B01.
 
-## 4. Experimental Results and Findings
+## 4. Progress and System Validation
 
-### 4.1 A positive point estimate in a bounded short run
+### 4.1 Fixed short-run development comparison: preliminary findings
 
 PW scored 133/246, the trained control 122/246, and the initial SFT reference 124/246.
 
 <figure class="talk-figure" data-talk-figure="short-run-results" lang="en" aria-labelledby="talk-short-run-results-title">
 <p class="tf-title" id="talk-short-run-results-title">Fixed short-run experiment: initial, control, and PW</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/short-run-results-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Fixed short-run experiment: initial, control, and PW"><img src="/figures/agentic-rl-talk/short-run-results-en.svg" alt="On 246 development questions, initial SFT answered 124 correctly, the trained control 122, and PW 133." loading="lazy" decoding="async" width="768" height="320"></a>
-<figcaption>Fixed 256 training inputs and two updates; 246 development questions. Stable gains over the trained control are not established. <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>256 fixed training inputs, two updates, and 246 development questions. These preliminary point estimates are not statistically confirmed or long-term gains. <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 - **Training dose**: 256 fixed saved inputs and 2 Adam updates; evaluation used an exposed 246-question development panel.
 - **Versus the trained control**: +11 correct, mean rounds −2.668%, total tokens −4.209%, pooled tokens/round −1.583%.
-- Statistical evidence remains insufficient for stable gains. Mean rounds were still +0.164% versus SFT, so overall RL compression was not established.
+- All changes use the trained control as the reference and apply to this short development setting, not overall compression relative to the initial SFT model.
 
-### 4.2 Complete 55-update runs: none met the joint objective
+### 4.2 System and correctness validation
 
-All three training runs completed, but none simultaneously preserved quality, reduced rounds, and met the length constraint.
+Validation spans real tool calls, numerical invariants, updates, and recovery.
 
-<figure class="talk-figure" data-talk-figure="complete-quality" lang="en" aria-labelledby="talk-complete-quality-title">
-<p class="tf-title" id="talk-complete-quality-title">Quality across three complete training runs</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/complete-quality-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Quality across three complete training runs"><img src="/figures/agentic-rl-talk/complete-quality-en.svg" alt="Three panels preserve eight quality nodes each: original 120 to 1, weight cap 115 to 0, fixed cost 106 to 2; 246 questions per node." loading="lazy" decoding="async" width="768" height="420"></a>
-<figcaption>55 model-path updates per run and 246 questions per node; dashed lines are each run’s own initial values. None passed the joint quality-and-cost objective; no fair cross-run ranking is claimed. <a class="tf-caption-link" href="/figures/agentic-rl-talk/complete-quality-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
+| Completed work | Evidence and scope |
+| --- | --- |
+| Real training path | GRPO/IGPO each completed 384 trajectories and 3 Actor updates, with real Search/Visit/Judge, final saving, and weight synchronization |
+| Answer-parser repair | The same 357 outputs changed from ERROR to END; this establishes syntactic acceptance, not answer correctness |
+| Equal-reward groups | For 9 groups and 72 members, advantages/returns are exactly 0; this invariant does not constrain other KL- or optimizer-state updates |
+| Controlled NB check | Under the tested configuration, 8-rank postclip gradients and initial/final master tensors matched bitwise |
+| Complete execution and continuation | One run consumed 6,994 members, with 55 model-path updates and 28 publications; this validates execution and recovery capability |
 
-- Each used 6,994 members and 55 model-path updates; nodes 0/8/16/24/32/40/48/55 each evaluated 246 questions.
-- Final correct counts were 1, 0, and 2 for the original, weight-cap, and fixed-cost runs; their respective initial counts were 120, 115, and 106.
-- Each has its own initial state and history, not a fair cross-run causal ranking. The short-run 133 is not a starting point on these curves. Complete Q/R/T/U: Appendices B06–B08.
+### 4.3 Deliverables and further research
 
-### 4.3 Repaired defects and degradation causes are separate
+A system for continuing research is in place, with method implementations, versioned data, and traceable validation evidence.
 
-Validating a specific repair does not explain degradation over complete training runs.
+- **System capabilities**: runtime, Tool Server, Judge, sampling, updates, synchronization, recovery, and complete evaluation.
+- **Engineering effects**: scoring latency and memory improvements in their respective workloads, plus observed full-workload timing improvements for Partial and continuous Eval.
+- **Further research**: controlled comparisons of quality baselines and algorithm increments, focusing on stable quality–cost behavior.
 
-| Evidence | Establishes | Does not establish |
-| --- | --- | --- |
-| Same 357 outputs: ERROR → END | Parser acceptance changed | Every answer was correct |
-| 9 equal-reward groups, 72 members: advantages/returns exactly 0 | A numerical invariant was restored | No KL or optimizer-driven update in the step |
-| Recovery path and actual consumption of incident-exposed trajectories | Interface repair or exposure | A fix's quality contribution, specific parameter damage, or the sole cause of degradation |
-
-KL, off-policy behavior, and learning-mechanism explanations still need comparisons; these repairs did not rule them out.
-
-### 4.4 Deliverables and next questions
-
-A system for continued research is in place; long-term quality-preserving compression remains unresolved.
-
-- **Delivered**: runtime, tool server, judging, sampling, updates, synchronization, recovery, and complete evaluation.
-- **Retained**: data versions, algorithm differences, full curves, failures, and recovery costs for subsequent comparisons.
-- **Open**: an effective quality baseline and conditions for stable process/cost gains.
-
-## Appendix: Formulas, Complete Data, and Validation Scope
+## Appendix: Method Configuration and System Validation
 
 ### B01 CTF recipe: credit, scale, and updates
 
@@ -281,26 +266,7 @@ PW:         A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
 | PPO clip / dual-clip | [0.8, 1.28] / 3 |
 | IG activation | Inherited first-batch effective IG, m=1; not validation of a full early-off schedule |
 
-### B02 Actor performance and numerical qualification
-
-<figure class="talk-figure" data-talk-figure="actor-cache" lang="en" aria-labelledby="talk-actor-cache-title">
-<p class="tf-title" id="talk-actor-cache-title">Fixed-input Actor replay: persistent-cache timing</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/actor-cache-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Fixed-input Actor replay: persistent-cache timing"><img src="/figures/agentic-rl-talk/actor-cache-en.svg" alt="The same 256 trajectories in two fresh processes: 1925.39 seconds with empty cache and 656.15 seconds with retained cache. Strict numerical equivalence failed." loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>Fixed-input Actor-only timing in two fresh processes, not end-to-end speedup. Strict numerical equivalence failed. <a class="tf-caption-link" href="/figures/agentic-rl-talk/actor-cache-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
-
-Later NB qualification does not repair the numerical failure of the earlier cold/warm cache comparison.
-
-| Evidence | Performance record | Numerical boundary |
-| --- | --- | --- |
-| Fixed 256-trajectory Actor replay, NB disabled | New process with empty cache 1925.391 s; retained cache 656.149 s | Strict equivalence failed; update-relative L2 difference 5.61%, not a quality-loss percentage |
-| Initial NB comparison | 1913.536 → 1197.195 s | Autotuning not fully controlled; 37.44% cannot be attributed entirely to NB |
-| Later controlled NB check | No isolated speedup estimate | 8-rank postclip gradients and initial/final master tensors were bitwise equal |
-| Combined real three-step run | Actor 973.715 / 752.250 / 655.359 s | Different tokens/microbatches; not single-component causality |
-
-Persistent caching and de-specialization reduce repeated compilation; numerical behavior, throughput, and end-to-end effects are validated separately.
-
-### B03 Tool and Judge denominators
+### B02 Tool and Judge denominators
 
 Requests, URLs, attempts, panel cases, and events are different units.
 
@@ -316,12 +282,12 @@ Requests, URLs, attempts, panel cases, and events are different units.
 
 All 42 timeouts waited for response headers; this does not distinguish upstream queueing, fetching, or rendering.
 
-### B04 Complete timing and scheduling observations
+### B03 Complete timing and scheduling observations
 
 <figure class="talk-figure" data-talk-figure="eval-scheduling" lang="en" aria-labelledby="talk-eval-scheduling-title">
 <p class="tf-title" id="talk-eval-scheduling-title">Scheduling observations for a complete Eval</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Scheduling observations for a complete Eval"><img src="/figures/agentic-rl-talk/eval-scheduling-en.svg" alt="Two complete Evals on the same 512 questions and model, with a zero-based wall-time axis." loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>Shared tools, caching, and stochastic outputs limit causal attribution; individual-request latency also increased. <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
+<figcaption>Shared tools, caching, and stochastic outputs limit causal attribution; this compares complete-Eval wall time, not speed for every request. <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
 </figure>
 
 The gains cover different experiments and cannot be added or multiplied into a total speedup.
@@ -344,9 +310,9 @@ The gains cover different experiments and cannot be added or multiplied into a t
 
 Tools, caches, trajectories, and stochastic outputs limit causal interpretation; request sums and cross-rank durations are not wall time.
 
-### B05 Data, model paths, and recovery rework
+### B04 Data and run deliveries
 
-Model-path updates and physically executed work are recorded separately.
+Data versions and actual update, publication, and recovery records support reproducible execution.
 
 | Item | Count and scope |
 | --- | --- |
@@ -355,72 +321,5 @@ Model-path updates and physically executed work are recorded separately.
 | Priority research set | 512 frozen independently, not a simple union |
 | Known errors / substantive disputes | 835 / 767 withheld; historical inputs and scores retained |
 | A009 | 8 saved updates + 47 new = 55 on the model path; 28 publications |
-| Fixed-cost first attempt | 22 successful updates |
-| Fixed-cost recovery point | 16 saved updates |
-| Fixed-cost continuation | 39 new updates |
-| Fixed-cost totals | 55 model-path updates; 61 physically successful updates; 6,994 model-path members |
 
-Do not multiply optimizer updates by rank count; recovery rework stays in resource accounting.
-
-### B06 Original combination: complete Q/R/T/U
-
-Every node has 246 questions: Q is number correct, R mean logical rounds, T total returned generated tokens on the panel, and U=ΣT/ΣR.
-
-<figure class="talk-figure" data-talk-figure="training-a009" lang="en" aria-labelledby="talk-training-a009-title">
-<p class="tf-title" id="talk-training-a009-title">Complete curves for the original combination</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the original combination"><img src="/figures/agentic-rl-talk/training-a009-en.svg" alt="Original combination: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
-
-| Path updates | Number correct | Mean rounds | Total generated tokens | Tokens/round (pooled) |
-| --- | --- | --- | --- | --- |
-| 0 | 120 | 45.805 | 5245056 | 465.482 |
-| 8 | 117 | 33.854 | 4109116 | 493.410 |
-| 16 | 111 | 33.516 | 5156335 | 625.389 |
-| 24 | 85 | 28.785 | 6418762 | 906.477 |
-| 32 | 49 | 15.833 | 4846495 | 1244.286 |
-| 40 | 21 | 5.541 | 3683373 | 2702.401 |
-| 48 | 2 | 2.366 | 3414906 | 5867.536 |
-| 55 | 1 | 1.707 | 3425488 | 8155.924 |
-
-### B07 Update weight cap: complete Q/R/T/U
-
-Each run retains its own initial reference; cross-run curve heights do not establish a component's causal effect.
-
-<figure class="talk-figure" data-talk-figure="training-cap2" lang="en" aria-labelledby="talk-training-cap2-title">
-<p class="tf-title" id="talk-training-cap2-title">Complete curves for the update weight cap</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the update weight cap"><img src="/figures/agentic-rl-talk/training-cap2-en.svg" alt="Update weight cap: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
-
-| Path updates | Number correct | Mean rounds | Total generated tokens | Tokens/round (pooled) |
-| --- | --- | --- | --- | --- |
-| 0 | 115 | 36.138 | 4113637 | 462.726 |
-| 8 | 117 | 43.163 | 5358615 | 504.673 |
-| 16 | 111 | 40.183 | 6211042 | 628.330 |
-| 24 | 85 | 26.683 | 6498177 | 989.972 |
-| 32 | 52 | 14.037 | 4810916 | 1393.257 |
-| 40 | 7 | 4.463 | 3790360 | 3452.058 |
-| 48 | 1 | 2.183 | 3397617 | 6327.034 |
-| 55 | 0 | 1.573 | 3348536 | 8652.548 |
-
-### B08 Fixed cost scale: complete Q/R/T/U
-
-All eight nodes are retained; decimals are rounded to three places for display, without recomputing evaluation or statistics. U is not the mean of per-question ratios.
-
-<figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="en" aria-labelledby="talk-training-fixed-cost-title">
-<p class="tf-title" id="talk-training-fixed-cost-title">Complete curves for the fixed cost scale</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer" aria-label="Open full-size figure: Complete curves for the fixed cost scale"><img src="/figures/agentic-rl-talk/training-fixed-cost-en.svg" alt="Fixed cost scale: eight recorded points for quality, mean rounds, total generated tokens, and pooled tokens per round." loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>All eight nodes; gray dashed lines mark this run’s initial values. Metric scales match across all three figures. <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-en.svg" target="_blank" rel="noopener noreferrer">Open full-size figure ↗</a></figcaption>
-</figure>
-
-| Path updates | Number correct | Mean rounds | Total generated tokens | Tokens/round (pooled) |
-| --- | --- | --- | --- | --- |
-| 0 | 106 | 36.528 | 4268496 | 475.016 |
-| 8 | 116 | 43.862 | 4985308 | 462.030 |
-| 16 | 114 | 46.537 | 5376493 | 469.645 |
-| 24 | 86 | 51.817 | 6813833 | 534.544 |
-| 32 | 58 | 29.813 | 4667599 | 636.433 |
-| 40 | 13 | 9.955 | 3603415 | 1471.382 |
-| 48 | 5 | 5.199 | 3286799 | 2569.819 |
-| 55 | 2 | 3.764 | 2897535 | 3129.087 |
+Count updates on the model path, without multiplying by ranks; retain actual runtime costs separately.

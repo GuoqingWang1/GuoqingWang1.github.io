@@ -1,13 +1,13 @@
 ---
 title: "Deep Research Agent RL：系统建设与算法探索"
-description: "Deep Research场景与Pipeline、基础设施与效率优化、IGPO到CTF-IGPO、短程与完整实验结果。"
+description: "Deep Research场景、基础设施建设与效率优化、IGPO到CTF-IGPO，以及短程结果与系统验收。"
 category: technical
 lang: zh-CN
 translationKey: agentic-rl-research-and-systems
 topic: training
 tags: [Agentic RL, Talk, 研究进展, 系统基建]
 pubDate: "2026-11-03T17:21:13.321Z"
-updatedDate: "2026-11-04T08:12:50+08:00"
+updatedDate: "2026-11-04T09:01:15+08:00"
 draft: false
 review: false
 presentation: true
@@ -67,7 +67,7 @@ Judge从一个评分调用，扩展为训练与评测共同使用的任务服务
 | 评分语义 | 严格输出校验；别名、单位、年代、引用检查；保留unknown | 不把信息不足或技术失败静默写成错误奖励0 |
 | 消费与观测 | 生成和评分解耦、旧接口兼容、显式新协议、事件持久化与集中采集 | 明确实际使用的模型路径、评分状态和故障位置 |
 
-36,601个历史请求的审查确认172项误判；另一个40项开发面板中，符合预期的处理从38项到40项，包含2项应保留的unknown。四路服务的上线验收实际命中一路，详细分母见附录B03。
+36,601个历史请求的审查确认172项误判；另一个40项开发面板中，符合预期的处理从38项到40项，包含2项应保留的unknown。四路服务的上线验收实际命中一路，详细分母见附录B02。
 
 ### 2.3 训练计算：从运行栈到Actor与IG评分
 
@@ -88,7 +88,6 @@ Qwen3.5混合结构、B300内核、训练框架和推理引擎必须共同工作
 - **IG评分**：只投影目标预测行，核对三轴mRoPE；复用rollout上下文，并处理跨策略版本的评分边界。
 - **端到端定位**：关联rollout、工具/Judge、old/ref、Actor和同步保存的时间；优先优化实际关键路径。
 
-固定Actor缓存回放观察到1925.39→656.15秒，但严格数值等价未通过，不能作为无损加速成绩；该对照和后续独立NB检查保留在附录B02。
 
 ### 2.4 采样与评测：减少长尾造成的空闲
 
@@ -109,7 +108,7 @@ Qwen3.5混合结构、B300内核、训练框架和推理引擎必须共同工作
 
 持续维持活跃任务，分开生成与评分后处理，避免每一批都等待最慢样本再开始下一批。
 
-同512题全部完成生成和评分，完整Eval由4505.21降至4126.03秒，观测下降8.42%。单请求延迟有所上升；独立Eval采用持续补入，训练内Validate保留自身路径。
+同512题全部完成生成和评分，完整Eval由4505.21降至4126.03秒，观测下降8.42%。这里衡量完整评测墙钟；独立Eval采用持续补入，训练内Validate保留自身路径。
 
 ### 2.5 运行保障：让中断之后能够继续研究
 
@@ -202,57 +201,43 @@ Qwen3.5混合结构、B300内核、训练框架和推理引擎必须共同工作
 - 合成后进入原单一PPO/dual-clip与token均值归约，不将分量分别裁剪后拼接。
 - 该实际组合被选为优化参考；不能拼历史最好组件，也不等于统计已证稳定收益。公式见附录B01。
 
-## 四、实验效果与关键认识
+## 四、阶段成果与系统验收
 
-### 4.1 固定短程对照出现正向点信号
+### 4.1 固定短程开发对照：初步结果
 
 PW候选133/246，训练对照122/246，初始SFT为124/246。
 
 <figure class="talk-figure" data-talk-figure="short-run-results" lang="zh-CN" aria-labelledby="talk-short-run-results-title">
 <p class="tf-title" id="talk-short-run-results-title">固定短程实验：初始模型、训练对照与 PW 候选</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/short-run-results-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图: 固定短程实验：初始模型、训练对照与 PW 候选"><img src="/figures/agentic-rl-talk/short-run-results-zh.svg" alt="246题开发面板：初始SFT124题正确，训练对照122题，PW候选133题。" loading="lazy" decoding="async" width="768" height="320"></a>
-<figcaption>训练输入固定256条、两次更新；评测为246题开发面板。候选较训练对照的点值改善未通过更强证据要求。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+<figcaption>固定256条训练输入、两次更新，评测为246题开发面板。以上是初步点估计，不作为统计确证或长期收益结论。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/short-run-results-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
 </figure>
 
 - **训练剂量**：固定保存256输入、2次Adam更新；评测为246题已暴露开发面板。
 - **相对训练对照**：正确数＋11，平均轮次−2.668%，总token−4.209%，池化单轮长度−1.583%。
-- 统计证据尚不足以确认稳定收益；相对SFT平均轮次仍＋0.164%，不是完整RL压缩成功。
+- 上述变化均以训练对照为参照；结果限于这次短程开发设置，不代表相对初始SFT的整体压缩效果。
 
-### 4.2 完整55步：三条配置均未达联合目标
+### 4.2 系统与正确性验收
 
-三条训练均完整执行，但没有同时保持质量、减少轮次并满足长度约束。
+从真实工具调用到数值、更新和恢复，形成分层验收证据。
 
-<figure class="talk-figure" data-talk-figure="complete-quality" lang="zh-CN" aria-labelledby="talk-complete-quality-title">
-<p class="tf-title" id="talk-complete-quality-title">三条完整训练的质量轨迹</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/complete-quality-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图: 三条完整训练的质量轨迹"><img src="/figures/agentic-rl-talk/complete-quality-zh.svg" alt="三个独立面板保留每条运行的8个质量节点：原始组合120至1，更新权重上限115至0，固定尺度成本106至2；每点246题。" loading="lazy" decoding="async" width="768" height="420"></a>
-<figcaption>各运行55次模型路径更新、每点246题；虚线为各自初始值。三条均未通过质量与成本联合要求，不作公平跨运行排名。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/complete-quality-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
+| 已完成事项 | 证据与范围 |
+| --- | --- |
+| 真实训练链路 | GRPO/IGPO各384条轨迹、3次Actor更新；真实Search/Visit/Judge、最终保存与权重同步 |
+| 终答解析修复 | 同357条输出由ERROR变为END；验证语法接受，不把END当作答案正确 |
+| 同奖组归零 | 9组72成员的优势/回报严格为0；该不变量不约束KL或优化器状态产生的其他更新 |
+| 受控NB检查 | 已测配置下，8-rank postclip梯度及初始/最终master逐位一致 |
+| 完整运行与续跑 | 一条运行消费6,994成员、55次模型路径更新、28次发布；验收执行与恢复能力 |
 
-- 每条6,994成员、55次模型路径更新；节点0/8/16/24/32/40/48/55，每点246题。
-- 原始组合、权重上限、固定成本终点正确数分别为1、0、2；各自初始为120、115、106。
-- 各运行有自身初始与历史，不作公平跨run因果排名；133短程点不是这三条曲线的起点。完整Q/R/T/U见附录B06–B08。
+### 4.3 阶段交付与后续工作
 
-### 4.3 已修缺陷与退化原因分开
+已形成支撑持续研究的运行系统，并积累方法实现、版本化数据与可追溯的验收证据。
 
-具体缺陷的验收，不能直接解释完整训练的退化。
+- **系统能力**：运行栈、Tool Server、Judge、采样、更新、同步、恢复与完整评测链。
+- **工程收益**：在各自负载下验证评分时延与显存优化，观察Partial与连续Eval的完整任务耗时改善。
+- **后续研究**：围绕质量基线与算法增量设计对照，继续研究稳定的质量—成本表现。
 
-| 已有证据 | 能证明什么 | 尚不能证明 |
-| --- | --- | --- |
-| 同357条输出：ERROR→END | 解析接受发生变化 | 答案全部正确 |
-| 同奖9组72成员优势/回报严格为0 | 数值不变量恢复 | 整步无KL或优化器更新 |
-| 恢复链与事故暴露轨迹实际消费 | 接口修复或暴露事实 | 单项质量贡献、具体参数损害或唯一退化原因 |
-
-KL、off-policy及学习机制的解释仍须对照；未由这些修复排除。
-
-### 4.4 阶段交付与下一步
-
-已形成可持续研究的运行系统，长期保质压缩目标仍未实现。
-
-- **已交付**：运行栈、tool server、评分、采样、更新、同步、恢复与完整评测链。
-- **已保留**：数据版本、算法差分、完整曲线、失败与恢复成本，支持后续对照。
-- **待解决**：有效质量基线，以及过程/成本信号何时带来稳定增量。
-
-## 附录：公式、完整数据与验收范围
+## 附录：方法配置与系统验收口径
 
 ### B01 CTF配方：信用、尺度与更新
 
@@ -281,26 +266,7 @@ PW：     A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
 | PPO clip／dual-clip | [0.8, 1.28]／3 |
 | IG启用 | 继承首批有效IG，m=1；不等于完整early-off调度验收 |
 
-### B02 Actor性能与数值资格分开
-
-<figure class="talk-figure" data-talk-figure="actor-cache" lang="zh-CN" aria-labelledby="talk-actor-cache-title">
-<p class="tf-title" id="talk-actor-cache-title">固定输入 Actor 回放：持久缓存的性能观测</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/actor-cache-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图: 固定输入 Actor 回放：持久缓存的性能观测"><img src="/figures/agentic-rl-talk/actor-cache-zh.svg" alt="同256条轨迹，两次新进程，空缓存1925.39秒、保留缓存656.15秒。严格数值等价未通过。" loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>固定输入、两次新进程的 Actor-only 计时；不是整步收益，严格数值等价未通过。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/actor-cache-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
-
-后续NB数值通过，不能补成早期缓存冷/热对照的无损证明。
-
-| 证据 | 性能记录 | 数值边界 |
-| --- | --- | --- |
-| 固定256轨迹Actor replay，NB关闭 | 新进程空缓存1925.391 s；保留缓存656.149 s | 严格等价失败；更新相对L2差5.61%，不是质量损失比例 |
-| 初次NB对照 | 1913.536→1197.195 s | autotune未完全受控，37.44%不能全归NB |
-| 后续受控NB检查 | 不作独立加速率估计 | 8-rank postclip梯度及初始/最终master逐位一致 |
-| 真实三步联用 | Actor 973.715 / 752.250 / 655.359 s | token/微批不同，非单组件因果 |
-
-持久缓存与去特化减少重复编译；数值、吞吐与端到端效果分别验收。
-
-### B03 工具与Judge的分母
+### B02 工具与Judge的分母
 
 请求、URL、attempt、面板项和事件不能混用。
 
@@ -316,12 +282,12 @@ PW：     A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
 
 42次timeout均在等待响应头；无法据此区分上游排队、抓取或渲染。
 
-### B04 计时与调度的完整观察
+### B03 计时与调度的完整观察
 
 <figure class="talk-figure" data-talk-figure="eval-scheduling" lang="zh-CN" aria-labelledby="talk-eval-scheduling-title">
 <p class="tf-title" id="talk-eval-scheduling-title">完整 Eval 的调度观测</p>
 <a class="talk-plot-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：完整 Eval 的调度观测"><img src="/figures/agentic-rl-talk/eval-scheduling-zh.svg" alt="同512题、同模型的两次完整Eval，零起点比较墙钟时间。" loading="lazy" decoding="async" width="768" height="336"></a>
-<figcaption>共享工具、缓存与随机输出限制因果归因；单请求延迟也有所上升。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
+<figcaption>共享工具、缓存与随机输出限制因果归因；此处比较完整Eval墙钟，不代表每个请求都更快。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/eval-scheduling-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
 </figure>
 
 各项收益来自不同实验范围，不能相加或相乘成总提速。
@@ -344,9 +310,9 @@ PW：     A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
 
 工具、缓存、轨迹与随机输出限制因果解释；请求累计和跨rank时间不等于墙钟。
 
-### B05 数据、模型路径与恢复返工
+### B04 数据与运行交付
 
-模型路径更新和实际执行工作量分别记录。
+数据版本与实际更新、发布和恢复记录共同支持运行复现。
 
 | 项目 | 数量与范围 |
 | --- | --- |
@@ -355,72 +321,5 @@ PW：     A'_t = A_Q,t + I_eff,t − λ·G_C,t · D_m/(K_m·n_t)
 | 优先研究集 | 512条独立冻结，不能简单并集 |
 | 已知错误／实质争议 | 835／767，暂扣并保留历史输入和分数 |
 | A009 | 已保存8更新＋新增47＝模型路径55；28次发布 |
-| 固定成本首attempt | 22次成功更新 |
-| 固定成本恢复点 | 已保存16次更新 |
-| 固定成本恢复后 | 新增39次更新 |
-| 固定成本总量 | 模型路径55；物理成功更新61；模型路径消费6,994成员 |
 
-rank数不乘算优化器更新；恢复之后的返工不从资源账单中消失。
-
-### B06 原始组合：完整Q/R/T/U
-
-每节点246题，Q为正确数，R为平均逻辑轮次，T为面板总返回生成token，U=ΣT/ΣR。
-
-<figure class="talk-figure" data-talk-figure="training-a009" lang="zh-CN" aria-labelledby="talk-training-a009-title">
-<p class="tf-title" id="talk-training-a009-title">原始组合方案的完整训练曲线</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：原始组合方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-a009-zh.svg" alt="原始组合方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>完整8个节点；灰虚线为该运行初始值。三图各指标使用相同尺度。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-a009-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
-
-| 路径更新 | 正确题数 | 平均轮次 | 总生成token | token/轮（池化） |
-| --- | --- | --- | --- | --- |
-| 0 | 120 | 45.805 | 5245056 | 465.482 |
-| 8 | 117 | 33.854 | 4109116 | 493.410 |
-| 16 | 111 | 33.516 | 5156335 | 625.389 |
-| 24 | 85 | 28.785 | 6418762 | 906.477 |
-| 32 | 49 | 15.833 | 4846495 | 1244.286 |
-| 40 | 21 | 5.541 | 3683373 | 2702.401 |
-| 48 | 2 | 2.366 | 3414906 | 5867.536 |
-| 55 | 1 | 1.707 | 3425488 | 8155.924 |
-
-### B07 更新权重上限：完整Q/R/T/U
-
-各运行保留自身初始参照，不能据跨run曲线高低推断单组件因果。
-
-<figure class="talk-figure" data-talk-figure="training-cap2" lang="zh-CN" aria-labelledby="talk-training-cap2-title">
-<p class="tf-title" id="talk-training-cap2-title">更新权重上限方案的完整训练曲线</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：更新权重上限方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-cap2-zh.svg" alt="更新权重上限方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>完整8个节点；灰虚线为该运行初始值。三图各指标使用相同尺度。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-cap2-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
-
-| 路径更新 | 正确题数 | 平均轮次 | 总生成token | token/轮（池化） |
-| --- | --- | --- | --- | --- |
-| 0 | 115 | 36.138 | 4113637 | 462.726 |
-| 8 | 117 | 43.163 | 5358615 | 504.673 |
-| 16 | 111 | 40.183 | 6211042 | 628.330 |
-| 24 | 85 | 26.683 | 6498177 | 989.972 |
-| 32 | 52 | 14.037 | 4810916 | 1393.257 |
-| 40 | 7 | 4.463 | 3790360 | 3452.058 |
-| 48 | 1 | 2.183 | 3397617 | 6327.034 |
-| 55 | 0 | 1.573 | 3348536 | 8652.548 |
-
-### B08 固定尺度成本：完整Q/R/T/U
-
-全部八节点保留；小数仅显示舍入三位，不重算评测或统计。U不是逐题比值均值。
-
-<figure class="talk-figure" data-talk-figure="training-fixed-cost" lang="zh-CN" aria-labelledby="talk-training-fixed-cost-title">
-<p class="tf-title" id="talk-training-fixed-cost-title">固定尺度成本方案的完整训练曲线</p>
-<a class="talk-plot-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer" aria-label="查看大图：固定尺度成本方案的完整训练曲线"><img src="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" alt="固定尺度成本方案：质量、平均轮次、总生成token与池化单轮长度的8个记录点。" loading="lazy" decoding="async" width="768" height="640"></a>
-<figcaption>完整8个节点；灰虚线为该运行初始值。三图各指标使用相同尺度。 <a class="tf-caption-link" href="/figures/agentic-rl-talk/training-fixed-cost-zh.svg" target="_blank" rel="noopener noreferrer">查看大图 ↗</a></figcaption>
-</figure>
-
-| 路径更新 | 正确题数 | 平均轮次 | 总生成token | token/轮（池化） |
-| --- | --- | --- | --- | --- |
-| 0 | 106 | 36.528 | 4268496 | 475.016 |
-| 8 | 116 | 43.862 | 4985308 | 462.030 |
-| 16 | 114 | 46.537 | 5376493 | 469.645 |
-| 24 | 86 | 51.817 | 6813833 | 534.544 |
-| 32 | 58 | 29.813 | 4667599 | 636.433 |
-| 40 | 13 | 9.955 | 3603415 | 1471.382 |
-| 48 | 5 | 5.199 | 3286799 | 2569.819 |
-| 55 | 2 | 3.764 | 2897535 | 3129.087 |
+更新次数按模型路径记录，不乘以rank数；实际运行成本另行保留。

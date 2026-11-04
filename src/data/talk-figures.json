@@ -10,12 +10,7 @@
     "igpo-signal",
     "ctf-objective",
     "short-run-results",
-    "complete-quality",
-    "actor-cache",
-    "eval-scheduling",
-    "training-a009",
-    "training-cap2",
-    "training-fixed-cost"
+    "eval-scheduling"
   ],
   "assets": [
     {
@@ -34,43 +29,13 @@
       "id": "short-run-results",
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/short-run-results-zh.svg",
-      "sha256": "5bf902835ffe753cf469a8e30c7d7d52b05249a77785b18814b2e5a1b1148bf5"
-    },
-    {
-      "id": "complete-quality",
-      "lang": "zh-CN",
-      "path": "/figures/agentic-rl-talk/complete-quality-zh.svg",
-      "sha256": "d7672281f91c412015d470e5c41a032824cff1ea5f19043dd311d513c4678cdd"
-    },
-    {
-      "id": "actor-cache",
-      "lang": "zh-CN",
-      "path": "/figures/agentic-rl-talk/actor-cache-zh.svg",
-      "sha256": "57dcc8064b26f8ab551b4d15e9ea49ceec569031a18239bbcd3be6e87bf1463a"
+      "sha256": "6b6f22c4ca063f77002806d33d95d4f9f1fb4cade70f78edef49c4dbdbf36a57"
     },
     {
       "id": "eval-scheduling",
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/eval-scheduling-zh.svg",
       "sha256": "d1a0924da2e5f24cb21b873e7e43cbc9fd36843ba87185d6c6eec7f1e2b9d087"
-    },
-    {
-      "id": "training-a009",
-      "lang": "zh-CN",
-      "path": "/figures/agentic-rl-talk/training-a009-zh.svg",
-      "sha256": "17ba519699f8cec302c6e756cf87d03d058e765c7a0d37c47a4b7ef81467b696"
-    },
-    {
-      "id": "training-cap2",
-      "lang": "zh-CN",
-      "path": "/figures/agentic-rl-talk/training-cap2-zh.svg",
-      "sha256": "dba7350d4e035fa3ab5dd539cc2a853665be14f93bb2434fad2e6b4bff4aa7fc"
-    },
-    {
-      "id": "training-fixed-cost",
-      "lang": "zh-CN",
-      "path": "/figures/agentic-rl-talk/training-fixed-cost-zh.svg",
-      "sha256": "633836130e4926b1b568944b7a410f08575aa6f4b1258a0463f0ae5a1fded22c"
     },
     {
       "id": "tool-stack",
@@ -88,43 +53,13 @@
       "id": "short-run-results",
       "lang": "en",
       "path": "/figures/agentic-rl-talk/short-run-results-en.svg",
-      "sha256": "088d0d100ca858cf6e08f2dfe0590f6006ea8b7bcc04bb4d1f5eabe3c71cc138"
-    },
-    {
-      "id": "complete-quality",
-      "lang": "en",
-      "path": "/figures/agentic-rl-talk/complete-quality-en.svg",
-      "sha256": "70568842e66a0d7515f48608f4b9e7a041152b0835965ec2340eca051add4301"
-    },
-    {
-      "id": "actor-cache",
-      "lang": "en",
-      "path": "/figures/agentic-rl-talk/actor-cache-en.svg",
-      "sha256": "bf1921e82be6e8cd042e51c25986bffd6293a1163253baf5fd63404c2da774e6"
+      "sha256": "ae537b2b25c5584cca7b6220dbaf4fd727d6f6d108cd4c5b2e153bd13dde1b93"
     },
     {
       "id": "eval-scheduling",
       "lang": "en",
       "path": "/figures/agentic-rl-talk/eval-scheduling-en.svg",
       "sha256": "eac691a3a724d115efeed7d588453c667272a28a5e4a7c4b90759e0d05364e8e"
-    },
-    {
-      "id": "training-a009",
-      "lang": "en",
-      "path": "/figures/agentic-rl-talk/training-a009-en.svg",
-      "sha256": "fe77dd1edea603b6abb3a77230364ed7b3a5d9a70337eb81b774b77a321a5d03"
-    },
-    {
-      "id": "training-cap2",
-      "lang": "en",
-      "path": "/figures/agentic-rl-talk/training-cap2-en.svg",
-      "sha256": "6f7064e684d983dc5fd655455620f63f4b4106ce44456c8069a8feb64fa83586"
-    },
-    {
-      "id": "training-fixed-cost",
-      "lang": "en",
-      "path": "/figures/agentic-rl-talk/training-fixed-cost-en.svg",
-      "sha256": "b22cbfee04195362a97bfa51c178d5bb19d4d8ea52935c089579403f0da95dc7"
     }
   ]
 }
