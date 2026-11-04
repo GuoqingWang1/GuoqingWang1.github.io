@@ -22,7 +22,7 @@
       "id": "tool-stack",
       "lang": "zh-CN",
       "path": "/figures/agentic-rl-talk/tool-server-framework-zh.svg",
-      "sha256": "71c2ae5f9ffa114b7760aa8ff40cc8897ba8297fd84bfae5e1c212fe907d36b6"
+      "sha256": "a3c96cfed85cccfe1b36979afd266c0f3f16fbd1833999fa8c3fc3c7cf8a7347"
     },
     {
       "id": "infra-benefits",
@@ -76,7 +76,7 @@
       "id": "tool-stack",
       "lang": "en",
       "path": "/figures/agentic-rl-talk/tool-server-framework-en.svg",
-      "sha256": "3c702cc025fdbbffeda3145080925f029ff5ff6fe94e16186da2317647ccea80"
+      "sha256": "3c10e683819ac41fcc7fb63bb147c5ab3cbdb332a19844ba03ec60bc3286572b"
     },
     {
       "id": "infra-benefits",
